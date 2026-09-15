@@ -140,6 +140,7 @@
                     'admin.capaian-pembelajaran.*',
                     'admin.tujuan-pembelajaran.*',
                     'admin.atp.*',
+                    'admin.modul_ajar.*',
                     'admin.absensi.*', 
                     'admin.kepala-sekolah.jurnal.*'
                 );
@@ -177,7 +178,13 @@
 
                         <a href="{{ route('admin.atp.index') }}"
                             class="block py-2 px-3 text-xs rounded-md transition {{ request()->routeIs('admin.atp.*') ? 'text-blue-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
-                            <i class="fa-solid fa-solid fa-route text-[10px] mr-2"></i> Alur Tujuan Pembelajaran
+                            <i class="fa-solid fa-route text-[10px] mr-2"></i> Alur Tujuan Pembelajaran
+                        </a>
+
+                        <!-- Modul Ajar -->
+                        <a href="{{ route('admin.modul_ajar.index') }}"
+                            class="block py-2 px-3 text-xs rounded-md transition {{ request()->routeIs('admin.modul_ajar.*') ? 'text-blue-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
+                            <i class="fa-solid fa-book-open text-[10px] mr-2"></i> Modul Ajar
                         </a>
 
                         <!-- Rekap Absensi -->

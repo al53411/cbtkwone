@@ -138,6 +138,12 @@
                             class="block py-2 px-3 text-sm rounded-md transition {{ request()->routeIs('guru.jurnal.*') ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-white' }}">
                             <i class="fa-solid fa-book-open text-xs mr-2"></i> Jurnal Mengajar
                         </a>
+                        
+                        <a href="{{ route('guru.modul_ajar.index') }}"
+                            class="block py-2 px-3 text-xs rounded-md transition {{ request()->routeIs('guru.modul_ajar.*') ? 'text-blue-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
+                            <i class="fa-solid fa-book-open text-[10px] mr-2"></i> Modul Ajar
+                        </a>
+
                         <a href="{{ route('guru.absensi.index') }}"
                             class="block py-2 px-3 text-sm rounded-md transition {{ request()->routeIs('guru.absensi.*') ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-white' }}">
                             <i class="fa-solid fa-clipboard-user text-xs mr-2"></i> Absen

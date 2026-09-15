@@ -5,18 +5,40 @@
 @section('content')
 <div class="space-y-6 max-w-7xl mx-auto px-2 sm:px-4">
 
-    <!-- Header Halaman & Tombol Cetak PDF -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- Header Halaman & Filter / Form Cetak Rekap Word -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80">
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Jurnal Pembelajaran Guru</h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Catatan aktivitas KBM harian yang terintegrasi dengan validasi Kepala Sekolah.</p>
         </div>
-        <div>
-            <a href="{{ route('guru.jurnal.cetak') }}" target="_blank"
-                class="w-full sm:w-auto px-4 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-sm">
-                <span>📄</span> Cetak PDF Rekap
-            </a>
-        </div>
+
+        <!-- Form Filter & Cetak Word -->
+        <form action="{{ route('guru.jurnal.cetak') }}" method="GET" class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+            <div>
+                <select name="bulan" class="text-xs rounded-xl border-slate-200 py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">-- Semua Bulan --</option>
+                    @for ($m = 1; $m <= 12; $m++)
+                        <option value="{{ sprintf('%02d', $m) }}" {{ request('bulan') == sprintf('%02d', $m) ? 'selected' : '' }}>
+                            {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                        </option>
+                    @endfor
+                </select>
+            </div>
+            <div>
+                <select name="tahun" class="text-xs rounded-xl border-slate-200 py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">-- Semua Tahun --</option>
+                    @for ($y = date('Y'); $y >= date('Y') - 3; $y--)
+                        <option value="{{ $y }}" {{ request('tahun', date('Y')) == $y ? 'selected' : '' }}>
+                            {{ $y }}
+                        </option>
+                    @endfor
+                </select>
+            </div>
+            <button type="submit"
+                class="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                <span>📄</span> Cetak Rekap Word
+            </button>
+        </form>
     </div>
 
     <!-- Alert Notifikasi Sukses -->
@@ -87,11 +109,12 @@
                 <!-- Mata Pelajaran -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Mata Pelajaran</label>
-                    <!-- BENAR: Hanya mengambil properti nama_mapel -->
-                    <select name="mapel" id="mapel" class="flat-input w-full p-2.5" required>
+                    <select name="mapel" id="mapel" class="w-full text-base sm:text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3" required>
                         <option value="">-- Pilih Mata Pelajaran --</option>
                         @foreach ($mapels as $mapel)
-                            <option value="{{ $mapel->nama_mapel }}">{{ $mapel->nama_mapel }}</option>
+                            <option value="{{ $mapel->nama_mapel }}" {{ old('mapel') == $mapel->nama_mapel ? 'selected' : '' }}>
+                                {{ $mapel->nama_mapel }}
+                            </option>
                         @endforeach
                     </select>
                 </div>

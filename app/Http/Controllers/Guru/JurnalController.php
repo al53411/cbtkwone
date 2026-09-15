@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Guru;
 use App\Http\Controllers\Controller;
 use App\Models\JurnalGuru;
 use App\Models\Kelas;
-use App\Models\Mapel; // 1. Impor Model Mapel
+use App\Models\Mapel;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,21 +17,35 @@ class JurnalController extends Controller
     /**
      * Menampilkan daftar jurnal mengajar guru & form input
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        // Ambil riwayat jurnal mengajar milik guru yang sedang login
-        $jurnals = JurnalGuru::with('kelas')
-            ->where('guru_id', $user->id)
-            ->latest()
-            ->get();
+        // Query Dasar
+        $query = JurnalGuru::with('kelas')
+            ->where('guru_id', $user->id);
 
-        // Ambil data kelas untuk pilihan dropdown
+        // Filter berdasarkan Bulan & Tahun jika ada request
+        if ($request->filled('bulan')) {
+            $query->whereMonth('tanggal', $request->bulan);
+        }
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal', $request->tahun);
+        }
+
+        // Filter berdasarkan Kelas jika ada
+        if ($request->filled('kelas_id')) {
+            $query->where('kelas_id', $request->kelas_id);
+        }
+
+        // Filter berdasarkan Mapel jika ada
+        if ($request->filled('mapel')) {
+            $query->where('mapel', $request->mapel);
+        }
+
+        $jurnals = $query->latest()->get();
+
         $kelases = Kelas::all();
-
-        // 2. Ambil Mata Pelajaran langsung dari Database
-        // Catatan: Jika ada relasi sekolah/status aktif, sesuaikan dengan query aplikasi Anda
         $mapels = Mapel::orderBy('nama_mapel', 'asc')->get();
 
         return view('guru.jurnal.index', compact('jurnals', 'kelases', 'mapels'));
@@ -42,11 +56,10 @@ class JurnalController extends Controller
      */
     public function store(Request $request)
     {
-        // 3. Validasi Input Form (Sesuaikan validasi mapel ke database)
         $request->validate([
             'tanggal'    => 'required|date',
             'kelas_id'   => 'required|exists:kelas,id',
-            'mapel'      => 'required|string|max:255', // Atau 'required|exists:mapels,nama_mapel' jika mengirim nama
+            'mapel'      => 'required|string|max:255',
             'jam_ke'     => 'required|string|max:255',
             'materi'     => 'required|string',
             'kegiatan'   => 'required|string',
@@ -60,11 +73,9 @@ class JurnalController extends Controller
             'kegiatan.required' => 'Kegiatan pembelajaran wajib diisi.',
         ]);
 
-        // Konversi tanggal menjadi nama Hari dalam Bahasa Indonesia
         Carbon::setLocale('id');
         $hari = Carbon::parse($request->tanggal)->translatedFormat('l');
 
-        // Simpan Data ke Tabel jurnal_gurus
         JurnalGuru::create([
             'guru_id'         => Auth::id(),
             'kelas_id'        => $request->kelas_id,
@@ -98,23 +109,37 @@ class JurnalController extends Controller
     }
 
     /**
-     * Cetak rekap jurnal guru menggunakan template Word (.docx)
+     * Cetak rekap jurnal guru berdasarkan FILTER (Bulan, Tahun, Kelas, Mapel)
      */
     public function cetakWord(Request $request)
     {
         $user = Auth::user();
 
-        // 1. Ambil data jurnal guru yang sedang login
-        $jurnals = JurnalGuru::with('kelas')
-            ->where('guru_id', $user->id)
-            ->orderBy('tanggal', 'asc')
-            ->get();
+        // 1. FILTER DINAMIS SESUAI REQUEST FORM CETAK
+        $query = JurnalGuru::with('kelas')
+            ->where('guru_id', $user->id);
 
-        if ($jurnals->isEmpty()) {
-            return redirect()->back()->with('error', 'Tidak ada data jurnal untuk dicetak.');
+        // Filter opsional berdasarkan form cetak/rekap
+        if ($request->filled('bulan')) {
+            $query->whereMonth('tanggal', $request->bulan);
+        }
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal', $request->tahun);
+        }
+        if ($request->filled('kelas_id')) {
+            $query->where('kelas_id', $request->kelas_id);
+        }
+        if ($request->filled('mapel')) {
+            $query->where('mapel', $request->mapel);
         }
 
-        // 2. KUNCIAN DOWNLOAD: Cek apakah ada jurnal yang belum Disetujui / Ditolak
+        $jurnals = $query->orderBy('tanggal', 'asc')->get();
+
+        if ($jurnals->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada data jurnal yang ditemukan sesuai filter untuk dicetak.');
+        }
+
+        // 2. KUNCIAN DOWNLOAD: Cek validasi persetujuan
         $adaBelumDisetujui = $jurnals->contains(function ($item) {
             return strtolower($item->status_validasi) !== 'disetujui';
         });
@@ -139,15 +164,20 @@ class JurnalController extends Controller
             $jurnalPertama = $jurnals->first();
             Carbon::setLocale('id');
 
-            // Fungsi pembantu untuk membersihkan karakter khusus XML (&, <, >)
+            // Fungsi pembersih karakter khusus XML
             $clean = function ($text) {
                 return htmlspecialchars($text ?? '-', ENT_QUOTES, 'UTF-8');
             };
 
-            // 5. Mengisi variabel bagian atas (Header)
-            $template->setValue('mapel_atas', $clean($jurnalPertama->mapel));
-            $template->setValue('kelas_atas', $clean($jurnalPertama->kelas->nama_kelas ?? null));
-            $template->setValue('bulan', Carbon::now()->translatedFormat('F Y'));
+            // Format nama bulan untuk Header (ambil dari filter jika ada, atau dari jurnal pertama)
+            $namaBulan = $request->filled('bulan') 
+                ? Carbon::createFromDate($request->tahun ?? date('Y'), $request->bulan, 1)->translatedFormat('F Y')
+                : Carbon::parse($jurnalPertama->tanggal)->translatedFormat('F Y');
+
+            // 5. Mengisi header dokumen
+            $template->setValue('mapel_atas', $clean($request->mapel ?? $jurnalPertama->mapel));
+            $template->setValue('kelas_atas', $clean($jurnalPertama->kelas->nama_kelas ?? '-'));
+            $template->setValue('bulan', $clean($namaBulan));
 
             // 6. Tanda tangan & Identitas Guru
             $template->setValue('nama_guru', $clean($user->name));
@@ -161,7 +191,6 @@ class JurnalController extends Controller
             $groupedJurnals = $jurnals->groupBy('tanggal');
             $totalTanggal = $groupedJurnals->count();
 
-            // Clone row berdasarkan jumlah TANGGAL UNIK
             $template->cloneRow('no', $totalTanggal);
 
             $i = 1;
@@ -185,7 +214,6 @@ class JurnalController extends Controller
                     $keteranganList[] = $prefix . $clean($item->keterangan);
                 }
 
-                // Masukkan data ter-grouping dengan pemisah baris baru (\n)
                 $template->setValue("no#{$i}", $i);
                 $template->setValue("hari#{$i}", $hari);
                 $template->setValue("tanggal#{$i}", $clean($tglFormatted));
@@ -197,11 +225,10 @@ class JurnalController extends Controller
                 $i++;
             }
 
-            // 9. Buat file temp unik
+            // 9. Simpan file sementara & Download
             $tempFile = tempnam(sys_get_temp_dir(), 'rekap_jurnal_') . '.docx';
             $template->saveAs($tempFile);
 
-            // 10. Bersihkan buffer output murni
             while (ob_get_level()) {
                 ob_end_clean();
             }

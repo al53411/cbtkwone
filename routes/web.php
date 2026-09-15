@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 
-// Import Controller Superadmin / Admin Pusat   
+// Import Controller Superadmin / Admin Pusat  
 use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardController;
 use App\Http\Controllers\Superadmin\SekolahController as SuperadminSekolahController;
 use App\Http\Controllers\Superadmin\UserController;
@@ -23,7 +23,7 @@ use App\Http\Controllers\Admin\CapaianPembelajaranController;
 use App\Http\Controllers\Admin\MapelController;
 use App\Http\Controllers\Admin\TujuanPembelajaranController;
 use App\Http\Controllers\Admin\AlurTujuanPembelajaranController;
-
+use App\Http\Controllers\Admin\ModulAjarController;
 
 // Import Controller Guru
 use App\Http\Controllers\Guru\DashboardController as GuruDashboardController;
@@ -32,6 +32,7 @@ use App\Http\Controllers\Guru\JurnalController as GuruJurnalController;
 use App\Http\Controllers\Guru\AbsensiController as GuruAbsensiController;
 use App\Http\Controllers\Guru\SekolahController as GuruSekolahController;
 use App\Http\Controllers\Guru\ProfilController as GuruProfilController;
+use App\Http\Controllers\Guru\ModulAjarController as GuruModulAjarController;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -131,17 +132,22 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru'])->
     Route::resource('jurnal', AdminJurnalController::class);
     Route::resource('kepala-sekolah', AdminKepalaSekolahController::class);
 
-    //Route Kelas
+    // Route Mata Pelajaran
     Route::resource('mapel', MapelController::class);
 
-    //Route Tujuan Pembelajaran
+    // Route Tujuan Pembelajaran
     Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
+    Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
+    Route::get('/get-elemen-cp', [TujuanPembelajaranController::class, 'getElemenByMapelFase'])->name('get_elemen_cp');
 
-    //Route Alur Tujuan Pembelajaran
+    // Route Alur Tujuan Pembelajaran (ATP) - DIPERBAIKI / DITAMBAHKAN KEMBALI
     Route::resource('atp', AlurTujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
 
     // Route API AJAX untuk dropdown dinamis
     Route::get('/api/atp/by-tp', [AlurTujuanPembelajaranController::class, 'getByTp'])->name('api.atp.get_by_tp');
+
+    // Route Modul Ajar Admin
+    Route::resource('modul_ajar', ModulAjarController::class);
 
 });
 
@@ -173,10 +179,19 @@ Route::middleware(['auth', 'role:guru,superadmin'])->prefix('guru')->name('guru.
     Route::get('/kelas', [GuruSiswaController::class, 'kelasIndex'])->name('kelas.index');
     Route::get('/kelas/{id}', [GuruSiswaController::class, 'kelasShow'])->name('kelas.show');
 
+    // Modul Ajar Guru (Pindahkan rute kustom ke ATAS resource)
+    Route::get('/get-cp-filtered', [GuruModulAjarController::class, 'getCpFiltered'])->name('get_cp_filtered');
+    Route::get('/get-tp-by-cp/{cp_id}', [GuruModulAjarController::class, 'getTpByCp'])->name('get_tp_by_cp');
+    Route::get('/get-tp-filtered', [GuruModulAjarController::class, 'getTpFiltered'])->name('get_tp_filtered');
+    Route::get('/modul-ajar/{id}/print', [GuruModulAjarController::class, 'print'])->name('modul_ajar.print');
+
+    // Route Resource diletakkan di bawah rute kustom
+    Route::resource('modul_ajar', GuruModulAjarController::class);
+   
     // Cetak Rekap Jurnal
     Route::get('/jurnal/cetak-pdf', [GuruJurnalController::class, 'cetakWord'])->name('jurnal.cetak');
     Route::resource('jurnal', GuruJurnalController::class);
-    
+
 });
 
 // ==========================================
