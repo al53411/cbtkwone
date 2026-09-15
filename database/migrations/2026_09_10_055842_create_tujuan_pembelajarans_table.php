@@ -13,12 +13,6 @@ return new class extends Migration
     {
         Schema::create('tujuan_pembelajarans', function (Blueprint $table) {
             $table->id();
-            
-            // Relasi ke modul ajar (NULL = master data dari admin, terisi = milik modul ajar guru)
-            $table->foreignId('modul_ajar_id')
-                  ->nullable()
-                  ->constrained('modul_ajars')
-                  ->onDelete('cascade');
 
             // Relasi ke sekolah (opsional / opsional multi-tenant)
             $table->foreignId('sekolah_id')
