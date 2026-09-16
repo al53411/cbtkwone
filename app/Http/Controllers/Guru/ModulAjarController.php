@@ -49,7 +49,7 @@ class ModulAjarController extends Controller
             (object)['id' => '2', 'nama' => 'Semester 2 (Genap)'],
         ]);
 
-        $taAktifRecord = class_exists(TahunAjaran::class) ? TahunAjaran::where('is_aktif', 1)->first() : null;
+        $taAktifRecord = class_exists(TahunAjaran::class) ? TahunAjaran::where('is_aktif', true)->first() : null;
         $tahunAjaranAktif = $taAktifRecord->tahun ?? '2026/2027';
         
         $semesterAktif = '1';
