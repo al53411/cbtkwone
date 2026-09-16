@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\JurnalGuru;
 use App\Models\Kelas;
 use App\Models\Mapel;
+use App\Models\TujuanPembelajaran;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,7 @@ class JurnalController extends Controller
     {
         $user = Auth::user();
 
-        // Query Dasar
+        // Query Dasar Jurnal Guru
         $query = JurnalGuru::with('kelas')
             ->where('guru_id', $user->id);
 
@@ -43,12 +44,15 @@ class JurnalController extends Controller
             $query->where('mapel', $request->mapel);
         }
 
-        $jurnals = $query->latest()->get();
+        $jurnals = $query->latest('tanggal')->latest('id')->get();
 
-        $kelases = Kelas::all();
+        $kelases = Kelas::orderBy('nama_kelas', 'asc')->get();
         $mapels = Mapel::orderBy('nama_mapel', 'asc')->get();
 
-        return view('guru.jurnal.index', compact('jurnals', 'kelases', 'mapels'));
+        // Mengambil data Tujuan Pembelajaran untuk dropdown pada form input Jurnal
+        $tujuanPembelajarans = TujuanPembelajaran::with(['mapel', 'kelas'])->get();
+
+        return view('guru.jurnal.index', compact('jurnals', 'kelases', 'mapels', 'tujuanPembelajarans'));
     }
 
     /**
@@ -77,15 +81,15 @@ class JurnalController extends Controller
         $hari = Carbon::parse($request->tanggal)->translatedFormat('l');
 
         JurnalGuru::create([
-            'guru_id'         => Auth::id(),
-            'kelas_id'        => $request->kelas_id,
-            'hari'            => $hari,
-            'tanggal'         => $request->tanggal,
-            'jam_ke'          => $request->jam_ke,
-            'mapel'           => $request->mapel,
-            'materi'          => $request->materi,
-            'kegiatan'        => $request->kegiatan,
-            'keterangan'      => $request->keterangan,
+            'guru_id'        => Auth::id(),
+            'kelas_id'       => $request->kelas_id,
+            'hari'           => $hari,
+            'tanggal'        => $request->tanggal,
+            'jam_ke'         => $request->jam_ke,
+            'mapel'          => $request->mapel,
+            'materi'         => $request->materi,
+            'kegiatan'       => $request->kegiatan,
+            'keterangan'     => $request->keterangan,
             'status_validasi' => 'Pending',
         ]);
 
@@ -119,7 +123,6 @@ class JurnalController extends Controller
         $query = JurnalGuru::with('kelas')
             ->where('guru_id', $user->id);
 
-        // Filter opsional berdasarkan form cetak/rekap
         if ($request->filled('bulan')) {
             $query->whereMonth('tanggal', $request->bulan);
         }
@@ -169,7 +172,7 @@ class JurnalController extends Controller
                 return htmlspecialchars($text ?? '-', ENT_QUOTES, 'UTF-8');
             };
 
-            // Format nama bulan untuk Header (ambil dari filter jika ada, atau dari jurnal pertama)
+            // Format nama bulan untuk Header
             $namaBulan = $request->filled('bulan') 
                 ? Carbon::createFromDate($request->tahun ?? date('Y'), $request->bulan, 1)->translatedFormat('F Y')
                 : Carbon::parse($jurnalPertama->tanggal)->translatedFormat('F Y');

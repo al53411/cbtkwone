@@ -130,18 +130,18 @@
                             <span class="font-medium text-sm">Administrasi</span>
                         </div>
                         <i id="arrow-administrasi"
-                            class="fa-solid fa-chevron-down text-xs text-slate-500 group-hover:text-white transition-transform duration-200 {{ request()->routeIs('guru.jurnal.*', 'guru.absensi.*') ? 'rotate-180' : '' }}"></i>
+                            class="fa-solid fa-chevron-down text-xs text-slate-500 group-hover:text-white transition-transform duration-200 {{ request()->routeIs('guru.jurnal.*', 'guru.absensi.*', 'guru.modul_ajar.*') ? 'rotate-180' : '' }}"></i>
                     </button>
 
-                    <div id="dropdown-administrasi" class="{{ request()->routeIs('guru.jurnal.*', 'guru.absensi.*') ? '' : 'hidden' }} pl-11 pr-2 py-1 space-y-1 bg-slate-900/40 rounded-lg">
+                    <div id="dropdown-administrasi" class="{{ request()->routeIs('guru.jurnal.*', 'guru.absensi.*', 'guru.modul_ajar.*') ? '' : 'hidden' }} pl-11 pr-2 py-1 space-y-1 bg-slate-900/40 rounded-lg">
                         <a href="{{ route('guru.jurnal.index') }}"
                             class="block py-2 px-3 text-sm rounded-md transition {{ request()->routeIs('guru.jurnal.*') ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-white' }}">
                             <i class="fa-solid fa-book-open text-xs mr-2"></i> Jurnal Mengajar
                         </a>
                         
                         <a href="{{ route('guru.modul_ajar.index') }}"
-                            class="block py-2 px-3 text-xs rounded-md transition {{ request()->routeIs('guru.modul_ajar.*') ? 'text-blue-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
-                            <i class="fa-solid fa-book-open text-[10px] mr-2"></i> Modul Ajar
+                            class="block py-2 px-3 text-sm rounded-md transition {{ request()->routeIs('guru.modul_ajar.*') ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-white' }}">
+                            <i class="fa-solid fa-file-lines text-xs mr-2"></i> Modul Ajar
                         </a>
 
                         <a href="{{ route('guru.absensi.index') }}"
@@ -196,33 +196,34 @@
                         <span class="text-slate-600 font-medium">@yield('page_title', 'Dashboard')</span>
                     </div>
                 </div>
+                
                 <div class="flex items-center space-x-3">
-    @php
-        $sekolahId = auth()->user()->sekolah_id ?? null;
-        $taAktif = $sekolahId ? \App\Models\TahunAjaran::getAktif($sekolahId) : null;
-    @endphp
+                    @php
+                        $sekolahId = auth()->user()->sekolah_id ?? null;
+                        $taAktif = $sekolahId ? \App\Models\TahunAjaran::getAktif($sekolahId) : null;
+                    @endphp
 
-    @if($taAktif)
-        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-            <i class="fa-solid fa-calendar-days mr-1.5"></i> TP: {{ $taAktif->tahun }} ({{ $taAktif->semester }})
-        </span>
-    @elseif(!$sekolahId)
-        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" title="User belum terhubung ke sekolah_id">
-            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Sekolah Belum Set
-        </span>
-    @else
-        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200" title="Belum ada Tahun Ajaran yang di-set Aktif">
-            <i class="fa-solid fa-calendar-xmark mr-1.5"></i> TP Belum Aktif
-        </span>
-    @endif
+                    @if($taAktif)
+                        <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                            <i class="fa-solid fa-calendar-days mr-1.5"></i> TP: {{ $taAktif->tahun }} ({{ $taAktif->semester }})
+                        </span>
+                    @elseif(!$sekolahId)
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" title="User belum terhubung ke sekolah_id">
+                            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Sekolah Belum Set
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200" title="Belum ada Tahun Ajaran yang di-set Aktif">
+                            <i class="fa-solid fa-calendar-xmark mr-1.5"></i> TP Belum Aktif
+                        </span>
+                    @endif
 
-    <span class="text-sm font-semibold text-slate-700 hidden sm:inline">
-        {{ Auth::user()->name ?? 'Guru' }}
-    </span>
-    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-        {{ strtoupper(substr(Auth::user()->name ?? 'G', 0, 1)) }}
-    </div>
-</div>
+                    <span class="text-sm font-semibold text-slate-700 hidden sm:inline">
+                        {{ Auth::user()->name ?? 'Guru' }}
+                    </span>
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        {{ strtoupper(substr(Auth::user()->name ?? 'G', 0, 1)) }}
+                    </div>
+                </div>
             </header>
 
             <!-- Main Content Section -->

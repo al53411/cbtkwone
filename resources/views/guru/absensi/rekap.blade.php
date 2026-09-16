@@ -13,7 +13,7 @@
     $bulanAktif = sprintf('%02d', (int)$bulan);
 @endphp
 
-<div class="space-y-6 max-w-7xl mx-auto px-2 sm:px-4">
+<div class="w-full bg-white text-slate-800 p-4 sm:p-6">
 
     <!-- Kop Cetak (Hanya Muncul Saat Print/Cetak) -->
     <div class="hidden print:block text-center mb-6">

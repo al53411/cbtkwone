@@ -3,7 +3,7 @@
 @section('title', $profilSekolah->nama_sekolah ?? 'SDN Kawu 1')
 
 @section('content')
-<div class="py-4 sm:py-6 w-full px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+<div class="w-full bg-white text-slate-800 p-4 sm:p-6">
 
     <!-- Header & Total Stats -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100">

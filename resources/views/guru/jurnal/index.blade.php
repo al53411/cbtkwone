@@ -3,7 +3,7 @@
 @section('title', $profilSekolah->nama_sekolah ?? 'SDN Kawu 1')
 
 @section('content')
-<div class="space-y-6 max-w-7xl mx-auto px-2 sm:px-4">
+<div class="w-full bg-white text-slate-800 p-4 sm:p-6">
 
     <!-- Header Halaman & Filter / Form Cetak Rekap Word -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80">
@@ -95,7 +95,7 @@
                 <!-- Kelas -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Kelas</label>
-                    <select name="kelas_id" required
+                    <select name="kelas_id" id="kelas_id" required
                         class="w-full text-base sm:text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3">
                         <option value="">-- Pilih Kelas --</option>
                         @foreach($kelases as $kelas)
@@ -112,7 +112,7 @@
                     <select name="mapel" id="mapel" class="w-full text-base sm:text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3" required>
                         <option value="">-- Pilih Mata Pelajaran --</option>
                         @foreach ($mapels as $mapel)
-                            <option value="{{ $mapel->nama_mapel }}" {{ old('mapel') == $mapel->nama_mapel ? 'selected' : '' }}>
+                            <option value="{{ $mapel->nama_mapel }}" data-id="{{ $mapel->id }}" {{ old('mapel') == $mapel->nama_mapel ? 'selected' : '' }}>
                                 {{ $mapel->nama_mapel }}
                             </option>
                         @endforeach
@@ -131,8 +131,23 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
                 <!-- Materi / TP -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Materi / TP Pembelajaran</label>
-                    <textarea name="materi" rows="3" placeholder="Tuliskan materi pembelajaran hari ini..." required
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-slate-600">Materi / TP Pembelajaran</label>
+                        <span class="text-[11px] text-indigo-600 cursor-pointer hover:underline" onclick="clearMateri()">Reset Text</span>
+                    </div>
+                    
+                    <!-- Dropdown Pilih TP (Dinamis) -->
+                    <select id="select_tp" class="w-full text-xs sm:text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 mb-2 bg-slate-50">
+                        <option value="">-- Pilih dari Master TP (Opsional) --</option>
+                        @foreach($tujuanPembelajarans ?? [] as $tp)
+                            <option value="{{ $tp->deskripsi_tp }}" data-mapel="{{ $tp->mapel_id ?? '' }}" data-mapel-nama="{{ $tp->mapel->nama_mapel ?? '' }}" data-kelas="{{ $tp->kelas_id ?? '' }}">
+                                {{ $tp->kode_tp ? '['.$tp->kode_tp.'] ' : '' }}{{ \Illuminate\Support\Str::limit($tp->deskripsi_tp, 70) }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <!-- Textarea Utama -->
+                    <textarea name="materi" id="materi" rows="3" placeholder="Pilih TP di atas atau tuliskan materi pembelajaran hari ini..." required
                         class="w-full text-base sm:text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-3">{{ old('materi') }}</textarea>
                 </div>
 
@@ -323,3 +338,71 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectKelas = document.getElementById('kelas_id');
+        const selectMapel = document.getElementById('mapel');
+        const selectTp = document.getElementById('select_tp');
+        const materiTextarea = document.getElementById('materi');
+
+        // Function untuk menyaring TP berdasarkan Kelas dan Mapel
+        function filterTpOptions() {
+            const selectedKelas = selectKelas ? selectKelas.value : '';
+            const selectedMapelOption = selectMapel ? selectMapel.options[selectMapel.selectedIndex] : null;
+            const selectedMapelId = selectedMapelOption ? selectedMapelOption.getAttribute('data-id') : '';
+            const selectedMapelNama = selectMapel ? selectMapel.value : '';
+
+            const options = selectTp.querySelectorAll('option');
+
+            options.forEach(option => {
+                if (!option.value) return; // Lewati option placeholder
+
+                const tpKelas = option.getAttribute('data-kelas');
+                const tpMapelId = option.getAttribute('data-mapel');
+                const tpMapelNama = option.getAttribute('data-mapel-nama');
+
+                // Cek kesesuaian Kelas
+                const matchKelas = !selectedKelas || !tpKelas || tpKelas === selectedKelas;
+
+                // Cek kesesuaian Mapel (baik via ID maupun Nama)
+                const matchMapel = !selectedMapelNama || 
+                                   (tpMapelId && tpMapelId === selectedMapelId) || 
+                                   (tpMapelNama && tpMapelNama === selectedMapelNama);
+
+                if (matchKelas && matchMapel) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+
+            // Reset pilihan TP jika opsi terpilih tersembunyi
+            if (selectTp.selectedIndex > 0 && selectTp.options[selectTp.selectedIndex].style.display === 'none') {
+                selectTp.value = '';
+            }
+        }
+
+        // Jalankan filter saat ada perubahan pada Kelas atau Mapel
+        if (selectKelas) selectKelas.addEventListener('change', filterTpOptions);
+        if (selectMapel) selectMapel.addEventListener('change', filterTpOptions);
+
+        // Tempelkan teks TP ke dalam textarea saat TP dipilih
+        selectTp.addEventListener('change', function () {
+            if (this.value) {
+                if (materiTextarea.value.trim() !== '') {
+                    materiTextarea.value += "\n" + this.value;
+                } else {
+                    materiTextarea.value = this.value;
+                }
+            }
+        });
+    });
+
+    function clearMateri() {
+        document.getElementById('materi').value = '';
+        document.getElementById('select_tp').value = '';
+    }
+</script>
+@endpush

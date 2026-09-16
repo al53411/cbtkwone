@@ -3,7 +3,7 @@
 @section('title', $profilSekolah->nama_sekolah ?? 'SDN Kawu 1')
 
 @section('content')
-<div class="space-y-6 max-w-7xl mx-auto px-2 sm:px-4">
+<div class="w-full bg-white text-slate-800 p-4 sm:p-6">
 
     <!-- Header Halaman -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
