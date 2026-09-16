@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TahunAjaran;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TahunAjaranController extends Controller
 {
@@ -24,11 +25,12 @@ class TahunAjaranController extends Controller
             'semester' => 'required|in:Ganjil,Genap',
         ]);
 
+        // Paksa PostgreSQL menggunakan literal boolean FALSE via DB::raw
         TahunAjaran::create([
             'sekolah_id' => Auth::user()->sekolah_id,
             'tahun'      => $request->tahun,
             'semester'   => $request->semester,
-            'is_aktif'   => false,
+            'is_aktif'   => DB::raw('false'),
         ]);
 
         return redirect()->back()->with('success', 'Tahun Ajaran berhasil ditambahkan!');
@@ -39,11 +41,16 @@ class TahunAjaranController extends Controller
         $sekolahId = Auth::user()->sekolah_id;
 
         // Reset semua status aktif untuk sekolah ini
-        TahunAjaran::where('sekolah_id', $sekolahId)->update(['is_aktif' => false]);
+        TahunAjaran::where('sekolah_id', $sekolahId)->update([
+            'is_aktif' => DB::raw('false')
+        ]);
 
         // Aktifkan tahun ajaran yang dipilih
-        $ta = TahunAjaran::where('sekolah_id', $sekolahId)->findOrFail($id);
-        $ta->update(['is_aktif' => true]);
+        TahunAjaran::where('sekolah_id', $sekolahId)
+            ->where('id', $id)
+            ->update([
+                'is_aktif' => DB::raw('true')
+            ]);
 
         return redirect()->back()->with('success', 'Tahun Ajaran aktif berhasil diperbarui!');
     }
