@@ -49,12 +49,16 @@ class ModulAjarController extends Controller
             (object)['id' => '2', 'nama' => 'Semester 2 (Genap)'],
         ]);
 
-        $taAktifRecord = class_exists(TahunAjaran::class) ? TahunAjaran::where('is_aktif', true)->first() : null;
+        // Perbaikan: Menggunakan boolean true agar cocok dengan tipe boolean PostgreSQL & MySQL
+        $taAktifRecord = class_exists(TahunAjaran::class) 
+            ? TahunAjaran::where('is_aktif', true)->first() 
+            : null;
+
         $tahunAjaranAktif = $taAktifRecord->tahun ?? '2026/2027';
         
         $semesterAktif = '1';
         if ($taAktifRecord) {
-            $semesterAktif = (strtolower($taAktifRecord->semester) === 'genap' || $taAktifRecord->semester == '2') ? '2' : '1';
+            $semesterAktif = (strtolower((string) $taAktifRecord->semester) === 'genap' || (string) $taAktifRecord->semester === '2') ? '2' : '1';
         }
 
         return view('guru.modul_ajar.index', compact(
