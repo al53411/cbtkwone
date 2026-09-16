@@ -20,7 +20,7 @@ class TahunAjaranController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'tahun' => 'required|string',
+            'tahun'    => 'required|string',
             'semester' => 'required|in:Ganjil,Genap',
         ]);
 
@@ -28,7 +28,7 @@ class TahunAjaranController extends Controller
             'sekolah_id' => Auth::user()->sekolah_id,
             'tahun'      => $request->tahun,
             'semester'   => $request->semester,
-            'is_aktif'   => false, // Gunakan boolean native PHP
+            'is_aktif'   => false,
         ]);
 
         return redirect()->back()->with('success', 'Tahun Ajaran berhasil ditambahkan!');
@@ -38,15 +38,12 @@ class TahunAjaranController extends Controller
     {
         $sekolahId = Auth::user()->sekolah_id;
 
-        // Reset semua tahun ajaran di sekolah ini menjadi false
-        TahunAjaran::where('sekolah_id', $sekolahId)->update([
-            'is_aktif' => false
-        ]);
+        // Reset semua status aktif untuk sekolah ini
+        TahunAjaran::where('sekolah_id', $sekolahId)->update(['is_aktif' => false]);
 
-        // Set tahun ajaran yang dipilih menjadi true
+        // Aktifkan tahun ajaran yang dipilih
         $ta = TahunAjaran::where('sekolah_id', $sekolahId)->findOrFail($id);
-        $ta->is_aktif = true;
-        $ta->save();
+        $ta->update(['is_aktif' => true]);
 
         return redirect()->back()->with('success', 'Tahun Ajaran aktif berhasil diperbarui!');
     }
