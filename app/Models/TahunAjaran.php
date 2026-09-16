@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class TahunAjaran extends Model
 {
@@ -18,22 +19,14 @@ class TahunAjaran extends Model
         'is_aktif',
     ];
 
-    /**
-     * Cast atribut ke tipe data murni.
-     * $casts ini akan otomatis mengubah angka 0/1 dari database menjadi true/false di Eloquent.
-     */
     protected $casts = [
         'is_aktif' => 'boolean',
     ];
 
-    /**
-     * Helper untuk mengambil data Tahun Ajaran yang aktif.
-     */
     public static function getAktif($sekolahId = null)
     {
-        // where('is_aktif', true) sekarang aman 100% di PostgreSQL & MySQL
-        // karena atribut $casts di atas sudah mendaftarkan tipe 'boolean'.
-        $query = static::where('is_aktif', true);
+        // Paksa query PostgreSQL menggunakan sintaks boolean murni 'true'
+        $query = static::whereRaw("is_aktif IS TRUE");
 
         if ($sekolahId) {
             $query->where('sekolah_id', $sekolahId);
