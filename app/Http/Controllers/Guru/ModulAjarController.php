@@ -49,9 +49,9 @@ class ModulAjarController extends Controller
             (object)['id' => '2', 'nama' => 'Semester 2 (Genap)'],
         ]);
 
-        // Perbaikan: Menggunakan boolean true agar cocok dengan tipe boolean PostgreSQL & MySQL
+        // Perbaikan Query Postgres: Menggunakan whereRaw agar kompatibel penuh dengan boolean PostgreSQL
         $taAktifRecord = class_exists(TahunAjaran::class) 
-            ? TahunAjaran::where('is_aktif', true)->first() 
+            ? TahunAjaran::whereRaw("is_aktif IS TRUE OR is_aktif = '1'")->first() 
             : null;
 
         $tahunAjaranAktif = $taAktifRecord->tahun ?? '2026/2027';
