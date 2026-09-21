@@ -1,9 +1,5 @@
-@extends('layouts.guru')
-
-@section('title', 'Modul Ajar')
-@section('page_title', 'Modul Ajar')
-
-@section('content')
+<!DOCTYPE html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,6 +19,8 @@
                 padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
+                border: none !important;
+                box-shadow: none !important;
             }
             .page-break {
                 page-break-before: always;
@@ -35,7 +33,7 @@
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen p-4 md:p-8">
 
-    <!-- BAR AKSI / TOMBOL (Tidak Ikut Terpratik) -->
+    <!-- BAR AKSI / TOMBOL (Tidak Ikut Tercetak) -->
     <div class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print bg-white p-4 rounded-xl shadow-sm border border-slate-200">
         <a href="{{ route('guru.modul_ajar.index') }}" class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
             &larr; Kembali
@@ -49,7 +47,7 @@
     <!-- DOKUMEN CETAK -->
     <div class="print-container max-w-4xl mx-auto bg-white p-8 md:p-12 shadow-md border border-slate-200 leading-relaxed text-sm">
         <div class="text-center mb-8">
-            <h2 class="text-lg font-bold uppercase tracking-wider underline">MODUL AJAR</h2>
+            <h2 class="text-lg font-bold uppercase tracking-wider underline">MODUL AJAR KURIKULUM MERDEKA</h2>
             <p class="text-base font-semibold mt-1">{{ $modul->judul }}</p>
         </div>
 
@@ -89,22 +87,30 @@
                         <td class="py-1.5">{{ $modul->alokasi_waktu ?? '-' }}</td>
                     </tr>
                     <tr class="border-b border-slate-100">
+                        <td class="py-1.5 font-semibold">Kompetensi Awal</td>
+                        <td class="py-1.5 text-center">:</td>
+                        <td class="py-1.5">{{ $modul->kompetensi_awal ?? '-' }}</td>
+                    </tr>
+                    <tr class="border-b border-slate-100">
+                        <td class="py-1.5 font-semibold">Profil Pelajar Pancasila</td>
+                        <td class="py-1.5 text-center">:</td>
+                        <td class="py-1.5">{{ $modul->profil_pelajar_pancasila ?? 'Mandiri, Bernalar Kritis, Gotong Royong' }}</td>
+                    </tr>
+                    <tr class="border-b border-slate-100">
+                        <td class="py-1.5 font-semibold">Sarana dan Prasarana</td>
+                        <td class="py-1.5 text-center">:</td>
+                        <td class="py-1.5">{{ $modul->sarana_prasarana ?? '-' }}</td>
+                    </tr>
+                    <tr class="border-b border-slate-100">
                         <td class="py-1.5 font-semibold">Target Peserta Didik</td>
                         <td class="py-1.5 text-center">:</td>
-                        <td class="py-1.5">{{ $modul->target_peserta_didik ?? '-' }}</td>
+                        <td class="py-1.5">{{ $modul->target_peserta_didik ?? 'Peserta didik reguler/tipikal' }}</td>
                     </tr>
                     <tr class="border-b border-slate-100">
                         <td class="py-1.5 font-semibold">Model Pembelajaran</td>
                         <td class="py-1.5 text-center">:</td>
                         <td class="py-1.5">{{ $modul->model_pembelajaran ?? '-' }}</td>
                     </tr>
-                    @if(!empty($modul->kompetensi_awal))
-                    <tr class="border-b border-slate-100">
-                        <td class="py-1.5 font-semibold">Kompetensi Awal</td>
-                        <td class="py-1.5 text-center">:</td>
-                        <td class="py-1.5">{{ $modul->kompetensi_awal }}</td>
-                    </tr>
-                    @endif
                 </tbody>
             </table>
         </div>
@@ -117,7 +123,7 @@
             <div class="mb-4">
                 <h4 class="font-bold text-xs uppercase text-slate-700 mb-1">A. Capaian Pembelajaran (CP)</h4>
                 <p class="text-justify pl-4 border-l-2 border-slate-300">
-                    {{ $modul->deskripsi_cp }}
+                    {{ $modul->deskripsi_cp ?? $modul->capaianPembelajaran->deskripsi_cp ?? $modul->capaianPembelajaran->deskripsi ?? '-' }}
                 </p>
             </div>
 
@@ -125,8 +131,11 @@
             <div class="mb-4">
                 <h4 class="font-bold text-xs uppercase text-slate-700 mb-1">B. Tujuan Pembelajaran (TP)</h4>
                 <ol class="list-decimal list-inside pl-4 space-y-1">
-                    @forelse($modul->tujuanPembelajarans as $tp)
-                        <li>{{ $tp->deskripsi_tp ?? $tp->deskripsi ?? $tp->tujuan }}</li>
+                    @forelse($modul->tujuanPembelajarans ?? [] as $tp)
+                        <li>
+                            @if(!empty($tp->kode_tp)) <strong>[{{ $tp->kode_tp }}]</strong> @endif
+                            {{ $tp->deskripsi_tp ?? $tp->deskripsi ?? $tp->tujuan }}
+                        </li>
                     @empty
                         <li class="text-slate-400 italic">Tidak ada Tujuan Pembelajaran.</li>
                     @endforelse
@@ -135,45 +144,81 @@
 
             <!-- Pemahaman Bermakna & Pertanyaan Pemantik -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                @if($modul->pemahaman_bermakna)
                 <div>
                     <h4 class="font-bold text-xs uppercase text-slate-700 mb-1">C. Pemahaman Bermakna</h4>
                     <p class="text-justify bg-slate-50 p-2.5 rounded border border-slate-200 text-xs">
-                        {{ $modul->pemahaman_bermakna }}
+                        {{ $modul->pemahaman_bermakna ?? '-' }}
                     </p>
                 </div>
-                @endif
-                
-                @if($modul->pertanyaan_pemantik)
                 <div>
                     <h4 class="font-bold text-xs uppercase text-slate-700 mb-1">D. Pertanyaan Pemantik</h4>
                     <p class="text-justify bg-slate-50 p-2.5 rounded border border-slate-200 text-xs">
-                        {{ $modul->pertanyaan_pemantik }}
+                        {{ $modul->pertanyaan_pemantik ?? '-' }}
                     </p>
                 </div>
+            </div>
+
+            <!-- Kegiatan Pembelajaran -->
+            <div class="mb-4">
+                <h4 class="font-bold text-xs uppercase text-slate-700 mb-2">E. Kegiatan Pembelajaran</h4>
+                
+                @if(isset($modul->langkahPembelajarans) && $modul->langkahPembelajarans->count() > 0)
+                    <div class="space-y-3">
+                        @foreach($modul->langkahPembelajarans as $langkah)
+                            <div class="border border-slate-200 rounded p-3">
+                                <h5 class="font-bold text-xs border-b border-slate-200 pb-1 mb-2">
+                                    Pertemuan Ke-{{ $langkah->pertemuan_ke }} ({{ $langkah->alokasi_waktu ?? '-' }})
+                                </h5>
+                                <div class="space-y-1.5 text-xs">
+                                    <div><strong>Kegiatan Pendahuluan:</strong> {{ $langkah->kegiatan_pendahuluan ?? '-' }}</div>
+                                    <div><strong>Kegiatan Inti:</strong> {{ $langkah->kegiatan_inti ?? '-' }}</div>
+                                    <div><strong>Kegiatan Penutup:</strong> {{ $langkah->kegiatan_penutup ?? '-' }}</div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="border border-slate-200 rounded p-3 text-xs space-y-1.5">
+                        <div><strong>Kegiatan Pendahuluan:</strong> {{ $modul->kegiatan_pendahuluan ?? 'Apersepsi, motivasi, dan penyampaian tujuan pembelajaran.' }}</div>
+                        <div><strong>Kegiatan Inti:</strong> {{ $modul->kegiatan_inti ?? 'Eksplorasi konsep, diskusi, dan sintesis materi.' }}</div>
+                        <div><strong>Kegiatan Penutup:</strong> {{ $modul->kegiatan_penutup ?? 'Refleksi pembelajaran, kesimpulan, dan tindak lanjut.' }}</div>
+                    </div>
                 @endif
             </div>
 
-            <!-- Langkah-Langkah Pembelajaran -->
-            @if($modul->langkahPembelajarans->count() > 0)
+            <!-- Asesmen -->
             <div class="mb-4">
-                <h4 class="font-bold text-xs uppercase text-slate-700 mb-2">E. Kegiatan Pembelajaran</h4>
-                <div class="space-y-3">
-                    @foreach($modul->langkahPembelajarans as $langkah)
-                        <div class="border border-slate-200 rounded p-3">
-                            <h5 class="font-bold text-xs border-b border-slate-200 pb-1 mb-2">
-                                Pertemuan Ke-{{ $langkah->pertemuan_ke }} ({{ $langkah->alokasi_waktu ?? '-' }})
-                            </h5>
-                            <div class="space-y-1.5 text-xs">
-                                <div><strong>Kegiatan Pendahuluan:</strong> {{ $langkah->kegiatan_pendahuluan ?? '-' }}</div>
-                                <div><strong>Kegiatan Inti:</strong> {{ $langkah->kegiatan_inti ?? '-' }}</div>
-                                <div><strong>Kegiatan Penutup:</strong> {{ $langkah->kegiatan_penutup ?? '-' }}</div>
-                            </div>
-                        </div>
-                    @endforeach
+                <h4 class="font-bold text-xs uppercase text-slate-700 mb-1">F. Asesmen</h4>
+                <ul class="list-disc list-inside pl-4 text-xs space-y-1">
+                    <li><strong>Asesmen Diagnostik:</strong> {{ $modul->asesmen_diagnostik ?? 'Penilaian kemampuan awal sebelum pembelajaran.' }}</li>
+                    <li><strong>Asesmen Formatif:</strong> {{ $modul->asesmen_formatif ?? 'Penilaian proses selama kegiatan pembelajaran.' }}</li>
+                    <li><strong>Asesmen Sumatif:</strong> {{ $modul->asesmen_sumatif ?? 'Penilaian akhir ketercapaian tujuan pembelajaran.' }}</li>
+                </ul>
+            </div>
+
+            <!-- Pengayaan & Remedial -->
+            <div class="mb-4">
+                <h4 class="font-bold text-xs uppercase text-slate-700 mb-1">G. Pengayaan dan Remedial</h4>
+                <div class="text-xs space-y-1 pl-4 border-l-2 border-slate-200">
+                    <div><strong>Pengayaan:</strong> {{ $modul->pengayaan ?? 'Pemberian materi/tugas tambahan bagi peserta didik dengan capaian tinggi.' }}</div>
+                    <div><strong>Remedial:</strong> {{ $modul->remedial ?? 'Bimbingan khusus bagi peserta didik yang membutuhkan pemahaman ekstra.' }}</div>
                 </div>
             </div>
-            @endif
+
+            <!-- Refleksi Peserta Didik dan Guru -->
+            <div class="mb-4">
+                <h4 class="font-bold text-xs uppercase text-slate-700 mb-1">H. Refleksi Peserta Didik dan Guru</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded">
+                        <strong>Refleksi Peserta Didik:</strong>
+                        <p class="mt-1">{{ $modul->refleksi_siswa ?? 'Bagian mana yang paling kamu sukai dari pembelajaran hari ini?' }}</p>
+                    </div>
+                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded">
+                        <strong>Refleksi Guru:</strong>
+                        <p class="mt-1">{{ $modul->refleksi_guru ?? 'Apakah seluruh peserta didik mencapai tujuan pembelajaran yang ditetapkan?' }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- TANDA TANGAN / PENGESAHAN -->
@@ -195,5 +240,4 @@
     </div>
 
 </body>
-
-@endsection
+</html>

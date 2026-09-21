@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Mata Pelajaran')
-@section('page_title', 'Master Mata Pelajaran')
+@section('page_title', 'Mata Pelajaran')
 
 @section('content')
 <!-- PENYESUAIAN 1: Menggunakan w-full, p-4/p-6 tanpa membatasi lebar container -->

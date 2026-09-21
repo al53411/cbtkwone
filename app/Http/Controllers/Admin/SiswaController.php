@@ -147,6 +147,7 @@ class SiswaController extends Controller
             'nisn.unique'           => 'NISN sudah terdaftar dalam sistem!',
             'nisn.required'         => 'NISN wajib diisi!',
             'kelas_id.required'     => 'Kelas wajib dipilih!',
+            'kelas_id.exists'       => 'Kelas yang dipilih belum di-setting atau tidak ditemukan!',
             'jenis_kelamin.required'=> 'Jenis kelamin wajib dipilih!',
         ]);
 
@@ -232,6 +233,7 @@ class SiswaController extends Controller
             'nisn.unique'           => 'NISN sudah digunakan oleh siswa lain!',
             'nisn.required'         => 'NISN wajib diisi!',
             'kelas_id.required'     => 'Kelas wajib dipilih!',
+            'kelas_id.exists'       => 'Kelas yang dipilih belum di-setting atau tidak ditemukan!',
             'jenis_kelamin.required'=> 'Jenis kelamin wajib dipilih!',
         ]);
 
@@ -277,6 +279,17 @@ class SiswaController extends Controller
         ]);
 
         $sekolahId = $this->getSekolahId();
+
+        // VALIDASI 1: Cek apakah data Master Kelas sudah ada di database
+        $kelasQuery = Kelas::query();
+        if ($sekolahId && Schema::hasColumn('kelas', 'sekolah_id')) {
+            $kelasQuery->where('sekolah_id', $sekolahId);
+        }
+
+        if ($kelasQuery->count() === 0) {
+            return redirect()->back()->with('error', 'Gagal Impor! Data Kelas belum di-setting di sistem. Silakan buat/setting data Kelas terlebih dahulu.');
+        }
+
         $file = $request->file('file');
         $extension = strtolower($file->getClientOriginalExtension());
 
@@ -302,9 +315,7 @@ class SiswaController extends Controller
             }, $rawHeader);
 
             // Mapping nama kelas ke kelas_id (Case Insensitive)
-            $kelasMapRaw = Kelas::when($sekolahId && Schema::hasColumn('kelas', 'sekolah_id'), function ($q) use ($sekolahId) {
-                $q->where('sekolah_id', $sekolahId);
-            })->pluck('id', 'nama_kelas')->toArray();
+            $kelasMapRaw = $kelasQuery->pluck('id', 'nama_kelas')->toArray();
 
             $kelasMap = [];
             foreach ($kelasMapRaw as $namaKls => $idKls) {
@@ -313,6 +324,7 @@ class SiswaController extends Controller
 
             $imported = 0;
             $skipped = 0;
+            $kelasMissingCount = 0;
 
             foreach ($rows as $row) {
                 if (empty(array_filter($row))) continue;
@@ -342,8 +354,14 @@ class SiswaController extends Controller
                     $kelasId = $kelasMap[$kelasInput];
                 }
 
-                // Hanya NISN & Nama Siswa yang Wajib (kelas_id opsional jika null di DB)
+                // VALIDASI 2: Wajib memiliki NISN, Nama Siswa, DAN Kelas yang valid
                 if (!empty($nisn) && !empty($namaSiswa)) {
+                    if (!$kelasId) {
+                        $skipped++;
+                        $kelasMissingCount++;
+                        continue;
+                    }
+
                     $payload = [
                         'nama_siswa'    => $namaSiswa,
                         'jenis_kelamin' => in_array($jenisKelamin, ['L', 'P']) ? $jenisKelamin : 'L',
@@ -363,11 +381,23 @@ class SiswaController extends Controller
             }
 
             if ($imported === 0) {
-                return redirect()->back()->with('error', 'Gagal memproses data! Pastikan kolom nisn dan nama_siswa terisi sesuai format.');
+                $errorMsg = 'Gagal memproses data! Pastikan kolom nisn dan nama_siswa terisi.';
+                if ($kelasMissingCount > 0) {
+                    $errorMsg .= ' Selain itu, kelas pada berkas tidak ditemukan di sistem / belum di-setting.';
+                }
+                return redirect()->back()->with('error', $errorMsg);
             }
 
-            return redirect()->route('admin.siswa.index')
-                ->with('success', "Berhasil mengimport {$imported} data siswa." . ($skipped > 0 ? " ({$skipped} baris terlewat)" : ""));
+            $msg = "Berhasil mengimport {$imported} data siswa.";
+            if ($skipped > 0) {
+                $msg .= " ({$skipped} baris dilewati";
+                if ($kelasMissingCount > 0) {
+                    $msg .= " — {$kelasMissingCount} diantaranya karena kelas tidak ditemukan/belum di-setting";
+                }
+                $msg .= ")";
+            }
+
+            return redirect()->route('admin.siswa.index')->with('success', $msg);
 
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengolah file: ' . $e->getMessage());

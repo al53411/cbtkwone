@@ -28,7 +28,7 @@
                         <th class="p-3 text-center">Semester / Thn</th>
                         <th class="p-3 text-center">Alokasi Waktu</th>
                         <th class="p-3 text-center">Status</th>
-                        <th class="p-3 text-center w-48">Aksi</th>
+                        <th class="p-3 text-center w-56">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -106,7 +106,6 @@
                     <input type="text" id="judul" name="judul" required class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none">
                 </div>
 
-                <!-- FILTER SELECTION: MAPEL, FASE, KELAS -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block font-semibold text-slate-700 mb-1">Mata Pelajaran *</label>
@@ -137,7 +136,6 @@
                     </div>
                 </div>
 
-                <!-- CAPAIAN PEMBELAJARAN (CP) SECTION -->
                 <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                     <label class="block font-bold text-indigo-900">Capaian Pembelajaran (CP) *</label>
                     <select id="cp_id" name="cp_id" onchange="fetchTpByCp()" required class="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white">
@@ -145,7 +143,6 @@
                     </select>
                 </div>
 
-                <!-- DYNAMIC TP CHECKBOX SECTION -->
                 <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
@@ -158,7 +155,6 @@
                     </div>
                 </div>
 
-                <!-- SEMESTER, THN AJARAN, ALOKASI, STATUS -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block font-semibold text-slate-700 mb-1">Semester *</label>
@@ -202,7 +198,6 @@
                     </div>
                 </div>
 
-                <!-- DESKRIPSI TAMBAHAN -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block font-semibold text-slate-700 mb-1">Kompetensi Awal</label>
@@ -340,11 +335,9 @@
         document.getElementById('fase').value = faseValue;
         document.getElementById('kelas').value = data.kelas || '';
 
-        // Fetch opsi CP lalu set nilai terpilih
         await fetchCpOptions(data.cp_id);
         document.getElementById('cp_id').value = data.cp_id || '';
 
-        // Ambil ID TP terpilih dari relation data
         const attachedTpIds = (data.tujuan_pembelajarans || []).map(tp => tp.id);
         await fetchTpByCp(attachedTpIds);
 

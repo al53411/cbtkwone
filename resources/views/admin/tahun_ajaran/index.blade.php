@@ -1,4 +1,5 @@
 @extends('layouts.admin')
+@section('page_title', 'Tahun Pelajaran')
 
 @section('content')
 <div class="w-full bg-white text-slate-800 p-4 sm:p-6">

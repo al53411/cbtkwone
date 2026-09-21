@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Capaian Pembelajaran')
-@section('page_title', 'Master Capaian Pembelajaran')
+@section('page_title', 'Capaian Pembelajaran')
 
 @section('content')
 <style>

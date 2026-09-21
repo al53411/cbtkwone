@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Superadmin Dashboard')</title>
+    <title>@yield('title', 'Superadmin CBT ONLINE')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -65,16 +65,16 @@
 
     <div class="flex h-screen overflow-hidden relative">
 
-        <!-- SIDEBAR SUPERADMIN -->
+        <!-- SIDEBAR SUPERADMIN CBT ONLINE -->
         <aside id="sidebar"
             class="fixed inset-y-0 left-0 w-64 bg-slate-950 text-slate-300 flex flex-col border-r border-slate-800 z-30 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 ease-in-out h-full">
 
-            <!-- Header Sidebar Superadmin -->
+            <!-- Header Sidebar CBT ONLINE -->
             <div class="h-16 flex items-center justify-between bg-slate-900 px-6 border-b border-slate-800 shrink-0">
                 <div class="flex items-center space-x-3 truncate">
                     <img src="{{ asset('favicon.png') }}" alt="Logo" class="w-7 h-7 object-contain shrink-0">
                     <div class="flex flex-col truncate">
-                        <span class="text-white font-bold text-sm tracking-wide uppercase truncate">Panel Utama</span>
+                        <span class="text-white font-bold text-sm tracking-wide uppercase truncate">CBT ONLINE</span>
                         <span class="text-[10px] text-emerald-400 font-semibold uppercase tracking-widest leading-none">Superadmin</span>
                     </div>
                 </div>
@@ -172,7 +172,7 @@
                     </button>
 
                     <div class="flex items-center space-x-2 text-sm text-gray-500">
-                        <span class="font-semibold text-emerald-600">Superadmin</span>
+                        <span class="font-semibold text-emerald-600">CBT ONLINE</span>
                         <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
                         <span class="text-gray-600">@yield('page_title', 'Dashboard Pusat')</span>
                     </div>
@@ -184,7 +184,7 @@
                         <span class="text-sm font-semibold text-slate-700 leading-tight">
                             {{ Auth::user()->name ?? 'Super Admin' }}
                         </span>
-                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Superadmin</span>
+                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Superadmin CBT</span>
                     </div>
                     <div
                         class="w-9 h-9 rounded-full bg-slate-900 text-emerald-400 border border-slate-700 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">

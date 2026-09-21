@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-
+@section('page_title', 'Tujuan Pembelajaran')
 @section('title', $profilSekolah->nama_sekolah ?? 'SDN Kawu 1')
 
 @section('content')
