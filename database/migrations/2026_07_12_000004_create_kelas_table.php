@@ -11,13 +11,14 @@ return new class extends Migration
         // Cek dulu apakah tabel kelas BELUM ada sebelum dibuat
         if (!Schema::hasTable('kelas')) {
             Schema::create('kelas', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('sekolah_id')->nullable()->constrained('sekolahs')->onDelete('cascade');
-            $table->foreignId('guru_id')->nullable()->constrained('gurus')->nullOnDelete(); // 💡 ID Wali Kelas
-            $table->string('nama_kelas'); // Contoh: Kelas 1-A, Kelas 2
-            $table->string('wali_kelas')->nullable(); // Backup string nama wali kelas
-            $table->timestamps();
-        });
+                $table->id();
+                $table->foreignId('sekolah_id')->nullable()->constrained('sekolahs')->onDelete('cascade');
+                $table->foreignId('guru_id')->nullable()->constrained('gurus')->nullOnDelete(); // ID Wali Kelas
+                $table->string('nama_kelas'); // Contoh: VII A, X IPA 1
+                $table->string('tingkat')->nullable(); // Contoh: 7, 10, X (Tambahan agar sesuai dengan Controller & View)
+                $table->string('wali_kelas')->nullable(); // Backup string nama wali kelas
+                $table->timestamps();
+            });
         }
     }
 

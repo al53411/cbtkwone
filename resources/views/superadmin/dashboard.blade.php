@@ -1,6 +1,6 @@
 @extends('layouts.superadmin')
-@section('title', 'Dashboard Superadmin')
-@section('header', 'Ringkasan Sistem Sekolah Pusat')
+@section('title', 'Dashboard CAT Superadmin')
+@section('header', 'Dashboard Monitoring CATKwOne')
 
 @section('content')
 
@@ -47,35 +47,38 @@
         </div>
     </div>
 
-    <!-- Card 2: Validasi Jurnal -->
+    <!-- Card 2: Ujian Aktif (CAT) -->
     <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between">
         <div>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Validasi Jurnal</p>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ujian Aktif</p>
             <div class="flex items-baseline gap-1 mt-2">
-                <h3 class="text-3xl font-black text-indigo-600 tracking-tight">{{ $persenValidasi ?? 0 }}%</h3>
+                <h3 class="text-3xl font-black text-emerald-600 tracking-tight">{{ $totalUjianAktif ?? $sekolahValidasi ?? 0 }}</h3>
             </div>
-            <p class="text-[11px] font-medium text-gray-400 mt-1">{{ $sekolahValidasi ?? 0 }} / {{ $totalSekolah ?? 0 }} Sekolah</p>
-        </div>
-        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm">
-            <i class="fa-solid fa-book-bookmark text-xl"></i>
-        </div>
-    </div>
-
-    <!-- Card 3: Kepala Sekolah -->
-    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between">
-        <div>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Kepala Sekolah</p>
-            <h3 class="text-3xl font-black text-gray-900 mt-2 tracking-tight">{{ $totalKepsek ?? 0 }}</h3>
+            <p class="text-[11px] font-medium text-emerald-600 mt-1 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Sedang Berlangsung
+            </p>
         </div>
         <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
-            <i class="fa-solid fa-user-tie text-xl"></i>
+            <i class="fa-solid fa-laptop-code text-xl"></i>
         </div>
     </div>
 
-    <!-- Card 4: Total Guru -->
+    <!-- Card 3: Total Bank Soal / Ujian -->
     <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between">
         <div>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Guru</p>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Ujian CAT</p>
+            <h3 class="text-3xl font-black text-indigo-600 mt-2 tracking-tight">{{ $totalUjian ?? 0 }}</h3>
+        </div>
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm">
+            <i class="fa-solid fa-file-signature text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Card 4: Guru / Proktor -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between">
+        <div>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Guru & Proktor</p>
             <h3 class="text-3xl font-black text-gray-900 mt-2 tracking-tight">{{ $totalGuru ?? 0 }}</h3>
         </div>
         <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all duration-300 shadow-sm">
@@ -83,31 +86,31 @@
         </div>
     </div>
 
-    <!-- Card 5: Tenaga Teknis -->
+    <!-- Card 5: Peserta Ujian / Siswa -->
     <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between">
         <div>
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tenaga Teknis</p>
-            <h3 class="text-3xl font-black text-gray-900 mt-2 tracking-tight">{{ $totalTendik ?? 0 }}</h3>
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Peserta</p>
+            <h3 class="text-3xl font-black text-gray-900 mt-2 tracking-tight">{{ $totalSiswa ?? $totalTendik ?? 0 }}</h3>
         </div>
         <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300 shadow-sm">
-            <i class="fa-solid fa-screwdriver-wrench text-xl"></i>
+            <i class="fa-solid fa-users text-xl"></i>
         </div>
     </div>
 
 </div>
 
-<!-- MAIN DATA TABLE -->
+<!-- MAIN DATA TABLE: MONITORING CAT PER SEKOLAH -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <!-- Header Tabel -->
     <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/30">
         <div>
-            <h2 class="text-lg font-bold text-gray-900">Daftar Sekolah & Penanggung Jawab</h2>
-            <p class="text-xs text-gray-500 mt-0.5">Kelola unit sekolah terdaftar beserta penugasan Kepala Sekolah</p>
+            <h2 class="text-lg font-bold text-gray-900">Monitoring Sesi Ujian CAT Sekolah</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Pantau pelaksanaan ujian online dan penanggung jawab di setiap unit sekolah</p>
         </div>
-        <div>
+        <div class="flex items-center gap-2">
             <a href="{{ route('superadmin.kepsek.create') }}"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs rounded-xl shadow-sm hover:shadow transition-all duration-200">
-                <i class="fa-solid fa-plus text-sm"></i> Tambah Kepsek / Sekolah
+                <i class="fa-solid fa-plus text-sm"></i> Tambah Sekolah / Akun
             </a>
         </div>
     </div>
@@ -120,7 +123,8 @@
                     <th class="px-6 py-4 w-16">No</th>
                     <th class="px-6 py-4">Informasi Sekolah</th>
                     <th class="px-6 py-4">NPSN & Alamat</th>
-                    <th class="px-6 py-4">Kepala Sekolah</th>
+                    <th class="px-6 py-4">Proktor / Kepala Sekolah</th>
+                    <th class="px-6 py-4 text-center">Status CAT</th>
                     <th class="px-6 py-4 text-center w-28">Aksi</th>
                 </tr>
             </thead>
@@ -169,7 +173,24 @@
                         @else
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-100">
                             <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                            Belum Ada Kepsek
+                            Belum Ada Penanggung Jawab
+                        </span>
+                        @endif
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        @php
+                            // Mengecek apakah sekolah memiliki ujian aktif
+                            $hasActiveExam = $sekolah->users && $sekolah->users->pluck('ujians')->flatten()->where('status', 'aktif')->count() > 0;
+                        @endphp
+
+                        @if($hasActiveExam)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            Ujian Aktif
+                        </span>
+                        @else
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                            Tidak Ada Ujian
                         </span>
                         @endif
                     </td>
@@ -182,7 +203,7 @@
                             </a>
 
                             <form action="{{ route('superadmin.sekolah.destroy', $sekolah->id) }}" method="POST"
-                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus data sekolah ini? Semua data terkait mungkin akan ikut terhapus.');"
+                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus data sekolah ini? Semua data ujian terkait akan terhapus.');"
                                 class="inline">
                                 @csrf
                                 @method('DELETE')
@@ -197,11 +218,11 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-12 text-center bg-gray-50/20">
+                    <td colspan="6" class="px-6 py-12 text-center bg-gray-50/20">
                         <div class="w-16 h-16 bg-gray-100 text-gray-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <i class="fa-solid fa-school-circle-xmark text-2xl"></i>
+                            <i class="fa-solid fa-laptop-code text-2xl"></i>
                         </div>
-                        <h4 class="text-sm font-bold text-gray-700">Belum Ada Data</h4>
+                        <h4 class="text-sm font-bold text-gray-700">Belum Ada Data Sekolah CAT</h4>
                         <p class="text-xs text-gray-400 mt-0.5">Silakan tambahkan unit sekolah baru terlebih dahulu.</p>
                     </td>
                 </tr>

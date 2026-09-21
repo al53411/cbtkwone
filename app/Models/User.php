@@ -51,7 +51,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper Methods Pengecekan Role (Tambahan Sangat Berguna)
+     * Helper Methods Pengecekan Role
      */
     public function isAdmin(): bool
     {
@@ -85,5 +85,13 @@ class User extends Authenticatable
     public function jurnals()
     {
         return $this->hasMany(JurnalGuru::class, 'guru_id');
+    }
+
+    /**
+     * Relasi ke Model Ujian (Dibuat/Dimiliki oleh User)
+     */
+    public function ujians()
+    {
+        return $this->hasMany(Ujian::class, 'user_id');
     }
 }

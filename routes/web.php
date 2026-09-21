@@ -7,6 +7,9 @@ use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardCo
 use App\Http\Controllers\Superadmin\SekolahController as SuperadminSekolahController;
 use App\Http\Controllers\Superadmin\UserController;
 use App\Http\Controllers\Superadmin\KepsekController;
+use App\Http\Controllers\Superadmin\SoalController;
+use App\Http\Controllers\Superadmin\KelasController as SuperadminKelasController;
+use App\Http\Controllers\Superadmin\MapelController as SuperadminMapelController;
 
 // Import Controller Admin Sekolah
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -20,7 +23,7 @@ use App\Http\Controllers\Admin\SiswaController as AdminSiswaController;
 use App\Http\Controllers\Admin\JurnalController as AdminJurnalController;
 use App\Http\Controllers\Admin\TahunAjaranController;
 use App\Http\Controllers\Admin\CapaianPembelajaranController;
-use App\Http\Controllers\Admin\MapelController;
+use App\Http\Controllers\Admin\MapelController as AdminMapelController;
 use App\Http\Controllers\Admin\TujuanPembelajaranController;
 use App\Http\Controllers\Admin\AlurTujuanPembelajaranController;
 use App\Http\Controllers\Admin\ModulAjarController;
@@ -83,11 +86,17 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::post('/kepsek', [KepsekController::class, 'store'])->name('kepsek.store');
     Route::post('/kepsek/{id}/reset-password', [KepsekController::class, 'resetPassword'])->name('kepsek.reset-password');
 
-    // CRUD Sekolah oleh Superadmin
+    // CRUD Master Data oleh Superadmin
     Route::resource('sekolah', SuperadminSekolahController::class);
-
-    // CRUD Management Account User oleh Superadmin
     Route::resource('users', UserController::class);
+    Route::resource('kelas', SuperadminKelasController::class);
+    Route::resource('mapel', SuperadminMapelController::class);
+    
+    // Custom Route Soal (Taruh sebelum Resource Soal)
+    Route::get('/soal/import', [SoalController::class, 'import'])->name('soal.import');
+    
+    // CRUD Bank Soal
+    Route::resource('soal', SoalController::class);
 });
 
 
@@ -132,15 +141,15 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru'])->
     Route::resource('jurnal', AdminJurnalController::class);
     Route::resource('kepala-sekolah', AdminKepalaSekolahController::class);
 
-    // Route Mata Pelajaran
-    Route::resource('mapel', MapelController::class);
+    // Route Mata Pelajaran Admin
+    Route::resource('mapel', AdminMapelController::class);
 
     // Route Tujuan Pembelajaran
     Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
     Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
     Route::get('/get-elemen-cp', [TujuanPembelajaranController::class, 'getElemenByMapelFase'])->name('get_elemen_cp');
 
-    // Route Alur Tujuan Pembelajaran (ATP) - DIPERBAIKI / DITAMBAHKAN KEMBALI
+    // Route Alur Tujuan Pembelajaran (ATP)
     Route::resource('atp', AlurTujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
 
     // Route API AJAX untuk dropdown dinamis
@@ -179,13 +188,13 @@ Route::middleware(['auth', 'role:guru,superadmin'])->prefix('guru')->name('guru.
     Route::get('/kelas', [GuruSiswaController::class, 'kelasIndex'])->name('kelas.index');
     Route::get('/kelas/{id}', [GuruSiswaController::class, 'kelasShow'])->name('kelas.show');
 
-    // Modul Ajar Guru (Pindahkan rute kustom ke ATAS resource)
+    // Modul Ajar Guru
     Route::get('/get-cp-filtered', [GuruModulAjarController::class, 'getCpFiltered'])->name('get_cp_filtered');
     Route::get('/get-tp-by-cp/{cp_id}', [GuruModulAjarController::class, 'getTpByCp'])->name('get_tp_by_cp');
     Route::get('/get-tp-filtered', [GuruModulAjarController::class, 'getTpFiltered'])->name('get_tp_filtered');
     Route::get('/modul-ajar/{id}/print', [GuruModulAjarController::class, 'print'])->name('modul_ajar.print');
 
-    // Route Resource diletakkan di bawah rute kustom
+    // Route Resource Modul Ajar
     Route::resource('modul_ajar', GuruModulAjarController::class);
    
     // Cetak Rekap Jurnal
@@ -195,7 +204,7 @@ Route::middleware(['auth', 'role:guru,superadmin'])->prefix('guru')->name('guru.
 });
 
 // ==========================================
-// PROFILE MANAGEMENT (DEFAULT BREEZE/JETSTREAM)
+// PROFILE MANAGEMENT
 // ==========================================
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
