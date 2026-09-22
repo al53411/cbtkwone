@@ -2,17 +2,20 @@ FROM richarvey/nginx-php-fpm:latest
 
 WORKDIR /var/www/html
 
-# 1. Copy seluruh source code project
+# 1. Copy file composer terlebih dahulu agar memanfaatkan cache Docker (Build lebih cepat)
+COPY composer.json composer.lock /var/www/html/
+
+# 2. Install dependencies composer tanpa mengeksekusi script artisan saat build
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts
+
+# 3. Copy seluruh source code project
 COPY . /var/www/html
 
-# 2. Buat folder database dan file database.sqlite kosong agar package:discover tidak error
-RUN mkdir -p database && touch database/database.sqlite
+# 4. Buat folder & file sqlite serta beri hak akses tulis (write permission)
+RUN mkdir -p database && touch database/database.sqlite && chmod -R 777 database
 
-# 3. Jalankan dump-autoload / composer install
-RUN composer dump-autoload --optimize
-
-# 4. Set permission folder wajib Laravel
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# 5. Set permission folder wajib Laravel (ubah ke 777 agar aman di Nginx/PHP-FPM)
+RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Configuration Environment Variables
 ENV WEBROOT /var/www/html/public
