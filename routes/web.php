@@ -218,20 +218,25 @@ require __DIR__.'/auth.php';
 // ==========================================
 // ROUTE UTILITY
 // ==========================================
+// ==========================================
+// ROUTE UTILITY (SANGAT BERGUNA UNTUK RENDER FREE TIER)
+// ==========================================
+
+// 1. Jalankan Migrasi Aman (TIDAK Menghapus Data yang Sudah Ada)
 Route::get('/run-migrate', function () {
-    if (request('key') !== '12345') {
+    // Ganti 'KunciRahasiamu2026' dengan kunci rahasia Anda sendiri
+    if (request('key') !== 'KunciRahasiamu2026') {
         abort(403, 'Akses ditolak: Key salah!');
     }
 
     try {
-        Artisan::call('migrate:fresh', [
+        Artisan::call('migrate', [
             '--force' => true,
-            '--seed'  => true,
         ]);
 
         return '
             <div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;">
-                <h2 style="margin-top:0;">✅ Migration & Seeding Berhasil!</h2>
+                <h2 style="margin-top:0;">✅ Migration Berhasil!</h2>
                 <pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre>
             </div>
         ';
@@ -239,6 +244,33 @@ Route::get('/run-migrate', function () {
         return '
             <div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;">
                 <h2 style="margin-top:0;">❌ Migration Gagal!</h2>
+                <pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre>
+            </div>
+        ';
+    }
+});
+
+// 2. Jalankan Seeder Secara Terpisah (Opsional, Hanya Saat Butuh Akun/Data Awal)
+Route::get('/run-seed', function () {
+    if (request('key') !== 'KunciRahasiamu2026') {
+        abort(403, 'Akses ditolak: Key salah!');
+    }
+
+    try {
+        Artisan::call('db:seed', [
+            '--force' => true,
+        ]);
+
+        return '
+            <div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;">
+                <h2 style="margin-top:0;">✅ Seeding Berhasil!</h2>
+                <pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre>
+            </div>
+        ';
+    } catch (\Exception $e) {
+        return '
+            <div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;">
+                <h2 style="margin-top:0;">❌ Seeding Gagal!</h2>
                 <pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre>
             </div>
         ';
