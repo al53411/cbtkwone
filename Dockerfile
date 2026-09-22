@@ -14,11 +14,12 @@ COPY . /var/www/html
 # 4. Buat folder & file sqlite serta beri hak akses tulis (write permission)
 RUN mkdir -p database && touch database/database.sqlite && chmod -R 777 database
 
-# 5. Set permission folder wajib Laravel (ubah ke 777 agar aman di Nginx/PHP-FPM)
+# 5. Set permission folder wajib Laravel
 RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Configuration Environment Variables
 ENV WEBROOT /var/www/html/public
+ENV LARA_APP 1
 ENV PHP_ERRORS_STDERR 1
 ENV RUN_CLI 1
 ENV REAL_IP_HEADER 1
