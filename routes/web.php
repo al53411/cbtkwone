@@ -30,7 +30,7 @@ use App\Http\Controllers\Admin\AlurTujuanPembelajaranController;
 use App\Http\Controllers\Admin\ModulAjarController;
 use App\Http\Controllers\Admin\RuangSesiController;
 use App\Http\Controllers\Admin\TokenController;
-use App\Http\Controllers\Admin\SoalController as AdminSoalController; // <-- TAMBAHKAN IMPORT INI
+use App\Http\Controllers\Admin\SoalController as AdminSoalController;
 
 // Import Controller Guru
 use App\Http\Controllers\Guru\DashboardController as GuruDashboardController;
@@ -48,6 +48,7 @@ use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema; // <-- TAMBAHKAN FACADE SCHEMA INI
 
 // Redirect Halaman Utama langsung ke Login
 Route::get('/', function () {
@@ -271,9 +272,13 @@ Route::get('/run-fresh-seed', function () {
     }
 
     try {
+        Schema::disableForeignKeyConstraints();
         Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+        Schema::enableForeignKeyConstraints();
+
         return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Fresh Migration & Seeding Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
     } catch (\Exception $e) {
+        Schema::enableForeignKeyConstraints();
         return '<div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;"><h2 style="margin-top:0;">❌ Fresh Migration Gagal!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre></div>';
     }
 });
