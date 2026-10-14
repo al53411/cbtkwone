@@ -272,10 +272,10 @@ Route::get('/run-fresh-seed', function () {
     }
 
     try {
-        // Jalankan migrasi biasa (hanya membuat tabel yang belum ada / update)
+        // Jalankan migrasi biasa tanpa drop table
         Artisan::call('migrate', ['--force' => true]);
         
-        // Jalankan seeder untuk memasukkan data (menggunakan firstOrCreate agar aman jika data sudah ada)
+        // Jalankan seeder untuk memasukkan data (termasuk superadmin)
         Artisan::call('db:seed', ['--force' => true]);
 
         return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Migration & Seeding Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
