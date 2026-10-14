@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB; // <-- Ditambahkan import DB
 
 return new class extends Migration
 {
@@ -12,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Matikan pengecekan foreign key agar tidak terhalang tabel lain yang terikat
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // Matikan pengecekan foreign key secara aman lintas database
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('mapels');
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Schema::enableForeignKeyConstraints();
 
         Schema::create('mapels', function (Blueprint $table) {
             $table->id();
@@ -32,8 +31,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('mapels');
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Schema::enableForeignKeyConstraints();
     }
 };
