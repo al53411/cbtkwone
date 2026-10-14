@@ -14,9 +14,8 @@ return new class extends Migration
         Schema::table('siswas', function (Blueprint $table) {
             $table->foreignId('kelas_id')
                   ->nullable()
-                  ->after('jenis_kelamin')
                   ->constrained('kelas')
-                  ->nullOnDelete(); // Opsional: set null jika data kelas dihapus
+                  ->nullOnDelete(); // Aman untuk PostgreSQL
         });
     }
 
@@ -26,7 +25,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('siswas', function (Blueprint $table) {
-            // Hapus foreign key constraint dan kolom kelas_id
             $table->dropForeign(['kelas_id']);
             $table->dropColumn('kelas_id');
         });
