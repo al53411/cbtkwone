@@ -110,8 +110,31 @@ return [
     | window expires and users are asked to re-enter their password via the
     | confirmation screen. By default, the timeout lasts for three hours.
     |
-    */
+        */
 
-    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+        'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+
+        'guards' => [
+        'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+        'siswa' => [
+            'driver' => 'session',
+            'provider' => 'siswas',
+        ],
+    ],
+
+    'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
+        'siswas' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Siswa::class,
+        ],
+    ],
 
 ];

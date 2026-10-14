@@ -33,4 +33,12 @@ class Mapel extends Model
         return $this->belongsToMany(Kelas::class, 'kelas_mapel', 'mapel_id', 'kelas_id')
                     ->withTimestamps();
     }
+
+    /**
+     * Relasi ke Soal (TAMBAHKAN INI)
+     */
+    public function soals()
+    {
+        return $this->hasMany(Soal::class, 'mapel_id');
+    }
 }

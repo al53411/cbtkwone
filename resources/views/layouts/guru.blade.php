@@ -87,7 +87,7 @@
                 <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Panel Guru</p>
 
                 <!-- Dashboard -->
-                <a href="{{ route('guru.dashboard') }}"
+                <a href="{{ route('admin.dashboard') }}"
                     class="flex items-center space-x-3 px-4 py-3 rounded-lg transition {{ request()->routeIs('guru.dashboard') ? 'bg-blue-600 text-white font-semibold' : 'hover:bg-slate-800 hover:text-white text-slate-300' }}">
                     <i class="fa-solid fa-chart-pie w-5 text-center"></i>
                     <span class="text-sm">Dashboard</span>

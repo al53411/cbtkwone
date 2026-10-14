@@ -56,94 +56,151 @@
             </div>
 
             <!-- Navigasi Menu Sidebar -->
-            <div class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
+            <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6">
                 
-                <!-- MENU: PUSAT KONTROL -->
-                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Pusat Kontrol</p>
-
-                <a href="{{ route('superadmin.dashboard') }}"
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-200 {{ request()->routeIs('superadmin.dashboard') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-800/80 hover:text-white' }}">
-                    <i class="fa-solid fa-chart-pie w-5 text-center text-sm"></i>
-                    <span class="text-xs">Dashboard Monitoring</span>
-                </a>
-
-                <!-- MENU: MANAJEMEN SEKOLAH & PROKTOR -->
-                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider pt-4 mb-2">Manajemen Instansi</p>
-                
-                @php
-                    $isSekolahActive = request()->routeIs('superadmin.sekolah.*', 'superadmin.kepsek.*', 'superadmin.kelas.*');
-                @endphp
-                <div class="space-y-1">
-                    <button onclick="toggleDropdown('dropdown-sekolah', 'arrow-sekolah')"
-                        class="w-full flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-slate-800/80 hover:text-white transition group focus:outline-none {{ $isSekolahActive ? 'text-white font-medium bg-slate-900/60' : 'text-slate-400' }}">
-                        <div class="flex items-center space-x-3">
-                            <i class="fa-solid fa-school w-5 text-center text-sm {{ $isSekolahActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400' }} transition"></i>
-                            <span class="text-xs">Kelola Sekolah</span>
-                        </div>
-                        <i id="arrow-sekolah"
-                            class="fa-solid fa-chevron-down text-[10px] text-slate-500 group-hover:text-white transition-transform duration-200 {{ $isSekolahActive ? 'rotate-180' : '' }}"></i>
-                    </button>
-
-                    <div id="dropdown-sekolah"
-                        class="{{ $isSekolahActive ? '' : 'hidden' }} pl-11 pr-2 py-1 space-y-1 bg-slate-900/40 rounded-xl">
-                        <a href="{{ route('superadmin.sekolah.index') }}"
-                            class="block py-2 px-3 text-xs rounded-lg transition {{ request()->routeIs('superadmin.sekolah.index') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
-                            <i class="fa-solid fa-list-check text-[10px] mr-2"></i> Daftar Sekolah
+                <!-- ========================================== -->
+                <!-- KELOMPOK 1: PUSAT MONITORING               -->
+                <!-- ========================================== -->
+                <div>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Pusat Monitoring</p>
+                    <div class="space-y-1">
+                        <a href="{{ route('superadmin.dashboard') }}"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ request()->routeIs('superadmin.dashboard') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i class="fa-solid fa-chart-pie w-5 text-center text-sm"></i>
+                            <span class="text-xs">Dashboard Utama</span>
                         </a>
-                        <a href="{{ route('superadmin.kepsek.index') }}"
-                            class="block py-2 px-3 text-xs rounded-lg transition {{ request()->routeIs('superadmin.kepsek.index') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
-                            <i class="fa-solid fa-user-shield text-[10px] mr-2"></i> Proktor
-                        </a>
-                        <a href="{{ route('superadmin.kepsek.create') }}"
-                            class="block py-2 px-3 text-xs rounded-lg transition {{ request()->routeIs('superadmin.kepsek.create') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
-                            <i class="fa-solid fa-plus-circle text-[10px] mr-2"></i> Tambah Akun
-                        </a>
-                        <a href="{{ route('superadmin.kelas.index') }}"
-                            class="block py-2 px-3 text-xs rounded-md transition {{ request()->routeIs('superadmin.kelas.*') ? 'text-blue-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
-                            <i class="fa-solid fa-layer-group text-[10px] mr-2"></i> Data Kelas
+
+                        <a href="{{ route('superadmin.ujian.index') }}"
+                                    class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ request()->routeIs('superadmin.ujian.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                                    <i class="fa-solid fa-tower-broadcast w-5 text-center text-sm text-amber-400"></i>
+                                    <span class="text-xs">Ujian Live Realtime</span>
                         </a>
                     </div>
                 </div>
 
-                <!-- MENU: MONITORING CAT / CBT -->
-                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider pt-4 mb-2">Pelaksanaan CAT</p>
+                <!-- ========================================== -->
+                <!-- KELOMPOK 2: DATA INSTANSI & USER           -->
+                <!-- ========================================== -->
+                <div>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Data Instansi & User</p>
+                    <div class="space-y-1">
+                        
+                        <!-- Dropdown Kelola Sekolah -->
+                        @php
+                            $isSekolahActive = request()->routeIs('superadmin.sekolah.*', 'superadmin.kelas.*');
+                        @endphp
+                        <div>
+                            <button onclick="toggleDropdown('dropdown-sekolah', 'arrow-sekolah')"
+                                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition group focus:outline-none {{ $isSekolahActive ? 'text-white font-medium bg-slate-900/80' : 'text-slate-400' }}">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fa-solid fa-school w-5 text-center text-sm {{ $isSekolahActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400' }} transition"></i>
+                                    <span class="text-xs">Sekolah & Kelas</span>
+                                </div>
+                                <i id="arrow-sekolah"
+                                    class="fa-solid fa-chevron-down text-[10px] text-slate-500 group-hover:text-white transition-transform duration-200 {{ $isSekolahActive ? 'rotate-180' : '' }}"></i>
+                            </button>
 
-                <a href="{{ route('superadmin.soal.index') }}""
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/80 hover:text-white transition">
-                    <i class="fa-solid fa-tower-broadcast w-5 text-center text-sm text-amber-400"></i>
-                    <span class="text-xs">Sesi Ujian Live</span>
-                </a>
+                            <div id="dropdown-sekolah"
+                                class="{{ $isSekolahActive ? '' : 'hidden' }} pl-9 pr-2 py-1.5 space-y-1 bg-slate-900/50 rounded-xl mt-1">
+                                <a href="{{ route('superadmin.sekolah.index') }}"
+                                    class="block py-2 px-3 text-xs rounded-lg transition {{ request()->routeIs('superadmin.sekolah.index') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
+                                    <i class="fa-solid fa-list-check text-[10px] mr-2"></i> Daftar Sekolah
+                                </a>
+                                <a href="{{ route('superadmin.kelas.index') }}"
+                                    class="block py-2 px-3 text-xs rounded-lg transition {{ request()->routeIs('superadmin.kelas.*') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
+                                    <i class="fa-solid fa-layer-group text-[10px] mr-2"></i> Data Kelas
+                                </a>
+                            </div>
+                        </div>
 
-                <a href="{{ route('superadmin.soal.index') }}""
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/80 hover:text-white transition {{ request()->routeIs('superadmin.soal.index') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
-                    <i class="fa-solid fa-file-signature w-5 text-center text-sm text-indigo-400"></i>
-                    <span class="text-xs">Master Bank Soal</span>
-                </a>
+                        <!-- Dropdown Kelola Akun Proktor / Kepsek -->
+                        @php
+                            $isKepsekActive = request()->routeIs('superadmin.kepsek.*');
+                        @endphp
+                        <div>
+                            <button onclick="toggleDropdown('dropdown-proktor', 'arrow-proktor')"
+                                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition group focus:outline-none {{ $isKepsekActive ? 'text-white font-medium bg-slate-900/80' : 'text-slate-400' }}">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fa-solid fa-user-shield w-5 text-center text-sm {{ $isKepsekActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400' }} transition"></i>
+                                    <span class="text-xs">Akun Proktor / Admin</span>
+                                </div>
+                                <i id="arrow-proktor"
+                                    class="fa-solid fa-chevron-down text-[10px] text-slate-500 group-hover:text-white transition-transform duration-200 {{ $isKepsekActive ? 'rotate-180' : '' }}"></i>
+                            </button>
 
-                <a href="#"
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/80 hover:text-white transition">
-                    <i class="fa-solid fa-square-poll-vertical w-5 text-center text-sm text-emerald-400"></i>
-                    <span class="text-xs">Rekap & Nilai Hasil CAT</span>
-                </a>
+                            <div id="dropdown-proktor"
+                                class="{{ $isKepsekActive ? '' : 'hidden' }} pl-9 pr-2 py-1.5 space-y-1 bg-slate-900/50 rounded-xl mt-1">
+                                <a href="{{ route('superadmin.kepsek.index') }}"
+                                    class="block py-2 px-3 text-xs rounded-lg transition {{ request()->routeIs('superadmin.kepsek.index') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
+                                    <i class="fa-solid fa-users text-[10px] mr-2"></i> Daftar Proktor
+                                </a>
+                                <a href="{{ route('superadmin.kepsek.create') }}"
+                                    class="block py-2 px-3 text-xs rounded-lg transition {{ request()->routeIs('superadmin.kepsek.create') ? 'text-emerald-400 font-semibold bg-slate-800/60' : 'text-slate-400 hover:text-white' }}">
+                                    <i class="fa-solid fa-user-plus text-[10px] mr-2"></i> Tambah Akun Baru
+                                </a>
+                            </div>
+                        </div>
 
-                <!-- MENU: SIMULASI & LINTAS ROLE -->
-                <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider pt-4 mb-2">Akses & Simulasi</p>
-                
-                <a href="#"
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/80 hover:text-white transition">
-                    <i class="fa-solid fa-user-gear w-5 text-center text-xs"></i>
-                    <span class="text-xs">Mode Admin Sekolah</span>
-                </a>
-                <a href="#"
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/80 hover:text-white transition">
-                    <i class="fa-solid fa-chalkboard-user w-5 text-center text-xs"></i>
-                    <span class="text-xs">Mode Proktor / Guru</span>
-                </a>
-                <a href="#"
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/80 hover:text-white transition">
-                    <i class="fa-solid fa-graduation-cap w-5 text-center text-xs"></i>
-                    <span class="text-xs">Simulasi Ujian Siswa</span>
-                </a>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- KELOMPOK 3: BANK SOAL & MATERI             -->
+                <!-- ========================================== -->
+                <div>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Bank Soal & Materi</p>
+                    <div class="space-y-1">
+                        <a href="{{ route('superadmin.soal.index') }}"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('superadmin.soal.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i class="fa-solid fa-file-signature w-5 text-center text-sm text-indigo-400"></i>
+                            <span class="text-xs">Master Bank Soal</span>
+                        </a>
+
+                        <a href="{{ route('superadmin.mapel.index') }}"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('superadmin.mapel.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i class="fa-solid fa-book-bookmark w-5 text-center text-sm text-sky-400"></i>
+                            <span class="text-xs">Mata Pelajaran</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- KELOMPOK 4: HASIL & LAPORAN                -->
+                <!-- ========================================== -->
+                <div>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hasil & Laporan</p>
+                    <div class="space-y-1">
+                        <a href="#"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
+                            <i class="fa-solid fa-square-poll-vertical w-5 text-center text-sm text-emerald-400"></i>
+                            <span class="text-xs">Rekap & Nilai CAT</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- KELOMPOK 5: AKSES ROLE & SIMULASI          -->
+                <!-- ========================================== -->
+                <div>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Akses Role & Simulasi</p>
+                    <div class="space-y-1">
+                        <a href="#"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
+                            <i class="fa-solid fa-user-gear w-5 text-center text-xs text-amber-400"></i>
+                            <span class="text-xs">Mode Admin Sekolah</span>
+                        </a>
+                        <a href="#"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
+                            <i class="fa-solid fa-chalkboard-user w-5 text-center text-xs text-sky-400"></i>
+                            <span class="text-xs">Mode Proktor / Guru</span>
+                        </a>
+                        <a href="#"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
+                            <i class="fa-solid fa-graduation-cap w-5 text-center text-xs text-emerald-400"></i>
+                            <span class="text-xs">Simulasi Ujian Siswa</span>
+                        </a>
+                    </div>
+                </div>
 
             </div>
 
@@ -180,9 +237,10 @@
                         <span class="font-bold text-emerald-600">CAT ONLINE</span>
                         <i class="fa-solid fa-chevron-right text-[10px] text-gray-300"></i>
                         <span class="font-medium text-gray-700"> 
-                            @hasSection('header') @yield('header')
-                             @else
-                            @yield('title', 'Dashboard Monitoring')
+                            @hasSection('header') 
+                                @yield('header')
+                            @else
+                                @yield('title', 'Dashboard Monitoring')
                             @endif
                         </span>
                     </div>

@@ -10,15 +10,17 @@ return new class extends Migration
     {
         Schema::create('ujians', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('nama_ujian')->nullable();
-            $table->string('status')->default('aktif'); // Dipanggil oleh query
+            $table->string('nama_ujian');
+            $table->unsignedBigInteger('kelas_id');
+            $table->foreignId('mapel_id')->constrained('mapels')->onDelete('cascade');
+            $table->dateTime('waktu_mulai');
+            $table->dateTime('waktu_selesai');
+            $table->integer('durasi'); // dalam menit
+            $table->string('token', 6);
+            $table->boolean('acak_soal')->default(false);
+            $table->boolean('acak_jawaban')->default(false);
+            $table->enum('status', ['draft', 'aktif', 'selesai'])->default('draft');
             $table->timestamps();
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('ujians');
     }
 };

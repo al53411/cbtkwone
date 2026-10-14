@@ -4,7 +4,7 @@
 @section('header', 'Master Bank Soal')
 
 @section('content')
-<div class="space-y-6">
+<div class="w-full space-y-6">
 
     <!-- Header & Action Buttons -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -101,9 +101,9 @@
 
             <!-- Search Keyword -->
             <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cari Kode / Judul Bank Soal</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cari Kode / Pertanyaan Soal</label>
                 <div class="relative">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Contoh: PAS Matematika Kelas 9..."
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari isi soal atau kode..."
                         class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
                 </div>
@@ -136,11 +136,10 @@
                 <thead class="bg-slate-50/80 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-100">
                     <tr>
                         <th class="py-3.5 px-4 text-center w-12">No</th>
-                        <th class="py-3.5 px-4">Kode & Judul Bank Soal</th>
+                        <th class="py-3.5 px-4">Kode & Judul / Pertanyaan Soal</th>
                         <th class="py-3.5 px-4">Mata Pelajaran</th>
                         <th class="py-3.5 px-4">Kelas</th>
-                        <th class="py-3.5 px-4 text-center">Jumlah Soal</th>
-                        <th class="py-3.5 px-4">Pembuat / Guru</th>
+                        <th class="py-3.5 px-4 text-center">Tipe & Opsi</th>
                         <th class="py-3.5 px-4 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -151,38 +150,43 @@
                             <td class="py-4 px-4 text-center font-bold text-slate-400">
                                 {{ $soals->firstItem() + $index }}
                             </td>
+                            
+                            {{-- Memperbaiki Kode & Judul/Pertanyaan Soal --}}
                             <td class="py-4 px-4">
-                                <span class="font-bold text-slate-800 text-sm block">{{ $item->kode_soal ?? $item->kode }}</span>
-                                <span class="text-[11px] text-slate-400">{{ $item->nama_bank_soal ?? $item->judul ?? '-' }}</span>
+                                <span class="font-bold text-indigo-600 text-xs block mb-0.5">
+                                    {{ $item->kode_soal ?? 'SOAL-' . $item->id }}
+                                </span>
+                                <span class="text-slate-600 text-xs line-clamp-1">
+                                    {{ $item->soal }}
+                                </span>
                             </td>
+
                             <td class="py-4 px-4">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     <i class="fa-solid fa-book text-[10px] mr-1.5"></i> {{ $item->mapel->nama_mapel ?? '-' }}
                                 </span>
                             </td>
+
                             <td class="py-4 px-4">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
-                                    {{ $item->kelas->nama_kelas ?? 'Kelas ' . ($item->tingkat ?? '-') }}
+                                    {{ $item->kelas->nama_kelas ?? '-' }}
                                 </span>
                             </td>
+
                             <td class="py-4 px-4 text-center">
-                                <div class="text-xs">
-                                    <span class="font-bold text-emerald-600">{{ $item->jumlah_pg ?? 0 }} PG</span> / 
-                                    <span class="font-bold text-amber-600">{{ $item->jumlah_esai ?? 0 }} Esai</span>
-                                </div>
+                                <span class="uppercase font-bold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px]">
+                                    {{ $item->tipe ?? 'pg' }}
+                                </span>
+                                <span class="text-slate-500 text-[11px] block mt-0.5">
+                                    ({{ $item->jumlah_opsi ?? 5 }} Opsi)
+                                </span>
                             </td>
-                            <td class="py-4 px-4">
-                                <span class="font-semibold text-slate-700 block">{{ $item->pembuat->name ?? $item->user->name ?? 'Admin' }}</span>
-                                <span class="text-[10px] text-slate-400">{{ $item->sekolah->nama_sekolah ?? 'Pusat' }}</span>
-                            </td>
+
                             <td class="py-4 px-4 text-center space-x-1">
-                                <a href="{{ route('superadmin.soal.show', $item->id) }}" class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition inline-block" title="Detail Soal">
-                                    <i class="fa-solid fa-list"></i>
-                                </a>
                                 <a href="{{ route('superadmin.soal.edit', $item->id) }}" class="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition inline-block" title="Edit Soal">
                                     <i class="fa-solid fa-pen"></i>
                                 </a>
-                                <button type="button" onclick="confirmDelete({{ $item->id }})" class="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition inline-block" title="Hapus Paket">
+                                <button type="button" onclick="confirmDelete({{ $item->id }})" class="p-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition inline-block" title="Hapus Soal">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
 
@@ -195,9 +199,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-400 font-medium">
+                            <td colspan="6" class="py-8 text-center text-slate-400 font-medium">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2 block text-slate-300"></i>
-                                Belum ada data paket soal yang ditemukan.
+                                Belum ada data soal yang ditemukan.
                             </td>
                         </tr>
                     @endforelse
@@ -218,13 +222,13 @@
 <script>
 function confirmDelete(id) {
     Swal.fire({
-        title: 'Hapus Paket Soal?',
-        text: "Seluruh butir soal dalam paket ini akan dihapus secara permanen!",
+        title: 'Hapus Soal?',
+        text: "Data soal ini akan dihapus secara permanen!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
         cancelButtonColor: '#64748b',
-        confirmButtonText: 'Ya, Hapus Paket!',
+        confirmButtonText: 'Ya, Hapus!',
         cancelButtonText: 'Batal',
         customClass: { popup: 'rounded-2xl' }
     }).then((result) => {

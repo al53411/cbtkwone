@@ -13,14 +13,15 @@ class KelasController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $search = trim($request->input('search', ''));
 
         $kelass = Kelas::when($search, function ($query, $search) {
             return $query->where('nama_kelas', 'like', "%{$search}%")
                          ->orWhere('tingkat', 'like', "%{$search}%");
         })
         ->latest()
-        ->paginate(10);
+        ->paginate(10)
+        ->withQueryString();
 
         return view('superadmin.kelas.index', compact('kelass', 'search'));
     }
@@ -34,11 +35,11 @@ class KelasController extends Controller
     }
 
     /**
-     * Menyimpan data kelas baru ke database
+     * Menyimpan data kelas baru
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_kelas' => 'required|string|max:255',
             'tingkat'    => 'nullable|string|max:50',
         ], [
@@ -46,8 +47,8 @@ class KelasController extends Controller
         ]);
 
         Kelas::create([
-            'nama_kelas' => $request->nama_kelas,
-            'tingkat'    => $request->tingkat,
+            'nama_kelas' => $validated['nama_kelas'],
+            'tingkat'    => $validated['tingkat'] ?? null,
         ]);
 
         return redirect()->route('superadmin.kelas.index')
@@ -57,7 +58,7 @@ class KelasController extends Controller
     /**
      * Menampilkan form edit kelas
      */
-    public function edit($id)
+    public function edit(string $id)
     {
         $kelas = Kelas::findOrFail($id);
         
@@ -65,11 +66,11 @@ class KelasController extends Controller
     }
 
     /**
-     * Memperbarui data kelas di database
+     * Memperbarui data kelas
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_kelas' => 'required|string|max:255',
             'tingkat'    => 'nullable|string|max:50',
         ], [
@@ -78,8 +79,8 @@ class KelasController extends Controller
 
         $kelas = Kelas::findOrFail($id);
         $kelas->update([
-            'nama_kelas' => $request->nama_kelas,
-            'tingkat'    => $request->tingkat,
+            'nama_kelas' => $validated['nama_kelas'],
+            'tingkat'    => $validated['tingkat'] ?? null,
         ]);
 
         return redirect()->route('superadmin.kelas.index')
@@ -87,11 +88,16 @@ class KelasController extends Controller
     }
 
     /**
-     * Menghapus data kelas dari database
+     * Menghapus data kelas
      */
-    public function destroy($id)
+    public function destroy(string $id)
     {
         $kelas = Kelas::findOrFail($id);
+
+        if (method_exists($kelas, 'siswas') && $kelas->siswas()->count() > 0) {
+            return redirect()->back()->with('error', 'Kelas tidak bisa dihapus karena masih memiliki data siswa!');
+        }
+
         $kelas->delete();
 
         return redirect()->route('superadmin.kelas.index')

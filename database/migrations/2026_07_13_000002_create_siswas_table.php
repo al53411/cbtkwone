@@ -12,13 +12,15 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('kelas_id')->nullable()->constrained('kelas')->onDelete('set null');
             $table->foreignId('sekolah_id')->nullable()->constrained('sekolahs')->onDelete('cascade');
 
             $table->string('nisn')->nullable()->unique();
             $table->string('nama_siswa');
             
-            // Kolom pendukung yang dibutuhkan oleh controller & form
+            // Kolom nama_kelas menggantikan kelas_id (bisa diisi teks bebas dari Excel/form)
+            $table->string('nama_kelas')->nullable();
+
+            // Kolom pendukung
             $table->enum('jenis_kelamin', ['L', 'P'])->default('L');
             $table->text('alamat')->nullable();
 

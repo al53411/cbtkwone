@@ -4,7 +4,7 @@
 @section('header', 'Master Bank Soal')
 
 @section('content')
-<div class="p-6 max-w-4xl mx-auto">
+<div class="w-full">
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-xl font-bold text-slate-800">Tambah Soal Baru</h1>
@@ -63,29 +63,39 @@
                       class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-3 border focus:ring-2 focus:ring-indigo-500 focus:outline-none">{{ old('soal') }}</textarea>
         </div>
 
-        {{-- Pilihan Jawaban (PG) --}}
+        {{-- Pilih Jumlah Pilihan Opsi Aktif --}}
+        <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jumlah Pilihan Jawaban <span class="text-red-500">*</span></label>
+            <select name="jumlah_opsi" id="jumlah_opsi" onchange="toggleOpsi()" class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 border focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="3" {{ old('jumlah_opsi') == 3 ? 'selected' : '' }}>3 Pilihan (A, B, C)</option>
+                <option value="4" {{ old('jumlah_opsi') == 4 ? 'selected' : '' }}>4 Pilihan (A, B, C, D)</option>
+                <option value="5" {{ old('jumlah_opsi', 5) == 5 ? 'selected' : '' }}>5 Pilihan (A, B, C, D, E)</option>
+            </select>
+        </div>
+
+        {{-- Pilihan Jawaban (PG Dinamis) --}}
         <div class="space-y-3 pt-2">
             <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Pilihan Jawaban</h2>
 
             @foreach (['a' => 'Pilihan A', 'b' => 'Pilihan B', 'c' => 'Pilihan C', 'd' => 'Pilihan D', 'e' => 'Pilihan E'] as $key => $label)
-                <div class="flex items-center gap-3">
+                <div class="option-item option-{{ $key }} flex items-center gap-3">
                     <span class="text-xs font-bold uppercase w-16 text-slate-500">{{ $label }}</span>
-                    <input type="text" name="option_{{ $key }}" value="{{ old('option_' . $key) }}" placeholder="Isi pilihan {{ strtoupper($key) }}"
+                    <input type="text" name="option_{{ $key }}" id="input_option_{{ $key }}" value="{{ old('option_' . $key) }}" placeholder="Isi pilihan {{ strtoupper($key) }}"
                            class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 border focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                 </div>
             @endforeach
         </div>
 
-        {{-- Kunci Jawaban --}}
+        {{-- Kunci Jawaban Dinamis --}}
         <div class="pt-2">
             <label class="block text-xs font-semibold text-slate-600 mb-1.5">Kunci Jawaban <span class="text-red-500">*</span></label>
-            <select name="kunci_jawaban" required class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 border focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <select name="kunci_jawaban" id="kunci_jawaban" required class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 border focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                 <option value="">-- Pilih Kunci Jawaban --</option>
                 <option value="A" {{ old('kunci_jawaban') == 'A' ? 'selected' : '' }}>A</option>
                 <option value="B" {{ old('kunci_jawaban') == 'B' ? 'selected' : '' }}>B</option>
-                <option value="C" {{ old('kunci_jawaban') == 'C' ? 'selected' : '' }}>C</option>
-                <option value="D" {{ old('kunci_jawaban') == 'D' ? 'selected' : '' }}>D</option>
-                <option value="E" {{ old('kunci_jawaban') == 'E' ? 'selected' : '' }}>E</option>
+                <option value="C" id="opt_c" {{ old('kunci_jawaban') == 'C' ? 'selected' : '' }}>C</option>
+                <option value="D" id="opt_d" {{ old('kunci_jawaban') == 'D' ? 'selected' : '' }}>D</option>
+                <option value="E" id="opt_e" {{ old('kunci_jawaban') == 'E' ? 'selected' : '' }}>E</option>
             </select>
         </div>
 
@@ -102,4 +112,56 @@
         </div>
     </form>
 </div>
+
+<script>
+function toggleOpsi() {
+    let jumlah = document.getElementById('jumlah_opsi').value;
+    let optionC = document.querySelector('.option-c');
+    let optionD = document.querySelector('.option-d');
+    let optionE = document.querySelector('.option-e');
+    
+    let optC = document.getElementById('opt_c');
+    let optD = document.getElementById('opt_d');
+    let optE = document.getElementById('opt_e');
+
+    let inputC = document.getElementById('input_option_c');
+    let inputD = document.getElementById('input_option_d');
+    let inputE = document.getElementById('input_option_e');
+
+    if (jumlah == '3') {
+        optionC.style.display = 'flex';
+        optionD.style.display = 'none';
+        optionE.style.display = 'none';
+        
+        optC.style.display = 'block';
+        optD.style.display = 'none';
+        optE.style.display = 'none';
+
+        inputD.value = '';
+        inputE.value = '';
+    } else if (jumlah == '4') {
+        optionC.style.display = 'flex';
+        optionD.style.display = 'flex';
+        optionE.style.display = 'none';
+        
+        optC.style.display = 'block';
+        optD.style.display = 'block';
+        optE.style.display = 'none';
+
+        inputE.value = '';
+    } else {
+        optionC.style.display = 'flex';
+        optionD.style.display = 'flex';
+        optionE.style.display = 'flex';
+        
+        optC.style.display = 'block';
+        optD.style.display = 'block';
+        optE.style.display = 'block';
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    toggleOpsi();
+});
+</script>
 @endsection

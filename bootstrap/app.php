@@ -19,10 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // 2. Percayai proxy Vercel agar HTTPS terbaca sempurna
         $middleware->trustProxies(at: '*');
 
-        // 3. Bypass CSRF untuk rute login & logout agar tidak terkena Error 419 di localhost
+        // 3. Bypass CSRF untuk seluruh rute login & logout (termasuk siswa)
         $middleware->validateCsrfTokens(except: [
             'login',
             'logout',
+            'siswa/login',
+            'siswa/logout',
+            'admin/token/*',
         ]);
 
         // 4. Daftarkan alias 'role'
