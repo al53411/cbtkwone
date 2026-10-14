@@ -272,13 +272,14 @@ Route::get('/run-fresh-seed', function () {
     }
 
     try {
-        Schema::disableForeignKeyConstraints();
-        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
-        Schema::enableForeignKeyConstraints();
+        // Jalankan migrasi biasa (hanya membuat tabel yang belum ada / update)
+        Artisan::call('migrate', ['--force' => true]);
+        
+        // Jalankan seeder untuk memasukkan data (menggunakan firstOrCreate agar aman jika data sudah ada)
+        Artisan::call('db:seed', ['--force' => true]);
 
-        return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Fresh Migration & Seeding Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
+        return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Migration & Seeding Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
     } catch (\Exception $e) {
-        Schema::enableForeignKeyConstraints();
-        return '<div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;"><h2 style="margin-top:0;">❌ Fresh Migration Gagal!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre></div>';
+        return '<div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;"><h2 style="margin-top:0;">❌ Proses Gagal!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre></div>';
     }
 });
