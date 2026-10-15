@@ -273,12 +273,17 @@ Route::get('/run-fresh-seed', function () {
     }
 
     try {
-        // Karena database sudah dikosongkan total lewat Supabase SQL Editor, 
-        // kita cukup panggil migrate biasa dan db:seed
+        // Bersihkan skema publik secara total dengan CASCADE
+        DB::statement('DROP SCHEMA public CASCADE;');
+        DB::statement('CREATE SCHEMA public;');
+
+        // Antisipasi jika ada sisa tabel, paksa drop dengan CASCADE sebelum migrasi
+        // (Opsional tambahan pengaman)
+        
         Artisan::call('migrate', ['--force' => true]);
         Artisan::call('db:seed', ['--force' => true]);
 
-        return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Migration & Seeding Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
+        return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Fresh Migration & Seeding Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
     } catch (\Exception $e) {
         return '<div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;"><h2 style="margin-top:0;">❌ Proses Gagal!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre></div>';
     }
