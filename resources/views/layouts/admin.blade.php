@@ -99,9 +99,16 @@
 
                 <!-- Input / Data Siswa -->
                 <a href="{{ Route::has('admin.siswa.index') ? route('admin.siswa.index') : '#' }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.index') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-user-graduate w-5 text-center"></i>
                     <span>Input Data Siswa</span>
+                </a>
+
+                <!-- TAMBAHAN: Menu Cetak Kartu Ujian -->
+                <a href="#" onclick="pilihKelasCetak()"
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition hover:bg-slate-900 hover:text-white">
+                    <i class="fa-solid fa-id-card w-5 text-center text-blue-400"></i>
+                    <span>Cetak Kartu Ujian</span>
                 </a>
 
                 <div class="pt-3 pb-1">
@@ -205,7 +212,7 @@
 
     </div>
 
-    <!-- Script Global UI Interaktif -->
+    <!-- Script Global UI Interaktif & Pop-up Cetak Kartu -->
     <script>
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
@@ -221,18 +228,23 @@
         }
     }
 
-    // 2. Toggle Dropdown Menu Sidebar (jika dibutuhkan)
-    function toggleDropdown(id, arrowId) {
-        const dropdown = document.getElementById(id);
-        const arrow = document.getElementById(arrowId);
-
-        if (dropdown.classList.contains('hidden')) {
-            dropdown.classList.remove('hidden');
-            arrow.classList.add('rotate-180');
-        } else {
-            dropdown.classList.add('hidden');
-            arrow.classList.remove('rotate-180');
-        }
+    // 2. Pop-up Pilih Kelas untuk Cetak Kartu Massal
+    function pilihKelasCetak() {
+        // Ambil data kelas menggunakan fetch atau masukkan opsi langsung jika tersedia
+        Swal.fire({
+            title: 'Cetak Kartu Ujian',
+            text: 'Masukkan ID Kelas atau pilih metode cetak massal:',
+            input: 'text',
+            inputPlaceholder: 'Ketik ID Kelas...',
+            showCancelButton: true,
+            confirmButtonText: 'Cetak Berdasarkan Kelas',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#2563eb',
+        }).then((result) => {
+            if (result.value) {
+                window.open("{{ route('admin.siswa.cetak-kartu-kelas') }}?kelas_id=" + result.value, '_blank');
+            }
+        });
     }
 
     // 3. Resizing handler untuk responsivitas layar desktop

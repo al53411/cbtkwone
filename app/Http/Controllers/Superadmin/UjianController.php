@@ -7,6 +7,8 @@ use App\Models\Ujian;
 use App\Models\Mapel;
 use App\Models\Kelas;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class UjianController extends Controller
 {
@@ -57,6 +59,14 @@ class UjianController extends Controller
     {
         $validated = $this->validateRequest($request);
 
+        $tokenUjian = !empty($validated['token']) 
+            ? strtoupper($validated['token']) 
+            : strtoupper(Str::random(6));
+
+        // Memaksa ekspresi boolean murni untuk PostgreSQL menggunakan DB::raw
+        $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
+        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
+
         Ujian::create([
             'nama_ujian'    => $validated['nama_ujian'],
             'kelas_id'      => $validated['kelas_id'],
@@ -64,10 +74,10 @@ class UjianController extends Controller
             'waktu_mulai'   => $validated['waktu_mulai'],
             'waktu_selesai' => $validated['waktu_selesai'],
             'durasi'        => $validated['durasi'],
-            'token'         => strtoupper($validated['token']),
+            'token'         => $tokenUjian,
             'status'        => $validated['status'],
-            'acak_soal'     => $request->boolean('acak_soal'),
-            'acak_jawaban'  => $request->boolean('acak_jawaban'),
+            'acak_soal'     => DB::raw($acakSoalVal),
+            'acak_jawaban'  => DB::raw($acakJawabanVal),
         ]);
 
         return redirect()->route('superadmin.ujian.index')->with('success', 'Jadwal Ujian berhasil dibuat!');
@@ -78,6 +88,9 @@ class UjianController extends Controller
         $ujian = Ujian::findOrFail($id);
         $validated = $this->validateRequest($request);
 
+        $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
+        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
+
         $ujian->update([
             'nama_ujian'    => $validated['nama_ujian'],
             'kelas_id'      => $validated['kelas_id'],
@@ -85,10 +98,10 @@ class UjianController extends Controller
             'waktu_mulai'   => $validated['waktu_mulai'],
             'waktu_selesai' => $validated['waktu_selesai'],
             'durasi'        => $validated['durasi'],
-            'token'         => strtoupper($validated['token']),
+            'token'         => !empty($validated['token']) ? strtoupper($validated['token']) : $ujian->token,
             'status'        => $validated['status'],
-            'acak_soal'     => $request->boolean('acak_soal'),
-            'acak_jawaban'  => $request->boolean('acak_jawaban'),
+            'acak_soal'     => DB::raw($acakSoalVal),
+            'acak_jawaban'  => DB::raw($acakJawabanVal),
         ]);
 
         return redirect()->route('superadmin.ujian.index')->with('success', 'Jadwal Ujian berhasil diperbarui!');
@@ -114,10 +127,10 @@ class UjianController extends Controller
             'waktu_mulai'   => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
             'durasi'        => 'required|integer|min:1',
-            'token'         => 'required|string|size:6',
+            'token'         => 'nullable|string|max:6',
             'status'        => 'required|in:draft,aktif,selesai',
-            'acak_soal'     => 'nullable|boolean',
-            'acak_jawaban'  => 'nullable|boolean',
+            'acak_soal'     => 'nullable',
+            'acak_jawaban'  => 'nullable',
         ]);
     }
 }

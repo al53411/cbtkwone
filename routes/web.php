@@ -3,7 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\DB;
 
-// Import Controller Superadmin / Admin Pusat   
+// Import Controller Superadmin / Admin Pusat  
 use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardController;
 use App\Http\Controllers\Superadmin\SekolahController as SuperadminSekolahController;
 use App\Http\Controllers\Superadmin\UserController;
@@ -45,11 +45,12 @@ use App\Http\Controllers\Guru\ModulAjarController as GuruModulAjarController;
 // Import Controller Siswa
 use App\Http\Controllers\Siswa\AuthController as SiswaAuthController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
+use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema; // <-- TAMBAHKAN FACADE SCHEMA INI
+use Illuminate\Support\Facades\Schema;
 
 // Redirect Halaman Utama langsung ke Login
 Route::get('/', function () {
@@ -152,8 +153,10 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
     Route::post('/guru/{guru}/reset-password', [AdminGuruController::class, 'resetPassword'])->name('guru.reset-password');
     Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
 
-    // Fitur Tambahan Siswa
+    // Fitur Tambahan Siswa & Cetak Kartu (Wajib di ATAS resource siswa)
     Route::post('/siswa/import', [AdminSiswaController::class, 'import'])->name('siswa.import');
+    Route::get('/siswa/cetak-kartu-kelas', [AdminSiswaController::class, 'cetakKartuKelas'])->name('siswa.cetak-kartu-kelas');
+    Route::get('/siswa/cetak-kartu/{id?}', [AdminSiswaController::class, 'cetakKartu'])->name('siswa.cetak-kartu');Route::get('/siswa/print-preview', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-preview');Route::get('/siswa/print-pure', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-pure');
 
     // Cetak Absensi Mapel
     Route::get('/absensi/cetak-mapel', [CetakAbsensiMapelController::class, 'index'])->name('absensi.cetak-mapel');
@@ -187,7 +190,7 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
     Route::put('/sesi/{id}', [RuangSesiController::class, 'updateSesi'])->name('sesi.update');
     Route::delete('/sesi/{id}', [RuangSesiController::class, 'destroySesi'])->name('sesi.destroy');
 
-    // Rute Admin Sekolah untuk MELIHAT Daftar Paket Soal (Menggunakan AdminSoalController)
+    // Rute Admin Sekolah untuk MELIHAT Daftar Paket Soal
     Route::get('/soal/paket', [AdminSoalController::class, 'paketIndex'])->name('soal.paket');
 });
 
@@ -220,22 +223,23 @@ Route::middleware(['auth', 'role:guru,superadmin'])->prefix('guru')->name('guru.
 // ==========================================
 // GROUP ROUTE KHUSUS SISWA
 // ==========================================
-    Route::prefix('siswa')->name('siswa.')->group(function () {
-        Route::middleware('guest:siswa')->group(function () {
-            Route::get('/login', [SiswaAuthController::class, 'showLoginForm'])->name('login');
-            Route::post('/login', [SiswaAuthController::class, 'login'])->name('login.post');
-        });
+Route::prefix('siswa')->name('siswa.')->group(function () {
+    Route::middleware('guest:siswa')->group(function () {
+        Route::get('/login', [SiswaAuthController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [SiswaAuthController::class, 'login'])->name('login.post');
+    });
 
-        Route::middleware('auth:siswa')->group(function () {
-            Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
-            Route::post('/konfirmasi', [SiswaDashboardController::class, 'konfirmasiUjian'])->name('konfirmasi');
-            
-            // --- TAMBAHKAN RUTE INI ---
-            Route::get('/ujian/mulai', [App\Http\Controllers\Siswa\UjianController::class, 'mulai'])->name('ujian.mulai');
-            // --------------------------
+    Route::middleware('auth:siswa')->group(function () {
+        Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/konfirmasi', [SiswaDashboardController::class, 'konfirmasiUjian'])->name('konfirmasi');
+        
+        // --- RUTE UJIAN SISWA (Verifikasi Token & Mulai Ujian) ---
+        Route::post('/ujian/verifikasi', [SiswaUjianController::class, 'verifikasiToken'])->name('ujian.verifikasi');
+        Route::get('/ujian/mulai', [SiswaUjianController::class, 'mulai'])->name('ujian.mulai');
+        // ---------------------------------------------------------
 
-            Route::post('/logout', [SiswaAuthController::class, 'logout'])->name('logout');
-        });
+        Route::post('/logout', [SiswaAuthController::class, 'logout'])->name('logout');
+    });
 });
 
 
@@ -273,13 +277,9 @@ Route::get('/run-fresh-seed', function () {
     }
 
     try {
-        // Bersihkan skema publik secara total dengan CASCADE
         DB::statement('DROP SCHEMA public CASCADE;');
         DB::statement('CREATE SCHEMA public;');
 
-        // Antisipasi jika ada sisa tabel, paksa drop dengan CASCADE sebelum migrasi
-        // (Opsional tambahan pengaman)
-        
         Artisan::call('migrate', ['--force' => true]);
         Artisan::call('db:seed', ['--force' => true]);
 

@@ -158,13 +158,13 @@
                     </div>
 
                     <div>
-                        @if($ujian->is_aktif)
+                        @if($ujian->status == 'aktif')
                             <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
                             </span>
                         @else
                             <span class="bg-gray-100 text-gray-500 text-[10px] font-medium px-2.5 py-1 rounded-full">
-                                Non-Aktif
+                                {{ ucfirst($ujian->status) }}
                             </span>
                         @endif
                     </div>
@@ -172,10 +172,10 @@
 
                 <div class="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-gray-100 text-xs text-gray-600">
                     <div>
-                        Token Ujian: <span class="font-mono font-bold text-gray-800">{{ $tokenAktif->token ?? '-' }}</span>
+                        Token: <span class="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{{ $ujian->token ?? '-' }}</span>
                     </div>
                     <div class="font-medium text-gray-500">
-                        Siswa Mengerjakan: <span class="text-blue-600 font-bold">{{ $ujian->siswa_selesai_count ?? 0 }}</span>/{{ $ujian->total_siswa_count ?? 0 }}
+                        Siswa: <span class="text-blue-600 font-bold">{{ $ujian->siswa_selesai_count ?? 0 }}</span>/{{ $ujian->total_siswa_count ?? 0 }}
                     </div>
                 </div>
             </div>
@@ -189,12 +189,13 @@
 
         <!-- 2. TAMPILAN DESKTOP/TABLET (>= sm) -->
         <div class="hidden sm:block overflow-x-auto w-full">
-            <table class="w-full text-left border-collapse min-w-[640px]">
+            <table class="w-full text-left border-collapse min-w-[700px]">
                 <thead>
                     <tr class="bg-gray-50/80 border-b border-gray-200">
                         <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500 text-center w-12 sm:w-16">No</th>
                         <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500">Mata Pelajaran / Ujian</th>
                         <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500">Kelas Target</th>
+                        <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500 text-center">Token Ujian</th>
                         <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500 text-center">Durasi</th>
                         <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500 text-center">Status Ujian</th>
                         <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500 text-center">Progres Siswa</th>
@@ -208,25 +209,30 @@
                         </td>
                         <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-semibold text-gray-900">
                             {{ $ujian->mapel->nama_mapel ?? $ujian->nama_ujian }}
-                            <div class="text-[11px] font-normal text-gray-400">{{ $ujian->kode_ujian ?? 'CBT-Exam' }}</div>
+                            <div class="text-[11px] font-normal text-gray-400">{{ $ujian->nama_ujian ?? 'CBT-Exam' }}</div>
                         </td>
                         <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 whitespace-nowrap">
                             <span class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-blue-100">
                                 {{ $ujian->kelas->nama_kelas ?? 'Semua Kelas' }}
                             </span>
                         </td>
+                        <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
+                            <span class="font-mono font-bold text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-lg tracking-wider">
+                                {{ $ujian->token }}
+                            </span>
+                        </td>
                         <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 text-center whitespace-nowrap">
                             <span class="font-medium text-gray-800">{{ $ujian->durasi ?? 60 }}</span> Menit
                         </td>
                         <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-center whitespace-nowrap">
-                            @if($ujian->is_aktif)
+                            @if($ujian->status == 'aktif')
                                 <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-1 rounded-full">
                                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    <span>Berlangsung</span>
+                                    <span>Aktif</span>
                                 </span>
                             @else
                                 <span class="inline-flex items-center bg-gray-100 text-gray-500 text-xs font-medium px-2.5 py-1 rounded-full">
-                                    Selesai / Non-Aktif
+                                    {{ ucfirst($ujian->status) }}
                                 </span>
                             @endif
                         </td>
@@ -237,7 +243,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-400 text-xs sm:text-sm">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-400 text-xs sm:text-sm">
                             <i class="fa-solid fa-folder-open text-2xl mb-2 block text-gray-300"></i>
                             Tidak ada jadwal ujian yang sesuai dengan filter kelas & mapel.
                         </td>
@@ -247,7 +253,7 @@
             </table>
         </div>
 
-        <!-- LINK PAGINATION (Jika Data Digunakan dengan Pagination) -->
+        <!-- LINK PAGINATION -->
         @if(method_exists($ujians, 'hasPages') && $ujians->hasPages())
         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6">
             {{ $ujians->appends(request()->query())->links() }}

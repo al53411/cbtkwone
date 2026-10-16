@@ -12,11 +12,6 @@
             <h1 class="text-xl font-bold text-slate-900 tracking-tight">Manajemen Sesi Ujian</h1>
             <p class="text-xs text-slate-500 mt-1">Atur jadwal, durasi, dan status pelaksanaan ujian CAT.</p>
         </div>
-        <button onclick="openModalTambah()" 
-            class="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
-            <i class="fa-solid fa-plus"></i>
-            <span>Tambah Sesi Ujian</span>
-        </button>
     </div>
 
     <!-- Filter & Table Card -->

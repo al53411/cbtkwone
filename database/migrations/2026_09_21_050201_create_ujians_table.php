@@ -17,10 +17,15 @@ return new class extends Migration
             $table->dateTime('waktu_selesai');
             $table->integer('durasi'); // dalam menit
             $table->string('token', 6);
-            $table->boolean('acak_soal')->default(false);
-            $table->boolean('acak_jawaban')->default(false);
+            $table->smallInteger('acak_soal')->default(0); // Diubah ke smallInteger
+            $table->smallInteger('acak_jawaban')->default(0); // Diubah ke smallInteger
             $table->enum('status', ['draft', 'aktif', 'selesai'])->default('draft');
             $table->timestamps();
         });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('ujians');
     }
 };

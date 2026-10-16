@@ -8,6 +8,7 @@ use App\Models\Kelas;
 use App\Models\Mapel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class UjianController extends Controller
 {
@@ -36,30 +37,39 @@ class UjianController extends Controller
         $validated = $request->validate([
             'nama_ujian'    => 'required|string|max:255',
             'kelas_id'      => 'nullable|exists:kelas,id',
-            'mapel_id'      => 'required|exists:mapels,id', // Memastikan mapel benar-benar ada di database
+            'mapel_id'      => 'required|exists:mapels,id',
             'token'         => 'nullable|string|max:10',
             'durasi'        => 'required|integer|min:1',
             'waktu_mulai'   => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
             'status'        => 'required|in:draft,aktif,selesai',
-            'acak_soal'     => 'nullable|boolean',
-            'acak_jawaban'  => 'nullable|boolean',
+            'acak_soal'     => 'nullable',
+            'acak_jawaban'  => 'nullable',
         ]);
 
-        // Jika token kosong, buat token otomatis yang unik
-        if ($request->filled('token')) {
-            $validated['token'] = strtoupper(trim($request->token));
-        } else {
-            // Opsional: Membuat token acak 6 karakter untuk ujian/mapel ini
-            $validated['token'] = strtoupper(Str::random(6));
-        }
+        // Mengatur token ujian
+        $tokenUjian = $request->filled('token') 
+            ? strtoupper(trim($request->token)) 
+            : strtoupper(Str::random(6));
 
-        $validated['acak_soal'] = $request->has('acak_soal') ? 1 : 0;
-        $validated['acak_jawaban'] = $request->has('acak_jawaban') ? 1 : 0;
+        // Format boolean murni untuk PostgreSQL menggunakan DB::raw
+        $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
+        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
 
-        Ujian::create($validated);
+        Ujian::create([
+            'nama_ujian'    => $validated['nama_ujian'],
+            'kelas_id'      => $validated['kelas_id'],
+            'mapel_id'      => $validated['mapel_id'],
+            'token'         => $tokenUjian,
+            'durasi'        => $validated['durasi'],
+            'waktu_mulai'   => $validated['waktu_mulai'],
+            'waktu_selesai' => $validated['waktu_selesai'],
+            'status'        => $validated['status'],
+            'acak_soal'     => DB::raw($acakSoalVal),
+            'acak_jawaban'  => DB::raw($acakJawabanVal),
+        ]);
 
-        return redirect()->route('admin.sesi.index')->with('success', 'Sesi ujian dan token mapel berhasil dibuat!');
+        return redirect()->route('admin.ujian.index')->with('success', 'Sesi ujian dan token mapel berhasil dibuat!');
     }
 
     public function update(Request $request, string $id)
@@ -67,27 +77,38 @@ class UjianController extends Controller
         $validated = $request->validate([
             'nama_ujian'    => 'required|string|max:255',
             'kelas_id'      => 'nullable|exists:kelas,id',
-            'mapel_id'      => 'required|exists:mapels,id', // Memastikan mapel valid
+            'mapel_id'      => 'required|exists:mapels,id',
             'token'         => 'nullable|string|max:10',
             'durasi'        => 'required|integer|min:1',
             'waktu_mulai'   => 'required|date',
             'waktu_selesai' => 'required|date|after:waktu_mulai',
             'status'        => 'required|in:draft,aktif,selesai',
-            'acak_soal'     => 'nullable|boolean',
-            'acak_jawaban'  => 'nullable|boolean',
+            'acak_soal'     => 'nullable',
+            'acak_jawaban'  => 'nullable',
         ]);
 
         $ujian = Ujian::findOrFail($id);
         
-        if ($request->filled('token')) {
-            $validated['token'] = strtoupper(trim($request->token));
-        }
+        $tokenUjian = $request->filled('token') 
+            ? strtoupper(trim($request->token)) 
+            : $ujian->token;
 
-        $validated['acak_soal'] = $request->has('acak_soal') ? 1 : 0;
-        $validated['acak_jawaban'] = $request->has('acak_jawaban') ? 1 : 0;
+        $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
+        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
         
-        $ujian->update($validated);
+        $ujian->update([
+            'nama_ujian'    => $validated['nama_ujian'],
+            'kelas_id'      => $validated['kelas_id'],
+            'mapel_id'      => $validated['mapel_id'],
+            'token'         => $tokenUjian,
+            'durasi'        => $validated['durasi'],
+            'waktu_mulai'   => $validated['waktu_mulai'],
+            'waktu_selesai' => $validated['waktu_selesai'],
+            'status'        => $validated['status'],
+            'acak_soal'     => DB::raw($acakSoalVal),
+            'acak_jawaban'  => DB::raw($acakJawabanVal),
+        ]);
 
-        return redirect()->route('admin.sesi.index')->with('success', 'Data sesi ujian dan mapel berhasil diperbarui!');
+        return redirect()->route('admin.ujian.index')->with('success', 'Data sesi ujian dan mapel berhasil diperbarui!');
     }
 }
