@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers\Admin;
+
 use App\Http\Controllers\Controller;
 use App\Models\Siswa;
 use App\Models\Kelas;
@@ -8,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class SiswaController extends Controller
@@ -31,17 +33,14 @@ class SiswaController extends Controller
         $user = Auth::user();
         $sekolahId = $this->getSekolahId();
 
-        // 1. Ambil daftar kelas untuk dropdown filter di Blade
         $kelasQuery = Kelas::query();
         if ($sekolahId && Schema::hasColumn('kelas', 'sekolah_id')) {
             $kelasQuery->where('sekolah_id', $sekolahId);
         }
         $listKelas = $kelasQuery->orderBy('nama_kelas', 'asc')->get();
 
-        // 2. Query Utama Siswa
         $query = Siswa::with('kelas');
 
-        // LOGIKA PENYARINGAN ROLE GURU VS ADMIN
         if ($user && ($user->isGuru() || $user->role === 'guru' || $user->guru)) {
             $guru = $user->guru;
             $allKelasIds = [];
@@ -61,7 +60,6 @@ class SiswaController extends Controller
                 });
             }
         } else {
-            // Role Admin / Superadmin
             if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
                 $query->where(function($q) use ($sekolahId) {
                     $q->where('sekolah_id', $sekolahId)
@@ -70,12 +68,10 @@ class SiswaController extends Controller
             }
         }
 
-        // 3. APPLY FILTER: Dropdown Pilih Kelas
         if ($request->filled('kelas_id')) {
             $query->where('kelas_id', $request->kelas_id);
         }
 
-        // 4. APPLY FILTER: Input Pencarian (Nama Siswa / NISN)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -90,7 +86,6 @@ class SiswaController extends Controller
 
         $siswas = $query->paginate(10);
 
-        // FALLBACK: Jika Guru tidak di-assign kelas spesifik dan hasil pencarian/filter awal kosong
         if ($siswas->isEmpty() && !$request->filled('search') && !$request->filled('kelas_id') && $user && ($user->isGuru() || $user->role === 'guru' || $user->guru) && $sekolahId) {
             $siswas = Siswa::with('kelas')
                 ->where(function($q) use ($sekolahId) {
@@ -104,9 +99,6 @@ class SiswaController extends Controller
         return view('admin.siswa.index', compact('siswas', 'listKelas'));
     }
 
-    /**
-     * Menampilkan form untuk menambah siswa baru.
-     */
     public function create()
     {
         $sekolahId = $this->getSekolahId();
@@ -120,9 +112,6 @@ class SiswaController extends Controller
         return view('admin.siswa.create', compact('kelas'));
     }
 
-    /**
-     * Menyimpan data siswa baru ke database + AKUN USER (NISN & NISN*)
-     */
     public function store(Request $request)
     {
         $sekolahId = $this->getSekolahId();
@@ -134,12 +123,6 @@ class SiswaController extends Controller
             'jenis_kelamin' => 'required|in:L,P',
             'alamat'        => 'nullable|string',
             'password'      => 'nullable|string|min:6',
-        ], [
-            'nama_siswa.required'    => 'Nama siswa wajib diisi!',
-            'nisn.unique'            => 'NISN sudah terdaftar dalam sistem!',
-            'nisn.required'          => 'NISN wajib diisi!',
-            'kelas_id.exists'        => 'Kelas yang dipilih belum di-setting atau tidak ditemukan!',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih!',
         ]);
 
         $emailUser = $validated['nisn'];
@@ -181,12 +164,9 @@ class SiswaController extends Controller
         Siswa::create($data);
 
         return redirect()->route('admin.siswa.index')
-            ->with('success', "Data siswa & akun user berhasil ditambahkan (User: {$emailUser}, Password: {$validated['nisn']}*).");
+            ->with('success', "Data siswa & akun user berhasil ditambahkan.");
     }
 
-    /**
-     * Menampilkan detail spesifik seorang siswa.
-     */
     public function show(string $id)
     {
         $sekolahId = $this->getSekolahId();
@@ -201,9 +181,6 @@ class SiswaController extends Controller
         return view('admin.siswa.show', compact('siswa'));
     }
 
-    /**
-     * Menampilkan form untuk mengedit data siswa.
-     */
     public function edit(string $id)
     {
         $sekolahId = $this->getSekolahId();
@@ -223,9 +200,6 @@ class SiswaController extends Controller
         return view('admin.siswa.edit', compact('siswa', 'kelas'));
     }
 
-    /**
-     * Memperbarui data siswa & akun user terikat di database.
-     */
     public function update(Request $request, string $id)
     {
         $sekolahId = $this->getSekolahId();
@@ -243,12 +217,6 @@ class SiswaController extends Controller
             'jenis_kelamin' => 'required|in:L,P',
             'alamat'        => 'nullable|string',
             'password'      => 'nullable|string|min:6',
-        ], [
-            'nama_siswa.required'    => 'Nama siswa wajib diisi!',
-            'nisn.unique'            => 'NISN sudah digunakan oleh siswa lain!',
-            'nisn.required'          => 'NISN wajib diisi!',
-            'kelas_id.exists'        => 'Kelas yang dipilih belum di-setting atau tidak ditemukan!',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih!',
         ]);
 
         $oldNisn = $siswa->nisn;
@@ -285,9 +253,6 @@ class SiswaController extends Controller
             ->with('success', 'Data siswa dan akun user berhasil diperbarui.');
     }
 
-    /**
-     * Menghapus data siswa dari database.
-     */
     public function destroy(string $id)
     {
         $sekolahId = $this->getSekolahId();
@@ -311,17 +276,12 @@ class SiswaController extends Controller
             ->with('success', 'Data siswa berhasil dihapus.');
     }
 
-    /**
-     * Memproses import data siswa dari file Excel (.xlsx) atau CSV
-     */
     public function import(Request $request)
     {
         set_time_limit(300);
 
         $request->validate([
             'file' => 'required|file|max:5120',
-        ], [
-            'file.required' => 'File Excel/CSV wajib diunggah!',
         ]);
 
         $sekolahId = $this->getSekolahId();
@@ -335,7 +295,7 @@ class SiswaController extends Controller
             } elseif ($extension === 'xlsx') {
                 $rows = $this->parseXlsxFile($file->getPathname());
             } else {
-                return redirect()->back()->with('error', 'Format file tidak didukung. Harap gunakan format .xlsx atau .csv');
+                return redirect()->back()->with('error', 'Format file tidak didukung.');
             }
 
             if (empty($rows) || count($rows) < 2) {
@@ -360,7 +320,7 @@ class SiswaController extends Controller
             $imported = 0;
             $skipped = 0;
 
-            \Illuminate\Support\Facades\DB::transaction(function () use ($rows, $header, $kelasMap, $sekolahId, &$imported, &$skipped) {
+            DB::transaction(function () use ($rows, $header, $kelasMap, $sekolahId, &$imported, &$skipped) {
                 foreach ($rows as $row) {
                     if (empty(array_filter($row))) continue;
                     
@@ -426,18 +386,13 @@ class SiswaController extends Controller
             });
 
             if ($imported === 0) {
-                return redirect()->back()->with('error', 'Gagal memproses data! Pastikan kolom nisn dan nama_siswa terisi.');
+                return redirect()->back()->with('error', 'Gagal memproses data!');
             }
 
-            $msg = "Berhasil mengimport {$imported} data siswa. Akun User: NISN, Password: NISN*.";
-            if ($skipped > 0) {
-                $msg .= " ({$skipped} baris dilewati karena NISN/Nama kosong).";
-            }
-
-            return redirect()->route('admin.siswa.index')->with('success', $msg);
+            return redirect()->route('admin.siswa.index')->with('success', "Berhasil mengimport {$imported} data siswa.");
 
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengolah file: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
@@ -501,14 +456,13 @@ class SiswaController extends Controller
         return $rows;
     }
 
-   /**
+    /**
      * Cetak kartu ujian untuk satu siswa tertentu atau fallback cetak semua
      */
     public function cetakKartu($id = null)
     {
         $sekolahId = $this->getSekolahId();
         
-        // Ambil semua daftar kelas untuk dropdown filter
         $semuaKelasQuery = Kelas::query();
         if ($sekolahId && Schema::hasColumn('kelas', 'sekolah_id')) {
             $semuaKelasQuery->where('sekolah_id', $sekolahId);
@@ -520,8 +474,7 @@ class SiswaController extends Controller
             $query->where('sekolah_id', $sekolahId);
         }
 
-        if (!$id) {
-            // Urutkan berdasarkan kelas_id lalu nama siswa agar nomor meja per kelas akurat
+        if (!$id || !is_numeric($id)) {
             $siswas = $query->orderBy('kelas_id', 'asc')
                             ->orderBy('nama_siswa', 'asc')
                             ->get();
@@ -552,7 +505,6 @@ class SiswaController extends Controller
         $sekolahId = $this->getSekolahId();
         $kelasId = $request->kelas_id;
 
-        // Ambil semua daftar kelas untuk dropdown filter
         $semuaKelasQuery = Kelas::query();
         if ($sekolahId && Schema::hasColumn('kelas', 'sekolah_id')) {
             $semuaKelasQuery->where('sekolah_id', $sekolahId);
@@ -579,9 +531,6 @@ class SiswaController extends Controller
         return view('admin.siswa.cetak-kartu', compact('siswas', 'semuaKelas', 'kelasPilih', 'namaKelasDipilih'));
     }
 
-    /**
-     * Menampilkan halaman preview cetak murni tanpa layout/sidebar admin
-     */
     /**
      * Menampilkan halaman khusus cetak tanpa layout admin
      */

@@ -105,8 +105,9 @@
                 </a>
 
                 <!-- TAMBAHAN: Menu Cetak Kartu Ujian -->
-                <a href="#" onclick="pilihKelasCetak()"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition hover:bg-slate-900 hover:text-white">
+               <!-- MENU CETAK KARTU UJIAN YANG DIPERBAIKI -->
+                <a href="{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : '#' }}"
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.cetak-kartu*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-id-card w-5 text-center text-blue-400"></i>
                     <span>Cetak Kartu Ujian</span>
                 </a>
@@ -242,7 +243,7 @@
             confirmButtonColor: '#2563eb',
         }).then((result) => {
             if (result.value) {
-                window.open("{{ route('admin.siswa.cetak-kartu-kelas') }}?kelas_id=" + result.value, '_blank');
+                window.open("{{ route('admin.siswa.cetak-kartu') }}?kelas_id=" + result.value, '_blank');
             }
         });
     }
