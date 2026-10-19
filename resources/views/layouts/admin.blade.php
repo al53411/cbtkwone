@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
     <style>
         .flat-card {
@@ -66,7 +66,7 @@
             <!-- Header Sidebar: Info Sekolah -->
             <div class="h-16 flex items-center justify-between bg-slate-900 px-4 border-b border-slate-800 shrink-0">
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <img src="{{ asset('favicon.png') }}" alt="Logo" class="w-8 h-8 object-contain shrink-0">
+                    <img src="{{ asset('logo.png') }}" alt="Logo" class="w-8 h-8 object-contain shrink-0">
                     <div class="flex flex-col truncate">
                         <span class="text-white font-bold text-sm tracking-wide truncate">
                             {{ Auth::user()->sekolah->nama_sekolah ?? $profilSekolah->nama_sekolah ?? 'Sistem Sekolah' }}

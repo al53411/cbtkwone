@@ -111,6 +111,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 
     // CRUD Bank Soal
     Route::resource('soal', SuperadminSoalController::class);
+    Route::get('/soal/import', [SuperadminSoalController::class, 'import'])->name('soal.import');
+    Route::post('/soal/import', [SuperadminSoalController::class, 'processImport'])->name('soal.process-import');
 
     // Custom Route Ujian (Taruh sebelum Resource Ujian)
     Route::get('/ujian/generate-token', [SuperadminUjianController::class, 'generateToken'])->name('ujian.generate-token');
@@ -152,6 +154,9 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
     Route::post('/guru/import', [AdminGuruController::class, 'import'])->name('guru.import');
     Route::post('/guru/{guru}/reset-password', [AdminGuruController::class, 'resetPassword'])->name('guru.reset-password');
     Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
+
+    //SISWA 
+    Route::post('/siswa/import', [AdminSiswaController::class, 'import'])->name('siswa.import');
 
     // FITUR CETAK KARTU UJIAN (Sesuaikan namanya agar cocok dengan pemanggilan)
     Route::get('/siswa/cetak-kartu/{id?}', [AdminSiswaController::class, 'cetakKartu'])->name('siswa.cetak-kartu');

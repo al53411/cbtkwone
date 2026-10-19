@@ -7,14 +7,13 @@
 <div class="space-y-6">
 
     <!-- Filter Kelas & Tombol Aksi -->
-    <div class="max-w-4xl mx-auto bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
-        
+    <div class="w-full max-w-4xl mx-auto  mb-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
         <!-- Form Pilih Kelas -->
         <form action="{{ route('admin.siswa.cetak-kartu-kelas') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
-            <select name="kelas_id" class="px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <select name="kelas_id" class="px-4 py-2 bg-slate-100 border border-slate-800 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 <option value="">-- Pilih Kelas --</option>
                 @foreach($semuaKelas ?? [] as $k)
-                    <option value="{{ $k->id }}" {{ isset($kelasPilih) && $kelasPilih == $k->id ? 'selected' : '' }}>
+                    <option vaalue="{{ $k->id }}" {{ isset($kelasPilih) && $kelasPilih == $k->id ? 'selected' : '' }}>
                         {{ $k->nama_kelas }}
                     </option>
                 @endforeach
