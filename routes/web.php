@@ -103,16 +103,21 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::resource('kelas', SuperadminKelasController::class);
     Route::resource('mapel', SuperadminMapelController::class);
     
-    // Custom Route Soal (Taruh sebelum Resource Soal)
-    Route::get('/soal/import', [SuperadminSoalController::class, 'import'])->name('soal.import');
-    
-    // Tambahan Rute Ringkasan Paket Soal (Tanpa Butir Soal)
-    Route::get('/soal/paket', [SuperadminSoalController::class, 'paketIndex'])->name('soal.paket');
-
-    // CRUD Bank Soal
-    Route::resource('soal', SuperadminSoalController::class);
+    // ==========================================
+    // RUTE KUSTOM SOAL (HARUS DI ATAS RESOURCE)
+    // ==========================================
     Route::get('/soal/import', [SuperadminSoalController::class, 'import'])->name('soal.import');
     Route::post('/soal/import', [SuperadminSoalController::class, 'processImport'])->name('soal.process-import');
+    Route::get('/soal/paket', [SuperadminSoalController::class, 'paketIndex'])->name('soal.paket');
+    
+    // Rute Upload Gambar Soal (Modal / Redirect Index)
+    Route::get('/soal/upload-gambar', fn() => redirect()->route('superadmin.soal.index'))->name('soal.upload-gambar');
+    Route::post('/soal/upload-gambar', [SuperadminSoalController::class, 'processUploadGambar'])->name('soal.process-upload-gambar');
+
+    // ==========================================
+    // RESOURCE ROUTE SOAL (DI BAWAH RUTE KUSTOM)
+    // ==========================================
+    Route::resource('soal', SuperadminSoalController::class);
 
     // Custom Route Ujian (Taruh sebelum Resource Ujian)
     Route::get('/ujian/generate-token', [SuperadminUjianController::class, 'generateToken'])->name('ujian.generate-token');

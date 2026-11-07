@@ -7,13 +7,13 @@
 <div class="space-y-6">
 
     <!-- Filter Kelas & Tombol Aksi -->
-    <div class="w-full max-w-4xl mx-auto  mb-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="w-full max-w-4xl mx-auto mb-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
         <!-- Form Pilih Kelas -->
         <form action="{{ route('admin.siswa.cetak-kartu-kelas') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
             <select name="kelas_id" class="px-4 py-2 bg-slate-100 border border-slate-800 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 <option value="">-- Pilih Kelas --</option>
                 @foreach($semuaKelas ?? [] as $k)
-                    <option vaalue="{{ $k->id }}" {{ isset($kelasPilih) && $kelasPilih == $k->id ? 'selected' : '' }}>
+                    <option value="{{ $k->id }}" {{ isset($kelasPilih) && $kelasPilih == $k->id ? 'selected' : '' }}>
                         {{ $k->nama_kelas }}
                     </option>
                 @endforeach
@@ -39,19 +39,19 @@
     <div class="cetak-area space-y-6 bg-white p-6 rounded-xl">
         
         <!-- Judul Header Dokumen -->
-        <div class="text-center border-b pb-4 mb-4">
-            <h2 class="text-sm font-bold uppercase text-slate-800">Kartu Peserta Ujian & Nomor Meja Peserta</h2>
-            <p class="text-xs text-slate-500">
+        <div class="text-center border-b-2 border-slate-900 pb-3 mb-4">
+            <h2 class="text-xs font-black uppercase tracking-wider text-slate-900">KARTU PESERTA UJIAN & NOMOR MEJA SEKOLAH</h2>
+            <p class="text-[10px] font-semibold text-slate-600 mt-0.5">
                 @if(isset($namaKelasDipilih))
-                    Kelas: {{ $namaKelasDipilih }}
+                    Rombongan Belajar / Kelas: {{ $namaKelasDipilih }}
                 @else
                     Semua Kelas
                 @endif
             </p>
         </div>
 
-        <!-- Container Kartu -->
-        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 print-grid">
+        <!-- Container Kartu (Grid 2 Kolom) -->
+        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
             @php
                 $currentKelasId = null;
                 $noMejaPerKelas = 0;
@@ -70,108 +70,113 @@
                     $nomorMejaPanjang = 'MJ-' . $inisialKelas . '-' . str_pad($noMejaPerKelas, 3, '0', STR_PAD_LEFT);
                 @endphp
             
-                <!-- ================= KARTU 1: KARTU PESERTA UJIAN (UNTUK SISWA) ================= -->
-                <div class="page-break bg-white border-2 border-slate-800 rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between" style="min-height: 290px; margin-bottom: 15px;">
+                <!-- ================= KARTU 1: KARTU PESERTA UJIAN ================= -->
+                <div class="bg-white border-2 border-slate-900 rounded-lg p-2.5 shadow-none relative overflow-hidden flex flex-col justify-between" style="height: 245px;">
+                    <!-- Aksen Garis Atas Resmi -->
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-slate-900"></div>
+
                     <div>
-                        <div class="flex items-start justify-between border-b border-slate-200 pb-2 mb-2">
-                            <div class="flex items-start">
-                                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm mr-2 shrink-0 mt-0.5">
-                                    CBT
+                        <!-- Header Instansi & Logo Sejajar Rapi -->
+                        <div class="flex items-center justify-between border-b border-slate-300 pb-1.5 mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-9 h-9 flex items-center justify-center shrink-0 bg-slate-50 border border-slate-200 rounded-md p-0.5">
+                                    <img src="{{ asset('logo.png') }}" alt="Logo" class="w-full h-full object-contain">
                                 </div>
                                 <div class="leading-tight">
-                                    <h2 class="font-bold text-[9px] uppercase tracking-wider text-slate-500">Kartu Peserta Ujian</h2>
-                                    <h1 class="font-extrabold text-[11px] text-slate-900">{{ $siswa->sekolah->nama_sekolah ?? 'Sistem Ujian Sekolah' }}</h1>
-                                    <p class="text-[9px] text-slate-500 leading-tight mt-0.5">
-                                        {{ $siswa->sekolah->alamat ?? $siswa->sekolah->alamat_sekolah ?? '' }}
+                                    <h2 class="font-extrabold text-[8px] uppercase tracking-wider text-blue-800">Kartu Peserta Ujian CAT</h2>
+                                    <h1 class="font-bold text-[9px] text-slate-900 uppercase">{{ $siswa->sekolah->nama_sekolah ?? 'Sistem Ujian Sekolah' }}</h1>
+                                    <p class="text-[7px] text-slate-500 truncate max-w-[210px]">
+                                        {{ $siswa->sekolah->alamat ?? $siswa->sekolah->alamat_sekolah ?? 'Alamat Resmi Satuan Pendidikan' }}
                                     </p>
                                 </div>
                             </div>
-                            <span class="text-[9px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-300">
-                                Urut: {{ str_pad($noMejaPerKelas, 2, '0', STR_PAD_LEFT) }}
-                            </span>
                         </div>
 
-                        <!-- Detail Siswa -->
-                        <div class="grid grid-cols-4 gap-1 text-[11px] mb-2">
-                            <div class="col-span-1 text-slate-500 font-medium">No. Peserta</div>
+                        <!-- Biodata Siswa -->
+                        <div class="grid grid-cols-4 gap-y-1 gap-x-1 text-[9px] mb-2">
+                            <div class="text-slate-500 font-semibold">No. Peserta</div>
                             <div class="col-span-3 font-bold font-mono text-slate-900">: {{ $siswa->nisn }}</div>
 
-                            <div class="col-span-1 text-slate-500 font-medium">Nama Siswa</div>
+                            <div class="text-slate-500 font-semibold">Nama Lengkap</div>
                             <div class="col-span-3 font-bold text-slate-900 truncate">: {{ $siswa->nama_siswa }}</div>
 
-                            <div class="col-span-1 text-slate-500 font-medium">Kelas</div>
+                            <div class="text-slate-500 font-semibold">Kelas / Rombel</div>
                             <div class="col-span-3 font-semibold text-slate-900">: {{ $siswa->kelas->nama_kelas ?? '-' }}</div>
 
-                            <div class="col-span-1 text-slate-500 font-medium">Password</div>
-                            <div class="col-span-3 font-mono font-bold text-rose-600">: {{ $siswa->nisn }}*</div>
+                            <div class="text-slate-500 font-semibold">Password Ujian</div>
+                            <div class="col-span-3 font-mono font-bold text-blue-700">: {{ $siswa->nisn }}*</div>
+
+                            <div class="text-slate-500 font-semibold">No. Meja</div>
+                            <div class="col-span-3 font-mono font-bold text-slate-800">: {{ str_pad($noMejaPerKelas, 3, '0', STR_PAD_LEFT) }}</div>
                         </div>
                     </div>
 
-                    <!-- Tanda Tangan & Footer -->
-                    <div>
-                        <div class="flex justify-between items-end pt-1 pb-2 border-t border-slate-100 text-[10px]">
-                            <div class="text-[9px] text-slate-400 italic">
-                                *Gunakan NISN & Password<br>untuk login ujian.
-                            </div>
-                            <div class="text-center leading-tight">
-                                <span>Kepala Sekolah</span>
-                                <div class="h-7"></div>
-                                <span class="font-bold underline text-[10px] text-slate-800">{{ $siswa->sekolah->nama_kepsek ?? ($siswa->sekolah->kepala_sekolah ?? 'SITI KALIMATUS SAKDIYAH, S.Pd') }}</span>
-                                <div class="text-[8px] text-slate-600 font-mono mt-0.5">
-                                    NIP. {{ $siswa->sekolah->nip_kepsek ?? ($siswa->sekolah->nip ?? '197809212008012012') }}
-                                </div>
-                            </div>
+                    <!-- Footer Kartu: Pas Foto di Bawah Kiri & Tanda Tangan di Bawah Kanan -->
+                    <div class="pt-1.5 border-t border-slate-300 flex justify-between items-end">
+                        <!-- Kotak Pas Foto -->
+                        <div class="w-10 h-13 bg-slate-100 border border-slate-400 rounded flex flex-col items-center justify-center text-[6.5px] text-slate-400 shrink-0 font-medium text-center p-0.5 shadow-2xs">
+                            @if(isset($siswa->foto) && $siswa->foto)
+                                <img src="{{ asset('storage/' . $siswa->foto) }}" class="w-full h-full object-cover rounded">
+                            @else
+                                <span>FOTO</span>
+                                <span class="text-[6px] font-mono">3x4</span>
+                            @endif
                         </div>
 
-                        <div class="bg-slate-50 -mx-4 -mb-4 px-4 py-1.5 border-t border-slate-200 flex justify-between items-center text-[9px] text-slate-500 font-semibold">
-                            <span>Pengawas: ...........................</span>
-                            <span>Ruang: ............</span>
+                        <!-- Tanda Tangan Kepala Sekolah -->
+                        <div class="text-right">
+                            <div class="text-[7px] text-slate-700 mb-3">Kepala Sekolah,</div>
+                            <div class="font-bold underline text-[7.5px] text-slate-900 leading-none mb-1">
+                                {{ $siswa->sekolah->nama_kepsek ?? ($siswa->sekolah->kepala_sekolah ?? 'SITI KALIMATUS SAKDIYAH, S.Pd') }}
+                            </div>
+                            <div class="text-[7px] font-mono text-slate-600">
+                                NIP. {{ $siswa->sekolah->nip_kepsek ?? ($siswa->sekolah->nip ?? '197809212008012012') }}
+                            </div>
                         </div>
                     </div>
                 </div>
 
 
-                <!-- ================= KARTU 2: NOMOR MEJA UJIAN (UNTUK MEJA) ================= -->
-                <div class="page-break bg-slate-50 border-4 border-dashed border-slate-700 rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between text-center" style="min-height: 290px; margin-bottom: 15px;">
+                <!-- ================= KARTU 2: NOMOR MEJA UJIAN ================= -->
+                <div class="bg-slate-50 border-4 border-slate-800 rounded-lg p-2.5 shadow-none text-center flex flex-col justify-between" style="height: 245px;">
                     <div>
-                        <div class="border-b-2 border-slate-300 pb-2 mb-3">
-                            <h2 class="font-bold text-[9px] uppercase tracking-widest text-slate-500">Nomor Meja Peserta Ujian</h2>
-                            <h1 class="font-extrabold text-[11px] text-slate-800 uppercase mt-0.5">{{ $siswa->sekolah->nama_sekolah ?? 'Sistem Ujian Sekolah' }}</h1>
+                        <div class="border-b-2 border-slate-300 pb-1 mb-1">
+                            <h2 class="font-black text-[7.5px] uppercase tracking-widest text-slate-600">TANDA PENGENAL NOMOR MEJA UJIAN</h2>
+                            <h1 class="font-extrabold text-[9px] text-slate-900 uppercase mt-0.5">{{ $siswa->sekolah->nama_sekolah ?? 'Sistem Ujian Sekolah' }}</h1>
                         </div>
 
-                        <!-- NOMOR MEJA PANJANG -->
-                        <div class="my-1">
-                            <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider block mb-1">KODE NOMOR MEJA</span>
-                            <div class="text-2xl font-black font-mono text-blue-700 tracking-tight bg-white py-2 px-3 border-2 border-slate-300 rounded-lg shadow-inner inline-block w-full">
+                        <!-- Kotak Besar Nomor Meja -->
+                        <div class="my-1.5">
+                            <div class="text-xl font-black font-mono text-slate-900 tracking-wider bg-white py-1.5 px-2 border-2 border-slate-900 rounded-md shadow-inner inline-block w-full">
                                 {{ $nomorMejaPanjang }}
                             </div>
                         </div>
 
-                        <!-- Identitas Singkat di Meja -->
-                        <div class="mt-2.5 bg-white p-2.5 rounded-lg border border-slate-300 text-left text-xs shadow-sm">
-                            <div class="flex justify-between border-b border-slate-100 pb-1 mb-1">
-                                <span class="text-slate-500 font-medium text-[11px]">No. Peserta:</span>
-                                <span class="font-bold font-mono text-slate-900 text-[11px]">{{ $siswa->nisn }}</span>
+                        <!-- Detail Singkat Siswa di Meja -->
+                        <div class="bg-white p-1.5 rounded-md border border-slate-300 text-left text-[8.5px] space-y-0.5">
+                            <div class="flex justify-between">
+                                <span class="text-slate-500 font-medium">No. Peserta:</span>
+                                <span class="font-bold font-mono text-slate-900">{{ $siswa->nisn }}</span>
                             </div>
                             <div class="flex justify-between items-center">
-                                <span class="text-slate-500 font-medium text-[11px]">Nama:</span>
-                                <span class="font-bold text-slate-900 truncate max-w-[170px] text-[11px]">{{ $siswa->nama_siswa }}</span>
+                                <span class="text-slate-500 font-medium">Nama:</span>
+                                <span class="font-bold text-slate-900 truncate max-w-[160px]">{{ $siswa->nama_siswa }}</span>
                             </div>
-                            <div class="flex justify-between items-center mt-1 pt-1 border-t border-slate-100">
-                                <span class="text-slate-500 font-medium text-[11px]">Kelas:</span>
-                                <span class="font-semibold text-slate-900 text-[11px]">{{ $siswa->kelas->nama_kelas ?? '-' }}</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 font-medium">Kelas:</span>
+                                <span class="font-semibold text-slate-900">{{ $siswa->kelas->nama_kelas ?? '-' }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Footer No Meja -->
-                    <div class="text-[9px] text-slate-400 italic pt-1.5 border-t border-slate-200">
-                        *Harap tempel / letakkan nomor meja ini sesuai urutan kelas.
+                    <!-- Footer Instruksi Meja -->
+                    <div class="text-[7px] text-slate-500 font-semibold italic pt-1 border-t border-slate-300 bg-slate-100/50 py-0.5 rounded">
+                        Harap ditempel di bagian kanan atas meja peserta ujian.
                     </div>
                 </div>
 
             @empty
-                <div class="col-span-2 text-center py-10 text-slate-500 text-xs">
+                <div class="col-span-2 text-center py-10 text-slate-500 text-xs font-semibold">
                     Tidak ada data siswa yang ditemukan. Silakan pilih kelas terlebih dahulu, lalu klik "Tampilkan Kelas".
                 </div>
             @endforelse
@@ -180,5 +185,4 @@
     </div>
 
 </div>
-
 @endsection

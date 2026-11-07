@@ -12,6 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('soals', function (Blueprint $table) {
+            if (!Schema::hasColumn('soals', 'nomor_soal')) {
+                $table->integer('nomor_soal')->nullable();
+            }
+            if (!Schema::hasColumn('soals', 'gambar')) {
+                $table->string('gambar')->nullable();
+            }
             if (!Schema::hasColumn('soals', 'soal')) {
                 $table->text('soal')->nullable();
             }
@@ -39,7 +45,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('soals', function (Blueprint $table) {
-            //
+            $table->dropColumn(['nomor_soal', 'gambar', 'soal', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e']);
         });
     }
 };

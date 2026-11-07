@@ -42,12 +42,19 @@
             <!-- Header Sidebar -->
             <div class="h-16 flex items-center justify-between bg-slate-900 px-6 border-b border-slate-800 shrink-0">
                 <div class="flex items-center space-x-3 truncate">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
-                        <i class="fa-solid fa-laptop-code text-sm"></i>
-                    </div>
-                    <div class="flex flex-col truncate">
-                        <span class="text-white font-bold text-sm tracking-wide uppercase truncate">CAT / CBT ONLINE</span>
-                        <span class="text-[10px] text-emerald-400 font-semibold uppercase tracking-widest leading-none">Superadmin Center</span>
+                  <div class="flex items-center gap-3 truncate">
+                        <!-- Logo -->
+                        <img src="{{ asset('logo.png') }}" alt="Logo" class="w-12 h-12 object-contain shrink-0">
+                        
+                        <!-- Informasi Akun -->
+                        <div class="flex flex-col truncate">
+                            <span class="text-16px font-bold text-white truncate">
+                                {{ Auth::user()->name ?? 'Nama Pengguna' }}
+                            </span>
+                            <span class="text-[12px] text-slate-500 capitalize truncate">
+                                {{ Auth::user()->role ?? 'User' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white focus:outline-none">

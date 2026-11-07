@@ -66,8 +66,13 @@
                     </div>
 
                     <!-- Teks Pertanyaan Soal -->
-                    <div class="text-sm text-slate-900 font-medium leading-relaxed mb-6">
+                    <div class="text-sm text-slate-900 font-medium leading-relaxed mb-4">
                         <div id="teks-soal" class="prose max-w-none text-slate-900">Memuat soal...</div>
+                    </div>
+
+                    <!-- Wadah Gambar Soal (Jika ada) -->
+                    <div id="gambar-soal-container" class="mb-6 hidden">
+                        <img id="gambar-soal-el" src="" alt="Gambar Soal" class="max-h-64 rounded-lg border border-slate-200 object-contain shadow-xs">
                     </div>
 
                     <!-- Pilihan Opsi Jawaban -->
@@ -146,6 +151,17 @@
         document.getElementById('nomor-soal-aktif').textContent = index + 1;
         document.getElementById('teks-soal').innerHTML = soal.soal || soal.pertanyaan || 'Tidak ada teks soal.';
         document.getElementById('tipe-soal-label').textContent = soal.tipe ? soal.tipe.toUpperCase() : 'Pilihan Ganda';
+
+        // Menangani Render Gambar Soal Jika Ada
+        let containerGambar = document.getElementById('gambar-soal-container');
+        let elGambar = document.getElementById('gambar-soal-el');
+        if (soal.gambar) {
+            elGambar.src = "{{ asset('storage') }}/" + soal.gambar;
+            containerGambar.classList.remove('hidden');
+        } else {
+            elGambar.src = '';
+            containerGambar.classList.add('hidden');
+        }
 
         document.getElementById('ragu-ragu-checkbox').checked = !!raguSiswa[index];
 

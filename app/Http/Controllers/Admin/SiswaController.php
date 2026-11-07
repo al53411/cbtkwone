@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -25,7 +26,7 @@ class SiswaController extends Controller
     }
 
     /**
-     * Menampilkan daftar siswa (Menyediakan Filter Kelas & Pencarian Nama/NISN)
+     * Menampilkan daftar siswa (Menyediakan Filter Kelas & Pencarian Nama/NISN, Diurutkan berdasarkan kelas terkecil)
      */
     public function index(Request $request)
     {
@@ -39,7 +40,10 @@ class SiswaController extends Controller
         }
         $listKelas = $kelasQuery->orderBy('nama_kelas', 'asc')->get();
 
-        $query = Siswa::with('kelas');
+        // Menggunakan join ke tabel kelas agar bisa di-sort berdasarkan nama/tingkat kelas secara akurat
+        $query = Siswa::with('kelas')
+            ->select('siswas.*')
+            ->leftJoin('kelas', 'siswas.kelas_id', '=', 'kelas.id');
 
         if ($user && ($user->isGuru() || $user->role === 'guru' || $user->guru)) {
             $guru = $user->guru;
@@ -52,48 +56,55 @@ class SiswaController extends Controller
                 $allKelasIds = array_unique(array_merge($kelasWaliIds, $kelasPengampuIds));
             }
             if (!empty($allKelasIds)) {
-                $query->whereIn('kelas_id', $allKelasIds);
+                $query->whereIn('siswas.kelas_id', $allKelasIds);
             } else if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
                 $query->where(function($q) use ($sekolahId) {
-                    $q->where('sekolah_id', $sekolahId)
-                      ->orWhereNull('sekolah_id');
+                    $q->where('siswas.sekolah_id', $sekolahId)
+                      ->orWhereNull('siswas.sekolah_id');
                 });
             }
         } else {
             if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
                 $query->where(function($q) use ($sekolahId) {
-                    $q->where('sekolah_id', $sekolahId)
-                      ->orWhereNull('sekolah_id');
+                    $q->where('siswas.sekolah_id', $sekolahId)
+                      ->orWhereNull('siswas.sekolah_id');
                 });
             }
         }
 
         if ($request->filled('kelas_id')) {
-            $query->where('kelas_id', $request->kelas_id);
+            $query->where('siswas.kelas_id', $request->kelas_id);
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 if (Schema::hasColumn('siswas', 'nama_siswa')) {
-                    $q->where('nama_siswa', 'like', "%{$search}%");
+                    $q->where('siswas.nama_siswa', 'like', "%{$search}%");
                 } else {
-                    $q->where('nama_lengkap', 'like', "%{$search}%");
+                    $q->where('siswas.nama_lengkap', 'like', "%{$search}%");
                 }
-                $q->orWhere('nisn', 'like', "%{$search}%");
+                $q->orWhere('siswas.nisn', 'like', "%{$search}%");
             });
         }
 
-        $siswas = $query->paginate(10);
+        // URUTKAN BERDASARKAN KELAS TERKECIL, LALU NAMA SISWA
+        $siswas = $query->orderBy('kelas.nama_kelas', 'asc')
+                        ->orderBy('siswas.nama_siswa', 'asc')
+                        ->paginate(10)
+                        ->withQueryString();
 
         if ($siswas->isEmpty() && !$request->filled('search') && !$request->filled('kelas_id') && $user && ($user->isGuru() || $user->role === 'guru' || $user->guru) && $sekolahId) {
             $siswas = Siswa::with('kelas')
+                ->select('siswas.*')
+                ->leftJoin('kelas', 'siswas.kelas_id', '=', 'kelas.id')
                 ->where(function($q) use ($sekolahId) {
-                    $q->where('sekolah_id', $sekolahId)
-                      ->orWhereNull('sekolah_id');
+                    $q->where('siswas.sekolah_id', $sekolahId)
+                      ->orWhereNull('siswas.sekolah_id');
                 })
-                ->latest()
-                ->get();
+                ->orderBy('kelas.nama_kelas', 'asc')
+                ->orderBy('siswas.nama_siswa', 'asc')
+                ->paginate(10);
         }
 
         return view('admin.siswa.index', compact('siswas', 'listKelas'));
@@ -104,9 +115,9 @@ class SiswaController extends Controller
         $sekolahId = $this->getSekolahId();
 
         if ($sekolahId && Schema::hasColumn('kelas', 'sekolah_id')) {
-            $kelas = Kelas::where('sekolah_id', $sekolahId)->get();
+            $kelas = Kelas::where('sekolah_id', $sekolahId)->orderBy('nama_kelas', 'asc')->get();
         } else {
-            $kelas = Kelas::all();
+            $kelas = Kelas::orderBy('nama_kelas', 'asc')->get();
         }
 
         return view('admin.siswa.create', compact('kelas'));
@@ -192,9 +203,9 @@ class SiswaController extends Controller
         $siswa = $siswaQuery->findOrFail($id);
 
         if ($sekolahId && Schema::hasColumn('kelas', 'sekolah_id')) {
-            $kelas = Kelas::where('sekolah_id', $sekolahId)->get();
+            $kelas = Kelas::where('sekolah_id', $sekolahId)->orderBy('nama_kelas', 'asc')->get();
         } else {
-            $kelas = Kelas::all();
+            $kelas = Kelas::orderBy('nama_kelas', 'asc')->get();
         }
 
         return view('admin.siswa.edit', compact('siswa', 'kelas'));
@@ -456,9 +467,6 @@ class SiswaController extends Controller
         return $rows;
     }
 
-    /**
-     * Cetak kartu ujian untuk satu siswa tertentu atau fallback cetak semua
-     */
     public function cetakKartu($id = null)
     {
         $sekolahId = $this->getSekolahId();
@@ -469,19 +477,22 @@ class SiswaController extends Controller
         }
         $semuaKelas = $semuaKelasQuery->orderBy('nama_kelas', 'asc')->get();
 
-        $query = Siswa::with(['kelas', 'sekolah']);
+        $query = Siswa::with(['kelas', 'sekolah'])
+            ->select('siswas.*')
+            ->leftJoin('kelas', 'siswas.kelas_id', '=', 'kelas.id');
+
         if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
-            $query->where('sekolah_id', $sekolahId);
+            $query->where('siswas.sekolah_id', $sekolahId);
         }
 
         if (!$id || !is_numeric($id)) {
-            $siswas = $query->orderBy('kelas_id', 'asc')
-                            ->orderBy('nama_siswa', 'asc')
+            $siswas = $query->orderBy('kelas.nama_kelas', 'asc')
+                            ->orderBy('siswas.nama_siswa', 'asc')
                             ->get();
             $kelasPilih = null;
             $namaKelasDipilih = 'Semua Kelas';
         } else {
-            $siswa = $query->find($id);
+            $siswa = Siswa::with(['kelas', 'sekolah'])->find($id);
             if (!$siswa) {
                 return redirect()->route('admin.siswa.index')->with('error', 'Data siswa tidak ditemukan.');
             }
@@ -493,9 +504,6 @@ class SiswaController extends Controller
         return view('admin.siswa.cetak-kartu', compact('siswas', 'semuaKelas', 'kelasPilih', 'namaKelasDipilih'));
     }
 
-    /**
-     * Cetak kartu ujian massal berdasarkan kelas
-     */
     public function cetakKartuKelas(Request $request)
     {
         $request->validate([
@@ -531,28 +539,30 @@ class SiswaController extends Controller
         return view('admin.siswa.cetak-kartu', compact('siswas', 'semuaKelas', 'kelasPilih', 'namaKelasDipilih'));
     }
 
-    /**
-     * Menampilkan halaman khusus cetak tanpa layout admin
-     */
     public function printPreview(Request $request)
     {
         $sekolahId = $this->getSekolahId();
         $kelasId = $request->kelas_id;
 
-        $query = Siswa::with(['kelas', 'sekolah']);
+        $query = Siswa::with(['kelas', 'sekolah'])
+            ->select('siswas.*')
+            ->leftJoin('kelas', 'siswas.kelas_id', '=', 'kelas.id');
+
         if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
-            $query->where('sekolah_id', $sekolahId);
+            $query->where('siswas.sekolah_id', $sekolahId);
         }
 
         if ($kelasId) {
-            $query->where('kelas_id', $kelasId);
+            $query->where('siswas.kelas_id', $kelasId);
             $kelasObj = Kelas::find($kelasId);
             $namaKelasDipilih = $kelasObj ? $kelasObj->nama_kelas : '';
         } else {
             $namaKelasDipilih = 'Semua Kelas';
         }
 
-        $siswas = $query->orderBy('nama_siswa', 'asc')->get();
+        $siswas = $query->orderBy('kelas.nama_kelas', 'asc')
+                        ->orderBy('siswas.nama_siswa', 'asc')
+                        ->get();
 
         return view('admin.siswa.print-pure', compact('siswas', 'namaKelasDipilih'));
     }

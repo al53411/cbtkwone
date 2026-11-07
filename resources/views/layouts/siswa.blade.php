@@ -15,9 +15,7 @@
     <!-- Top Navbar Minimalis (Hanya Nama Aplikasi / Status Logout Sederhana) -->
     <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
         <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                CBT
-            </div>
+          <img src="{{ asset('logo.png') }}" alt="Logo CBT" class="w-12 h-12 rounded-xl object-cover shadow-sm">
             <div>
                 <span class="text-xs font-bold text-slate-800 block">CBT Online Siswa</span>
                 <span class="text-[10px] text-slate-500">Mode Ujian Terkunci</span>

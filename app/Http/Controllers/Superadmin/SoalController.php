@@ -9,6 +9,7 @@ use App\Models\Kelas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class SoalController extends Controller
 {
@@ -16,6 +17,12 @@ class SoalController extends Controller
     {
         $mapels = Mapel::all();
         $kelass = Kelas::all();
+
+        // Mengambil daftar seluruh kode soal unik langsung dari database untuk pilihan datalist
+        $kodeSoals = Soal::select('kode_soal')
+            ->whereNotNull('kode_soal')
+            ->distinct()
+            ->pluck('kode_soal');
 
         $query = Soal::with(['mapel', 'kelas']);
 
@@ -40,16 +47,27 @@ class SoalController extends Controller
 
         $soals = $query->latest()->paginate(10)->withQueryString();
 
-        // Data Statistik untuk Ringkasan Atas
-        $totalPaket  = Soal::count();
-        $totalPg     = Soal::where('jenis_soal', 'pg')->count(); 
-        $totalEsai   = Soal::where('jenis_soal', 'esai')->count();
-        $totalMapel  = Mapel::has('soals')->count();
+        // Data Statistik untuk Ringkasan Atas (Aman dari error kolom tidak ditemukan)
+        $totalPaket = Soal::count();
+        
+        if (Schema::hasColumn('soals', 'tipe')) {
+            $totalPg   = Soal::where('tipe', 'pg')->count();
+            $totalEsai = Soal::where('tipe', 'esai')->count();
+        } elseif (Schema::hasColumn('soals', 'jenis_soal')) {
+            $totalPg   = Soal::where('jenis_soal', 'pg')->count();
+            $totalEsai = Soal::where('jenis_soal', 'esai')->count();
+        } else {
+            $totalPg   = Soal::count();
+            $totalEsai = 0;
+        }
+
+        $totalMapel = Mapel::has('soals')->count();
 
         return view('superadmin.soal.index', compact(
             'soals', 
             'mapels', 
             'kelass', 
+            'kodeSoals', // Ditambahkan agar terbaca di view index
             'totalPaket', 
             'totalPg', 
             'totalEsai', 
@@ -81,6 +99,7 @@ class SoalController extends Controller
             'mapel_id'      => $request->mapel_id,
             'kelas_id'      => $request->kelas_id,
             'kode_soal'     => 'SOAL-' . strtoupper(uniqid()),
+            'nomor_soal'    => $request->nomor_soal ?? null,
             'soal'          => $request->soal,
             'jumlah_opsi'   => $jumlahOpsi,
             'option_a'      => $request->option_a,
@@ -120,6 +139,7 @@ class SoalController extends Controller
             'mapel_id'      => $request->mapel_id,
             'kelas_id'      => $request->kelas_id,
             'soal'          => $request->soal,
+            'nomor_soal'    => $request->nomor_soal ?? $soal->nomor_soal,
             'jumlah_opsi'   => $jumlahOpsi,
             'option_a'      => $request->option_a,
             'option_b'      => $request->option_b,
@@ -135,6 +155,12 @@ class SoalController extends Controller
     public function destroy(string $id)
     {
         $soal = Soal::findOrFail($id);
+        
+        // Hapus file gambar fisik jika ada
+        if ($soal->gambar && Storage::disk('public')->exists($soal->gambar)) {
+            Storage::disk('public')->delete($soal->gambar);
+        }
+
         $soal->delete();
 
         return redirect()->route('superadmin.soal.index')->with('success', 'Soal berhasil dihapus!');
@@ -153,6 +179,72 @@ class SoalController extends Controller
     public function import()
     {
         return view('superadmin.soal.import');
+    }
+
+    /**
+     * Menampilkan halaman upload gambar soal terpisah
+     */
+    public function showUploadGambar()
+    {
+        $mapels = Mapel::orderBy('nama_mapel', 'asc')->get();
+        $kelass = Kelas::orderBy('nama_kelas', 'asc')->get();
+
+        $kodeSoals = Soal::select('kode_soal')
+            ->whereNotNull('kode_soal')
+            ->groupBy('kode_soal')
+            ->pluck('kode_soal');
+
+        return view('superadmin.soal.upload-gambar', compact('mapels', 'kelass', 'kodeSoals'));
+    }
+
+    /**
+     * Memproses penyimpanan file gambar ke soal berdasarkan Kode Soal, Kelas, dan Nomor Soal
+     */
+    public function processUploadGambar(Request $request)
+    {
+        $request->validate([
+            'kode_soal'  => 'required',
+            'kelas_id'   => 'required',
+            'nomor_soal' => 'required|numeric',
+            'gambar'     => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ], [
+            'kode_soal.required'  => 'Kode soal wajib diisi!',
+            'kelas_id.required'   => 'Kelas wajib dipilih!',
+            'nomor_soal.required' => 'Nomor soal wajib diisi!',
+            'gambar.required'     => 'File gambar wajib diunggah!',
+            'gambar.image'        => 'File harus berupa gambar valid.',
+            'gambar.max'          => 'Ukuran gambar maksimal 2MB.',
+        ]);
+
+        $query = Soal::where('kode_soal', $request->kode_soal)
+                     ->where('kelas_id', $request->kelas_id);
+
+        if (Schema::hasColumn('soals', 'nomor_soal')) {
+            $soal = $query->where('nomor_soal', $request->nomor_soal)->first();
+        } else {
+            $soal = $query->orderBy('id', 'asc')
+                         ->skip($request->nomor_soal - 1)
+                         ->take(1)
+                         ->first();
+        }
+
+        if (!$soal) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', "Soal tidak ditemukan untuk Kode: {$request->kode_soal} pada kelas tersebut dengan Nomor Soal: {$request->nomor_soal}");
+        }
+
+        if ($soal->gambar && Storage::disk('public')->exists($soal->gambar)) {
+            Storage::disk('public')->delete($soal->gambar);
+        }
+
+        $path = $request->file('gambar')->store('soal', 'public');
+
+        $soal->update([
+            'gambar' => $path
+        ]);
+
+        return redirect()->back()->with('success', "Gambar berhasil diunggah untuk Soal No. {$request->nomor_soal} ({$request->kode_soal})!");
     }
 
     /**
@@ -196,7 +288,7 @@ class SoalController extends Controller
             $skipped = 0;
 
             DB::transaction(function () use ($rows, $header, &$imported, &$skipped) {
-                foreach ($rows as $row) {
+                foreach ($rows as $indexRow => $row) {
                     if (empty(array_filter($row))) continue;
                     
                     $dataRow = [];
@@ -204,8 +296,31 @@ class SoalController extends Controller
                         $dataRow[$colName] = isset($row[$index]) ? trim((string)$row[$index]) : '';
                     }
 
-                    $mapelId      = $dataRow['mapel_id'] ?? null;
-                    $kelasId      = $dataRow['kelas_id'] ?? null;
+                    // --- PENANGANAN FLEKSIBEL MAPEL (BISA ID ATAU NAMA) ---
+                    $rawMapel = $dataRow['mapel_id'] ?? $dataRow['mapel'] ?? null;
+                    $mapelId = null;
+                    if (!empty($rawMapel)) {
+                        if (is_numeric($rawMapel)) {
+                            $mapelId = (int) $rawMapel;
+                        } else {
+                            $mapel = Mapel::where('nama_mapel', 'like', "%{$rawMapel}%")->first();
+                            $mapelId = $mapel ? $mapel->id : null;
+                        }
+                    }
+
+                    // --- PENANGANAN FLEKSIBEL KELAS (BISA ID ATAU NAMA) ---
+                    $rawKelas = $dataRow['kelas_id'] ?? $dataRow['kelas'] ?? null;
+                    $kelasId = null;
+                    if (!empty($rawKelas)) {
+                        if (is_numeric($rawKelas)) {
+                            $kelasId = (int) $rawKelas;
+                        } else {
+                            $kelas = Kelas::where('nama_kelas', 'like', "%{$rawKelas}%")->first();
+                            $kelasId = $kelas ? $kelas->id : null;
+                        }
+                    }
+
+                    $nomorSoal    = isset($dataRow['nomor_soal']) && is_numeric($dataRow['nomor_soal']) ? (int)$dataRow['nomor_soal'] : ($indexRow + 1);
                     $pertanyaan   = $dataRow['soal'] ?? $dataRow['pertanyaan'] ?? '';
                     $jumlahOpsi   = isset($dataRow['jumlah_opsi']) && is_numeric($dataRow['jumlah_opsi']) ? (int)$dataRow['jumlah_opsi'] : 5;
                     $kunciJawaban = strtoupper($dataRow['kunci_jawaban'] ?? $dataRow['kunci'] ?? 'A');
@@ -221,6 +336,7 @@ class SoalController extends Controller
                             'mapel_id'      => $mapelId,
                             'kelas_id'      => $kelasId,
                             'kode_soal'     => 'SOAL-' . strtoupper(uniqid()),
+                            'nomor_soal'    => $nomorSoal,
                             'soal'          => $pertanyaan,
                             'jumlah_opsi'   => $jumlahOpsi,
                             'option_a'      => $optA,
@@ -280,7 +396,7 @@ class SoalController extends Controller
             if (($index = $zip->locateName('xl/sharedStrings.xml')) !== FALSE) {
                 $xml = simplexml_load_string($zip->getFromIndex($index));
                 foreach ($xml->si as $val) {
-                    $sharedStrings[] = (string)$val->t;
+                    $sharedStrings[] = (string)($val->t ?? $val->r->t ?? '');
                 }
             }
             if (($index = $zip->locateName('xl/worksheets/sheet1.xml')) !== FALSE) {
@@ -293,7 +409,7 @@ class SoalController extends Controller
                         if (isset($cell->v)) {
                             $v = (string)$cell->v;
                             if ($t == 's') {
-                                $val = $sharedStrings[$v] ?? '';
+                                $val = $sharedStrings[(int)$v] ?? '';
                             } else {
                                 $val = $v;
                             }
