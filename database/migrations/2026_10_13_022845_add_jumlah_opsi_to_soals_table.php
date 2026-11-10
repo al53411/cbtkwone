@@ -9,12 +9,10 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
+    public function up(): void
     {
-        Schema::table('soals', function (Blueprint $table) {
-            if (!Schema::hasColumn('soals', 'jumlah_opsi')) {
-                $table->integer('jumlah_opsi')->default(5)->after('tipe'); // Default 5 opsi (A-E)
-            }
+        Schema::table('ujians', function (Blueprint $table) {
+            $table->text('aturan_ujian')->nullable();
         });
     }
 

@@ -21,9 +21,9 @@ class UjianController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama_ujian', 'LIKE', "%{$search}%")
-                  ->orWhereHas('mapel', function ($qm) use ($search) {
-                      $qm->where('nama_mapel', 'LIKE', "%{$search}%");
-                  });
+                    ->orWhereHas('mapel', function ($qm) use ($search) {
+                        $qm->where('nama_mapel', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
@@ -39,7 +39,7 @@ class UjianController extends Controller
 
         // Mengambil data dengan pagination dan mempertahankan parameter query di URL
         $ujians = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
-        
+
         $mapels = Mapel::where('status', 'aktif')->get();
         $kelases = Kelas::all();
 
@@ -59,8 +59,8 @@ class UjianController extends Controller
     {
         $validated = $this->validateRequest($request);
 
-        $tokenUjian = !empty($validated['token']) 
-            ? strtoupper($validated['token']) 
+        $tokenUjian = !empty($validated['token'])
+            ? strtoupper($validated['token'])
             : strtoupper(Str::random(6));
 
         // Memaksa ekspresi boolean murni untuk PostgreSQL menggunakan DB::raw

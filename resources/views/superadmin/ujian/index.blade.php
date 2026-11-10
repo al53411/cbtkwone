@@ -10,7 +10,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
             <h1 class="text-xl font-bold text-slate-800 tracking-tight">Pengaturan & Jadwal Ujian</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Kelola jadwal pelaksanaan, token, durasi, dan konfigurasi ujian CAT.</p>
+            <p class="text-xs text-slate-500 mt-0.5">Kelola jadwal pelaksanaan, token, durasi, aturan, dan konfigurasi ujian CAT.</p>
         </div>
         <div>
             <button type="button" onclick="openModalCreate()" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-sm transition space-x-2">
@@ -146,8 +146,9 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center space-x-2">
+                                        <!-- MENGGUNAKAN BASE64 AGAR DATA AMAN DARI ERROR ENTER/KUTIP -->
                                         <button type="button" 
-                                            data-ujian="{{ e(json_encode($item)) }}"
+                                            data-ujian="{{ base64_encode(json_encode($item)) }}"
                                             onclick="editUjianFromBtn(this)"
                                             class="px-2.5 py-1 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition font-medium">
                                             Edit
@@ -183,7 +184,7 @@
 
 <!-- MODAL FORM INPUT (TAMBAH / EDIT UJIAN) -->
 <div id="modalUjian" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all my-8">
         
         <!-- Modal Header -->
         <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
@@ -276,6 +277,15 @@
                 </select>
             </div>
 
+            <!-- INPUT ATURAN / TATA TERTIB UJIAN -->
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Aturan / Tata Tertib Ujian (Opsional)</label>
+                <textarea id="aturan_ujian" name="aturan_ujian" rows="3" 
+                    placeholder="Contoh:&#10;1. Dilarang membuka tab lain atau keluar fullscreen.&#10;2. Wajib menggunakan NISN dan Password yang valid."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">{{ old('aturan_ujian') }}</textarea>
+                <p class="text-[10px] text-slate-400 mt-0.5">Jika dikosongkan, sistem akan otomatis menampilkan aturan standar default saat siswa memasukkan token.</p>
+            </div>
+
             <!-- Opsi Checkbox Konfigurasi Acak -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <label class="flex items-center space-x-2 cursor-pointer select-none">
@@ -320,6 +330,7 @@
         document.getElementById('ujian_id').value = "";
         document.getElementById('acak_soal').checked = false;
         document.getElementById('acak_jawaban').checked = false;
+        document.getElementById('aturan_ujian').value = "";
         modalTitle.innerText = "Tambah Jadwal Ujian";
         generateRandomToken();
         modal.classList.remove('hidden');
@@ -328,13 +339,15 @@
     function editUjianFromBtn(button) {
         const rawData = button.getAttribute('data-ujian');
         if (rawData) {
-            const data = JSON.parse(rawData);
+            // MEN-DECODE BASE64 MENJADI TEKS DAN MEM-PARSE-NYA KE JSON
+            const data = JSON.parse(decodeURIComponent(escape(window.atob(rawData))));
             editUjian(data);
         }
     }
 
     function editUjian(data) {
         form.reset();
+        // Pastikan rute update mengarah ke ID yang benar
         form.action = '/superadmin/ujian/' + data.id;
         formMethod.value = "PUT";
         modalTitle.innerText = "Edit Jadwal Ujian";
@@ -346,6 +359,9 @@
         document.getElementById('durasi').value = data.durasi || '';
         document.getElementById('token').value = data.token || '';
         document.getElementById('status').value = data.status || 'draft';
+        
+        // Memasukkan data aturan ujian ke textarea modal dengan aman
+        document.getElementById('aturan_ujian').value = data.aturan_ujian || '';
 
         // Checkbox acak soal & jawaban
         document.getElementById('acak_soal').checked = data.acak_soal == 1 || data.acak_soal === true;

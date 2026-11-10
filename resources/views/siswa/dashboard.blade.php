@@ -16,6 +16,25 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        /* Custom Scrollbar for Textarea */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 
@@ -95,87 +114,131 @@
             </div>
         @endif
 
-        <!-- Form Input Token Ujian -->
-        <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-300 shadow-xs space-y-5">
-            <div>
-                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Mulai Mengerjakan Ujian</h2>
-                <p class="text-xs text-slate-600 mt-0.5">Masukkan token ujian unik yang diberikan oleh pengawas atau
-                    proktor ruang ujian Anda.</p>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <form action="{{ route('siswa.konfirmasi') }}" method="POST" class="space-y-4">
-                @csrf
+            <!-- KOLOM KIRI: Form Input Token & Aturan Ujian -->
+            <div class="lg:col-span-7 bg-white p-6 md:p-8 rounded-2xl border border-slate-300 shadow-xs space-y-5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Token
-                        Ujian</label>
-                    <div class="relative max-w-md">
-                        <span
-                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 z-10">
-                            <i class="fa-solid fa-key"></i>
-                        </span>
-                        <input type="text" name="token" required value="{{ old('token') }}" placeholder="CONTOH: A7X9M2"
-                            class="w-full text-sm font-mono uppercase tracking-widest rounded-xl border border-slate-300 bg-slate-50 pl-11 pr-4 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-700 focus:ring-1 focus:ring-blue-700 transition @error('token') border-rose-500 bg-rose-50/30 @enderror"
-                            maxlength="10" autocomplete="off">
-                    </div>
-                    @error('token')
-                        <span class="text-xs text-rose-600 mt-1.5 block font-medium">{{ $message }}</span>
-                    @enderror
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Mulai Mengerjakan Ujian</h2>
+                    <p class="text-xs text-slate-600 mt-0.5">Silakan baca tata tertib, masukkan token, lalu centang
+                        persetujuan.</p>
                 </div>
 
-                <button type="submit"
-                    class="px-6 py-3 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold text-xs rounded-xl transition shadow-xs inline-flex items-center gap-2 cursor-pointer">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk Ujian Sekarang
-                </button>
-            </form>
-        </div>
+                <form action="{{ route('siswa.konfirmasi') }}" method="POST" class="space-y-6">
+                    @csrf
 
-        <!-- Informasi Daftar Ujian Aktif Hari Ini -->
-        <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-300 shadow-xs space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Jadwal Ujian Aktif</h2>
-                <span class="text-[11px] text-slate-500 font-medium">Real-time status</span>
+                    <!-- Tata Tertib Area -->
+                    <!-- Tata Tertib Area -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            <i class="fa-solid fa-clipboard-list text-blue-600 mr-1"></i> Tata Tertib Ujian
+                        </label>
+                        <div
+                            class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-700 h-32 overflow-y-auto custom-scrollbar leading-relaxed">
+
+                            {{-- LOGIKA DINAMIS: Menampilkan aturan dari ujian yang aktif, atau pengaturan global, atau
+                            default --}}
+                            @if(isset($aturan_global) && $aturan_global != '')
+                                {!! nl2br(e($aturan_global)) !!}
+
+                            @elseif(isset($ujianAktif) && $ujianAktif->count() > 0 && !empty($ujianAktif->first()->aturan_ujian))
+                                {!! nl2br(e($ujianAktif->first()->aturan_ujian)) !!}
+
+                            @else
+                                1. Peserta ujian wajib menjunjung tinggi kejujuran.<br>
+                                2. Dilarang membuka tab lain, browser, atau aplikasi tambahan selama ujian berlangsung
+                                (sistem layar penuh/fullscreen akan aktif).<br>
+                                3. Jika keluar dari layar ujian lebih dari batas yang ditentukan, sistem otomatis menyimpan
+                                jawaban dan mengakhiri sesi ujian Anda.<br>
+                                4. Waktu pengerjaan akan terus berjalan meskipun Anda keluar sistem atau perangkat mati.<br>
+                                5. Dilarang mendokumentasikan atau menyebarkan soal ujian dalam bentuk apapun.<br>
+                                6. Pastikan koneksi internet stabil sebelum mulai mengerjakan.
+                            @endif
+
+                        </div>
+                    </div>
+
+                    <!-- Input Token -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Token
+                            Ujian</label>
+                        <div class="relative max-w-sm">
+                            <span
+                                class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 z-10">
+                                <i class="fa-solid fa-key"></i>
+                            </span>
+                            <input type="text" name="token" required value="{{ old('token') }}"
+                                placeholder="CONTOH: A7X9M2"
+                                class="w-full text-sm font-mono uppercase tracking-widest rounded-xl border border-slate-300 bg-slate-50 pl-11 pr-4 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-700 focus:ring-1 focus:ring-blue-700 transition @error('token') border-rose-500 bg-rose-50/30 @enderror"
+                                maxlength="10" autocomplete="off">
+                        </div>
+                        @error('token')
+                            <span class="text-xs text-rose-600 mt-1.5 block font-medium">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Checkbox Persetujuan -->
+                    <div class="flex items-start gap-3 p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+                        <div class="flex items-center h-5 mt-0.5">
+                            <input id="persetujuan" type="checkbox" required onchange="toggleSubmitButton()"
+                                class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+                        </div>
+                        <label for="persetujuan"
+                            class="text-xs text-slate-700 cursor-pointer select-none leading-relaxed">
+                            Saya telah membaca dan memahami tata tertib di atas. Saya bersedia menaati semua peraturan
+                            dan menerima sanksi apabila melakukan pelanggaran selama ujian berlangsung.
+                        </label>
+                    </div>
+
+                    <!-- Tombol Submit (Disabled by default) -->
+                    <button type="submit" id="btn-submit" disabled
+                        class="px-6 py-3 w-full sm:w-auto justify-center bg-slate-300 text-slate-500 font-bold text-xs rounded-xl transition shadow-xs inline-flex items-center gap-2 cursor-not-allowed">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Masuk Ujian Sekarang
+                    </button>
+                </form>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-700">
-                    <thead
-                        class="bg-slate-100 text-slate-700 uppercase tracking-wider font-bold border-b border-slate-300">
-                        <tr>
-                            <th class="py-3 px-4">Nama Ujian</th>
-                            <th class="py-3 px-4">Mata Pelajaran</th>
-                            <th class="py-3 px-4 text-center">Durasi</th>
-                            <th class="py-3 px-4 text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 font-medium">
-                        @forelse ($ujianAktif as $ujian)
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="py-3.5 px-4 font-bold text-slate-900">{{ $ujian->nama_ujian }}</td>
-                                <td class="py-3.5 px-4">
+            <!-- KOLOM KANAN: Informasi Ujian Aktif -->
+            <div class="lg:col-span-5 bg-white p-6 md:p-8 rounded-2xl border border-slate-300 shadow-xs space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Jadwal Ujian Aktif</h2>
+                    <span class="text-[11px] text-slate-500 font-medium">Real-time status</span>
+                </div>
+
+                <div class="space-y-3">
+                    @forelse ($ujianAktif as $ujian)
+                        <div
+                            class="p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-white hover:border-blue-300 transition group">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-700 transition">
+                                    {{ $ujian->nama_ujian }}
+                                </h3>
+                                <span
+                                    class="px-2 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded text-[10px] font-extrabold uppercase tracking-wide">
+                                    Aktif
+                                </span>
+                            </div>
+                            <div class="flex flex-col gap-1.5 text-xs text-slate-600">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-book w-4 text-center text-slate-400"></i>
                                     <span
-                                        class="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md font-semibold">
-                                        {{ $ujian->mapel->nama_mapel ?? '-' }}
-                                    </span>
-                                </td>
-                                <td class="py-3.5 px-4 text-center text-slate-800 font-semibold">{{ $ujian->durasi ?? '-' }}
-                                    Menit</td>
-                                <td class="py-3.5 px-4 text-center">
-                                    <span
-                                        class="px-2.5 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-md font-extrabold uppercase tracking-wide">
-                                        Aktif
-                                    </span>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" class="py-8 text-center text-slate-500 font-normal italic">
-                                    Belum ada jadwal ujian yang aktif saat ini.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                        class="font-semibold text-emerald-700">{{ $ujian->mapel->nama_mapel ?? '-' }}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-clock w-4 text-center text-slate-400"></i>
+                                    <span>Durasi: <b class="text-slate-700">{{ $ujian->durasi ?? '-' }} Menit</b></span>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div
+                            class="py-8 text-center text-slate-500 text-xs italic bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                            Belum ada jadwal ujian yang aktif untuk kelas Anda saat ini.
+                        </div>
+                    @endforelse
+                </div>
             </div>
+
         </div>
 
     </main>
@@ -185,6 +248,25 @@
         &copy; {{ date('Y') }} Sistem CBT Sekolah &bull; Hak Cipta Dilindungi.
     </footer>
 
+    <!-- SCRIPT UNTUK TOGGLE TOMBOL SUBMIT -->
+    <script>
+        function toggleSubmitButton() {
+            const checkbox = document.getElementById('persetujuan');
+            const btnSubmit = document.getElementById('btn-submit');
+
+            if (checkbox.checked) {
+                // Aktifkan Tombol
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                btnSubmit.classList.add('bg-blue-700', 'hover:bg-blue-800', 'active:bg-blue-900', 'text-white', 'cursor-pointer');
+            } else {
+                // Nonaktifkan Tombol
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+                btnSubmit.classList.remove('bg-blue-700', 'hover:bg-blue-800', 'active:bg-blue-900', 'text-white', 'cursor-pointer');
+            }
+        }
+    </script>
 </body>
 
 </html>
