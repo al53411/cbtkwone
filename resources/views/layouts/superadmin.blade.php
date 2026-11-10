@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Superadmin CAT Online')</title>
-    
+
     <!-- CSS & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,13 +18,16 @@
             width: 5px;
             height: 5px;
         }
+
         ::-webkit-scrollbar-track {
             background: #0f172a;
         }
+
         ::-webkit-scrollbar-thumb {
             background: #334155;
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: #10b981;
         }
@@ -42,10 +45,10 @@
             <!-- Header Sidebar -->
             <div class="h-16 flex items-center justify-between bg-slate-900 px-6 border-b border-slate-800 shrink-0">
                 <div class="flex items-center space-x-3 truncate">
-                  <div class="flex items-center gap-3 truncate">
+                    <div class="flex items-center gap-3 truncate">
                         <!-- Logo -->
                         <img src="{{ asset('logo.png') }}" alt="Logo" class="w-12 h-12 object-contain shrink-0">
-                        
+
                         <!-- Informasi Akun -->
                         <div class="flex flex-col truncate">
                             <span class="text-16px font-bold text-white truncate">
@@ -64,12 +67,13 @@
 
             <!-- Navigasi Menu Sidebar -->
             <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-                
+
                 <!-- ========================================== -->
                 <!-- KELOMPOK 1: PUSAT MONITORING               -->
                 <!-- ========================================== -->
                 <div>
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Pusat Monitoring</p>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Pusat Monitoring
+                    </p>
                     <div class="space-y-1">
                         <a href="{{ route('superadmin.dashboard') }}"
                             class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ request()->routeIs('superadmin.dashboard') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
@@ -78,9 +82,9 @@
                         </a>
 
                         <a href="{{ route('superadmin.ujian.index') }}"
-                                    class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ request()->routeIs('superadmin.ujian.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
-                                    <i class="fa-solid fa-tower-broadcast w-5 text-center text-sm text-amber-400"></i>
-                                    <span class="text-xs">Ujian Live Realtime</span>
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ request()->routeIs('superadmin.ujian.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i class="fa-solid fa-tower-broadcast w-5 text-center text-sm text-amber-400"></i>
+                            <span class="text-xs">Ujian Live Realtime</span>
                         </a>
                     </div>
                 </div>
@@ -89,9 +93,10 @@
                 <!-- KELOMPOK 2: DATA INSTANSI & USER           -->
                 <!-- ========================================== -->
                 <div>
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Data Instansi & User</p>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Data Instansi &
+                        User</p>
                     <div class="space-y-1">
-                        
+
                         <!-- Dropdown Kelola Sekolah -->
                         @php
                             $isSekolahActive = request()->routeIs('superadmin.sekolah.*', 'superadmin.kelas.*');
@@ -100,7 +105,8 @@
                             <button onclick="toggleDropdown('dropdown-sekolah', 'arrow-sekolah')"
                                 class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition group focus:outline-none {{ $isSekolahActive ? 'text-white font-medium bg-slate-900/80' : 'text-slate-400' }}">
                                 <div class="flex items-center space-x-3">
-                                    <i class="fa-solid fa-school w-5 text-center text-sm {{ $isSekolahActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400' }} transition"></i>
+                                    <i
+                                        class="fa-solid fa-school w-5 text-center text-sm {{ $isSekolahActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400' }} transition"></i>
                                     <span class="text-xs">Sekolah & Kelas</span>
                                 </div>
                                 <i id="arrow-sekolah"
@@ -128,7 +134,8 @@
                             <button onclick="toggleDropdown('dropdown-proktor', 'arrow-proktor')"
                                 class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-slate-900 hover:text-white transition group focus:outline-none {{ $isKepsekActive ? 'text-white font-medium bg-slate-900/80' : 'text-slate-400' }}">
                                 <div class="flex items-center space-x-3">
-                                    <i class="fa-solid fa-user-shield w-5 text-center text-sm {{ $isKepsekActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400' }} transition"></i>
+                                    <i
+                                        class="fa-solid fa-user-shield w-5 text-center text-sm {{ $isKepsekActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400' }} transition"></i>
                                     <span class="text-xs">Akun Proktor / Admin</span>
                                 </div>
                                 <i id="arrow-proktor"
@@ -155,18 +162,18 @@
                 <!-- KELOMPOK 3: BANK SOAL & MATERI             -->
                 <!-- ========================================== -->
                 <div>
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Bank Soal & Materi</p>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Bank Soal &
+                        Materi</p>
                     <div class="space-y-1">
-                        <a href="{{ route('superadmin.soal.index') }}"
-                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('superadmin.soal.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
-                            <i class="fa-solid fa-file-signature w-5 text-center text-sm text-indigo-400"></i>
-                            <span class="text-xs">Master Bank Soal</span>
-                        </a>
-
                         <a href="{{ route('superadmin.mapel.index') }}"
                             class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('superadmin.mapel.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
                             <i class="fa-solid fa-book-bookmark w-5 text-center text-sm text-sky-400"></i>
                             <span class="text-xs">Mata Pelajaran</span>
+                        </a>
+                        <a href="{{ route('superadmin.soal.index') }}"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('superadmin.soal.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i class="fa-solid fa-file-signature w-5 text-center text-sm text-indigo-400"></i>
+                            <span class="text-xs">Master Bank Soal</span>
                         </a>
                     </div>
                 </div>
@@ -175,7 +182,8 @@
                 <!-- KELOMPOK 4: HASIL & LAPORAN                -->
                 <!-- ========================================== -->
                 <div>
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hasil & Laporan</p>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hasil & Laporan
+                    </p>
                     <div class="space-y-1">
                         <a href="#"
                             class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
@@ -189,7 +197,8 @@
                 <!-- KELOMPOK 5: AKSES ROLE & SIMULASI          -->
                 <!-- ========================================== -->
                 <div>
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Akses Role & Simulasi</p>
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Akses Role &
+                        Simulasi</p>
                     <div class="space-y-1">
                         <a href="#"
                             class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
@@ -233,7 +242,8 @@
         <div class="flex-1 flex flex-col overflow-hidden min-w-0">
 
             <!-- Top Header / Navbar -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10 shrink-0 shadow-xs">
+            <header
+                class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10 shrink-0 shadow-xs">
                 <div class="flex items-center space-x-4">
                     <button onclick="toggleSidebar()"
                         class="p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none md:hidden">
@@ -243,8 +253,8 @@
                     <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
                         <span class="font-bold text-emerald-600">CAT ONLINE</span>
                         <i class="fa-solid fa-chevron-right text-[10px] text-gray-300"></i>
-                        <span class="font-medium text-gray-700"> 
-                            @hasSection('header') 
+                        <span class="font-medium text-gray-700">
+                            @hasSection('header')
                                 @yield('header')
                             @else
                                 @yield('title', 'Dashboard Monitoring')
@@ -259,9 +269,11 @@
                         <span class="text-xs font-bold text-slate-800 leading-tight">
                             {{ Auth::user()->name ?? 'Super Admin' }}
                         </span>
-                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Superadmin CAT Center</span>
+                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Superadmin CAT
+                            Center</span>
                     </div>
-                    <div class="w-9 h-9 rounded-xl bg-slate-900 text-emerald-400 border border-slate-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                    <div
+                        class="w-9 h-9 rounded-xl bg-slate-900 text-emerald-400 border border-slate-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
                         {{ strtoupper(substr(Auth::user()->name ?? 'S', 0, 1)) }}
                     </div>
                 </div>
@@ -277,61 +289,61 @@
 
     <!-- SCRIPT INTERAKTIF & SWAL NOTIFICATION -->
     <script>
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
 
-    function toggleSidebar() {
-        if (sidebar.classList.contains('-translate-x-full')) {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-        } else {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
+        function toggleSidebar() {
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
         }
-    }
 
-    function toggleDropdown(id, arrowId) {
-        const dropdown = document.getElementById(id);
-        const arrow = document.getElementById(arrowId);
+        function toggleDropdown(id, arrowId) {
+            const dropdown = document.getElementById(id);
+            const arrow = document.getElementById(arrowId);
 
-        if (dropdown.classList.contains('hidden')) {
-            dropdown.classList.remove('hidden');
-            arrow.classList.add('rotate-180');
-        } else {
-            dropdown.classList.add('hidden');
-            arrow.classList.remove('rotate-180');
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                arrow.classList.add('rotate-180');
+            } else {
+                dropdown.classList.add('hidden');
+                arrow.classList.remove('rotate-180');
+            }
         }
-    }
 
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 768) {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.add('hidden');
-        } else {
-            sidebar.classList.add('-translate-x-full');
-        }
-    });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
 
-    // Alert Flash Notification via SweetAlert2
-    @if(session('success'))
-    Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: @json(session('success')),
-        showConfirmButton: false,
-        timer: 2000,
-        customClass: { popup: 'rounded-2xl' }
-    });
-    @endif
+        // Alert Flash Notification via SweetAlert2
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: @json(session('success')),
+                showConfirmButton: false,
+                timer: 2000,
+                customClass: { popup: 'rounded-2xl' }
+            });
+        @endif
 
-    @if(session('error'))
-    Swal.fire({
-        icon: 'error',
-        title: 'Terjadi Kesalahan',
-        text: @json(session('error')),
-        customClass: { popup: 'rounded-2xl' }
-    });
-    @endif
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Terjadi Kesalahan',
+                text: @json(session('error')),
+                customClass: { popup: 'rounded-2xl' }
+            });
+        @endif
     </script>
 </body>
 

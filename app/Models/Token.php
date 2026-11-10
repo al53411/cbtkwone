@@ -31,4 +31,6 @@ class Token extends Model
     {
         return $this->belongsTo(Sekolah::class, 'sekolah_id');
     }
+
+    
 }

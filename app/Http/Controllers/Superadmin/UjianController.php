@@ -76,6 +76,7 @@ class UjianController extends Controller
             'durasi'        => $validated['durasi'],
             'token'         => $tokenUjian,
             'status'        => $validated['status'],
+            'aturan_ujian'  => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null, // MENAMBAHKAN ATURAN UJIAN
             'acak_soal'     => DB::raw($acakSoalVal),
             'acak_jawaban'  => DB::raw($acakJawabanVal),
         ]);
@@ -100,6 +101,7 @@ class UjianController extends Controller
             'durasi'        => $validated['durasi'],
             'token'         => !empty($validated['token']) ? strtoupper($validated['token']) : $ujian->token,
             'status'        => $validated['status'],
+            'aturan_ujian'  => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null, // MEMPERBARUI ATURAN UJIAN
             'acak_soal'     => DB::raw($acakSoalVal),
             'acak_jawaban'  => DB::raw($acakJawabanVal),
         ]);
@@ -129,8 +131,72 @@ class UjianController extends Controller
             'durasi'        => 'required|integer|min:1',
             'token'         => 'nullable|string|max:6',
             'status'        => 'required|in:draft,aktif,selesai',
+            'aturan_ujian'  => 'nullable|string', // VALIDASI ATURAN UJIAN
             'acak_soal'     => 'nullable',
             'acak_jawaban'  => 'nullable',
         ]);
+    }
+
+    /**
+     * Menampilkan rekap nilai siswa berdasarkan ujian
+     */
+    public function rekapNilai(Request $request, $id)
+    {
+        $ujian = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
+
+        // Query rekap nilai siswa
+        $query = \App\Models\NilaiUjian::where('ujian_id', $id)
+            ->with(['siswa.kelas', 'siswa.sekolah']); // Pastikan relasi sekolah ada di model Siswa
+
+        // Filter berdasarkan Sekolah (jika dipilih)
+        if ($request->filled('sekolah_id')) {
+            $query->whereHas('siswa', function ($q) use ($request) {
+                $q->where('sekolah_id', $request->sekolah_id);
+            });
+        }
+
+        // Filter berdasarkan Kelas (jika dipilih)
+        if ($request->filled('kelas_id')) {
+            $query->whereHas('siswa', function ($q) use ($request) {
+                $q->where('kelas_id', $request->kelas_id);
+            });
+        }
+
+        $rekapNilais = $query->orderBy('nilai', 'desc')->get();
+
+        // Ambil data untuk dropdown filter
+        $sekolahs = \App\Models\Sekolah::all();
+        $kelases = \App\Models\Kelas::all();
+
+        return view('superadmin.ujian.rekap', compact('ujian', 'rekapNilais', 'sekolahs', 'kelases'));
+    }
+
+    /**
+     * Cetak rekap nilai ujian
+     */
+    public function cetakRekap(Request $request, $id)
+    {
+        $ujian = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
+
+        $query = \App\Models\NilaiUjian::where('ujian_id', $id)
+            ->with(['siswa.kelas', 'siswa.sekolah']);
+
+        // Filter berdasarkan Sekolah (jika ada)
+        if ($request->filled('sekolah_id')) {
+            $query->whereHas('siswa', function ($q) use ($request) {
+                $q->where('sekolah_id', $request->sekolah_id);
+            });
+        }
+
+        // Filter berdasarkan Kelas (jika ada)
+        if ($request->filled('kelas_id')) {
+            $query->whereHas('siswa', function ($q) use ($request) {
+                $q->where('kelas_id', $request->kelas_id);
+            });
+        }
+
+        $rekapNilais = $query->orderBy('nilai', 'desc')->get();
+
+        return view('superadmin.ujian.cetak-rekap', compact('ujian', 'rekapNilais'));
     }
 }

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- TAMBAHKAN BARIS INI -->
     <title>Ujian CAT - {{ $ujian->nama_ujian ?? 'Ujian Seleksi' }}</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -269,12 +270,12 @@
                         let borderClass = isChecked ? 'border-blue-700 bg-blue-50/70 ring-1 ring-blue-700 font-semibold' : 'border-slate-300 bg-white hover:bg-slate-50';
 
                         let html = `
-                                                                            <label class="flex items-center gap-3.5 p-3 rounded-lg border ${borderClass} cursor-pointer transition select-none shadow-2xs">
-                                                                                <input type="radio" name="pilihan_jawaban" value="${opsi.key}" ${isChecked} onclick="pilihJawaban(${index}, '${opsi.key}')" class="text-blue-700 focus:ring-blue-600 w-4 h-4 cursor-pointer">
-                                                                                <span class="text-xs font-bold text-slate-900 w-7 h-7 flex items-center justify-center bg-slate-100 rounded border border-slate-300 shrink-0">${opsi.key}.</span>
-                                                                                <span class="text-xs md:text-sm text-slate-900 flex-1 leading-relaxed">${opsi.teks}</span>
-                                                                            </label>
-                                                                        `;
+                                <label class="flex items-center gap-3.5 p-3 rounded-lg border ${borderClass} cursor-pointer transition select-none shadow-2xs">
+                                    <input type="radio" name="pilihan_jawaban" value="${opsi.key}" ${isChecked} onclick="pilihJawaban(${index}, '${opsi.key}')" class="text-blue-700 focus:ring-blue-600 w-4 h-4 cursor-pointer">
+                                    <span class="text-xs font-bold text-slate-900 w-7 h-7 flex items-center justify-center bg-slate-100 rounded border border-slate-300 shrink-0">${opsi.key}.</span>
+                                    <span class="text-xs md:text-sm text-slate-900 flex-1 leading-relaxed">${opsi.teks}</span>
+                                </label>
+                            `;
                         containerOpsi.insertAdjacentHTML('beforeend', html);
                     }
                 });
@@ -285,9 +286,30 @@
                 updateTombolNavigasi();
             }
 
+            // FUNGSI PILIH JAWABAN & AUTO-SAVE KE DATABASE VIA AJAX
             function pilihJawaban(indexSoal, pilihan) {
                 jawabanSiswa[indexSoal] = pilihan;
-                // Jika siswa menjawab, status ragu otomatis hilang agar kembali hijau (atau biarkan jika ingin tetap kuning, standar BKN jika dijawab tetap bisa ragu)
+                let soalId = daftarSoal[indexSoal].id;
+
+                // Kirim otomatis ke server (Auto-save)
+                fetch("{{ route('siswa.ujian.simpan-jawaban') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        ujian_id: "{{ $ujian->id }}",
+                        soal_id: soalId,
+                        jawaban: pilihan
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Jawaban tersimpan otomatis.");
+                    })
+                    .catch(error => console.error('Gagal menyimpan:', error));
+
                 updateTombolNavigasi();
                 muatSoal(indexSoal);
             }
@@ -308,10 +330,6 @@
                         let hasAnswer = jawabanSiswa[idx] !== undefined;
                         let isRagu = raguSiswa[idx];
 
-                        // Warna Kotak Navigasi sesuai standar BKN:
-                        // Ragu-ragu = Kuning (amber-400)
-                        // Sudah Dijawab = Hijau (emerald-600)
-                        // Belum Dijawab = Putih (white)
                         let baseClass = "w-full aspect-square rounded text-xs font-bold flex items-center justify-center border transition shadow-2xs ";
                         if (isRagu) {
                             btn.className = baseClass + "border-amber-500 bg-amber-400 text-slate-900";
@@ -321,7 +339,6 @@
                             btn.className = baseClass + "border-slate-300 bg-white text-slate-800 hover:bg-slate-100";
                         }
 
-                        // Tanda border hitam tebal untuk soal yang sedang aktif dilihat
                         if (idx === indeksAktif) {
                             btn.classList.add('ring-2', 'ring-offset-1', 'ring-slate-950', 'font-black');
                         } else {
@@ -352,21 +369,64 @@
 
                 if (timerdetik <= 0) {
                     clearInterval(countdown);
-                    alert('Waktu ujian telah habis!');
-                    window.location.href = "{{ route('siswa.dashboard') }}";
+                    alert('Waktu ujian telah habis! Sistem akan mengirimkan jawaban Anda.');
+                    submitUjianOtomatis();
                 } else {
                     timerdetik--;
                 }
             }, 1000);
 
+            // FUNGSI KONFIRMASI & HITUNG NILAI SELESAI UJIAN
             function konfirmasiSelesai() {
                 let jumlahTerjawab = Object.keys(jawabanSiswa).length;
                 let totalSoal = daftarSoal.length;
 
                 if (confirm(`Anda telah menjawab ${jumlahTerjawab} dari ${totalSoal} soal. Apakah Anda yakin ingin mengakhiri dan mengirimkan ujian ini?`)) {
-                    alert('Ujian berhasil diserahkan!');
-                    window.location.href = "{{ route('siswa.dashboard') }}";
+                    kirimSinyalSelesai();
                 }
+            }
+
+            function submitUjianOtomatis() {
+                fetch("{{ route('siswa.ujian.selesai') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        ujian_id: "{{ $ujian->id }}"
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        window.location.href = "{{ route('siswa.dashboard') }}";
+                    });
+            }
+
+            function kirimSinyalSelesai() {
+                fetch("{{ route('siswa.ujian.selesai') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        ujian_id: "{{ $ujian->id }}"
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('Ujian berhasil diserahkan! Nilai Anda telah direkap.');
+                            window.location.href = "{{ route('siswa.dashboard') }}";
+                        } else {
+                            alert('Gagal menyerahkan ujian: ' + (data.message || 'Terjadi kesalahan'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan koneksi.');
+                    });
             }
         </script>
     @endif

@@ -44,10 +44,10 @@
     <header class="bg-white border-b border-slate-200 px-6 py-3 shadow-xs sticky top-0 z-50">
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <img src="{{ asset('logo.png') }}" alt="Logo CBT" class="w-10 h-10 rounded-xl object-cover shadow-sm">
+                <img src="{{ asset('logo.png') }}" alt="Logo CBT" class="w-14 h-14 rounded-x4 object-cover shadow-sm">
                 <div>
-                    <span class="text-xs font-bold text-slate-800 block">CBT Online Siswa</span>
-                    <span class="text-[10px] text-slate-500 font-medium">SDN Kawu 1</span>
+                    <span class="text-xs font-bold text-slate-800 block">MAHESAPP</span>
+                    <span class="text-[10px] text-slate-500 font-medium">CAT Sytem</span>
                 </div>
             </div>
 
@@ -78,7 +78,9 @@
                 @php
                     $namaSiswa = $siswa->nama ?? ($siswa->nama_lengkap ?? ($siswa->name ?? 'Siswa'));
                 @endphp
-                <h1 class="text-2xl font-bold tracking-tight text-white">Selamat Datang, {{ $namaSiswa }}!</h1>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Selamat Datang,
+                    {{ $siswa->nama_siswa ?? $siswa->nama_lengkap ?? $siswa->name ?? '-' }}!
+                </h1>
                 <p class="text-xs text-slate-300 flex flex-wrap items-center gap-2 pt-1">
                     <span>NISN / No: <b class="text-white">{{ $siswa->nisn ?? ($siswa->nis ?? '-') }}</b></span>
                     <span class="text-slate-600">•</span>
@@ -207,22 +209,28 @@
 
                 <div class="space-y-3">
                     @forelse ($ujianAktif as $ujian)
-                        <div
-                            class="p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-white hover:border-blue-300 transition group">
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-700 transition">
-                                    {{ $ujian->nama_ujian }}
-                                </h3>
-                                <span
-                                    class="px-2 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded text-[10px] font-extrabold uppercase tracking-wide">
-                                    Aktif
-                                </span>
-                            </div>
-                            <div class="flex flex-col gap-1.5 text-xs text-slate-600">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-book w-4 text-center text-slate-400"></i>
+                            <div
+                                class="p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-white hover:border-blue-300 transition group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-700 transition">
+                                        {{ $ujian->nama_ujian }}
+                                    </h3>
                                     <span
-                                        class="font-semibold text-emerald-700">{{ $ujian->mapel->nama_mapel ?? '-' }}</span>
+                                        class="px-2 py-0.5 bg-blue-100 text-blue-800 border border-blue-200 rounded text-[10px] font-extrabold uppercase tracking-wide">
+                                        Aktif
+                                    </span>
+                                </div>
+                                <div class="flex flex-col gap-1.5 text-xs text-slate-600">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa-solid fa-book w-4 text-center text-slate-400"></i>
+                                        <span
+                                            class="font-semibold text-emerald-700">{{ $ujian->mapel->nama_mapel ?? '-' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2"><i
+                                            class="fa-solid fa-book w-4 text-center text-slate-400"></i>
+                                        <span class="font-semibold text-emerald-700">
+                                            {{ $ujian->kelas->nama_kelas ?? '-' }}</span>
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <i class="fa-solid fa-clock w-4 text-center text-slate-400"></i>
@@ -231,13 +239,13 @@
                             </div>
                         </div>
                     @empty
-                        <div
-                            class="py-8 text-center text-slate-500 text-xs italic bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                            Belum ada jadwal ujian yang aktif untuk kelas Anda saat ini.
-                        </div>
-                    @endforelse
-                </div>
+                    <div
+                        class="py-8 text-center text-slate-500 text-xs italic bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                        Belum ada jadwal ujian yang aktif untuk kelas Anda saat ini.
+                    </div>
+                @endforelse
             </div>
+        </div>
 
         </div>
 

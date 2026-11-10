@@ -71,11 +71,11 @@ Route::get('/dashboard', function () {
 
     if ($role === 'superadmin') {
         return redirect()->route('superadmin.dashboard');
-    } 
+    }
 
     if (in_array($role, ['admin', 'admin_sekolah', 'kepsek', 'proktor'], true)) {
         return redirect()->route('admin.dashboard');
-    } 
+    }
 
     if ($role === 'guru') {
         return redirect()->route('guru.dashboard');
@@ -102,14 +102,14 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::resource('users', UserController::class);
     Route::resource('kelas', SuperadminKelasController::class);
     Route::resource('mapel', SuperadminMapelController::class);
-    
+
     // ==========================================
     // RUTE KUSTOM SOAL (HARUS DI ATAS RESOURCE)
     // ==========================================
     Route::get('/soal/import', [SuperadminSoalController::class, 'import'])->name('soal.import');
     Route::post('/soal/import', [SuperadminSoalController::class, 'processImport'])->name('soal.process-import');
     Route::get('/soal/paket', [SuperadminSoalController::class, 'paketIndex'])->name('soal.paket');
-    
+
     // Rute Upload Gambar Soal (Modal / Redirect Index)
     Route::get('/soal/upload-gambar', fn() => redirect()->route('superadmin.soal.index'))->name('soal.upload-gambar');
     Route::post('/soal/upload-gambar', [SuperadminSoalController::class, 'processUploadGambar'])->name('soal.process-upload-gambar');
@@ -119,14 +119,21 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     // ==========================================
     Route::resource('soal', SuperadminSoalController::class);
 
-    // Custom Route Ujian (Taruh sebelum Resource Ujian)
+    // ==========================================
+    // CUSTOM ROUTE UJIAN (HARUS DI ATAS RESOURCE UJIAN)
+    // ==========================================
     Route::get('/ujian/generate-token', [SuperadminUjianController::class, 'generateToken'])->name('ujian.generate-token');
     Route::patch('/ujian/{ujian}/status', [SuperadminUjianController::class, 'updateStatus'])->name('ujian.update-status');
-    
-    // CRUD Resource Pengaturan Ujian
+
+    // Rute Rekap & Cetak Rekap Nilai Ujian (Diletakkan di atas sebelum resource ujian)
+    Route::get('/ujian/{id}/rekap', [SuperadminUjianController::class, 'rekapNilai'])->name('ujian.rekap');
+    Route::get('/ujian/{id}/cetak-rekap', [SuperadminUjianController::class, 'cetakRekap'])->name('ujian.cetak-rekap');
+
+    // ==========================================
+    // CRUD RESOURCE PENGATURAN UJIAN
+    // ==========================================
     Route::resource('ujian', SuperadminUjianController::class);
 });
-
 
 // ==========================================
 // GROUP ROUTE KHUSUS ADMIN SEKOLAH / KEPSEK
@@ -136,76 +143,79 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
     ->name('admin.')
     ->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        // Dashboard
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-    // Rilis & Management Token Ujian
-    Route::get('/token', [TokenController::class, 'index'])->name('token.index');
-    Route::get('/token/fetch', [TokenController::class, 'fetchToken'])->name('token.fetch');
-    Route::post('/token/generate', [TokenController::class, 'generate'])->name('token.generate');
-    Route::post('/token/refresh', [TokenController::class, 'refreshToken'])->name('token.refresh');
+        // Rilis & Management Token Ujian
+        Route::get('/token', [TokenController::class, 'index'])->name('token.index');
+        Route::get('/token/fetch', [TokenController::class, 'fetchToken'])->name('token.fetch');
+        Route::post('/token/generate', [TokenController::class, 'generate'])->name('token.generate');
+        Route::post('/token/refresh', [TokenController::class, 'refreshToken'])->name('token.refresh');
 
-    // Tahun Ajaran
-    Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun-ajaran.index');
-    Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun-ajaran.store');
-    Route::put('/tahun-ajaran/{id}/set-aktif', [TahunAjaranController::class, 'setAktif'])->name('tahun-ajaran.set-aktif');
+        // --- RUTE TAMBAHAN: PROGRESS UJIAN SISWA ---
+        Route::get('/token/progress/{id}', [TokenController::class, 'progressUjian'])->name('token.progress');
+        // -------------------------------------------
 
-    // Validasi Jurnal oleh Kepala Sekolah / Admin
-    Route::get('/validasi-jurnal', [AdminKepalaSekolahController::class, 'indexValidasiJurnal'])->name('kepala-sekolah.jurnal.index');
-    Route::put('/validasi-jurnal/{id}', [AdminKepalaSekolahController::class, 'updateStatusJurnal'])->name('kepala-sekolah.jurnal.update');
+        // Tahun Ajaran
+        Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun-ajaran.index');
+        Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun-ajaran.store');
+        Route::put('/tahun-ajaran/{id}/set-aktif', [TahunAjaranController::class, 'setAktif'])->name('tahun-ajaran.set-aktif');
 
-    // Fitur Tambahan Guru
-    Route::get('/guru/template', [AdminGuruController::class, 'downloadTemplate'])->name('guru.template');
-    Route::post('/guru/import', [AdminGuruController::class, 'import'])->name('guru.import');
-    Route::post('/guru/{guru}/reset-password', [AdminGuruController::class, 'resetPassword'])->name('guru.reset-password');
-    Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
+        // Validasi Jurnal oleh Kepala Sekolah / Admin
+        Route::get('/validasi-jurnal', [AdminKepalaSekolahController::class, 'indexValidasiJurnal'])->name('kepala-sekolah.jurnal.index');
+        Route::put('/validasi-jurnal/{id}', [AdminKepalaSekolahController::class, 'updateStatusJurnal'])->name('kepala-sekolah.jurnal.update');
 
-    //SISWA 
-    Route::post('/siswa/import', [AdminSiswaController::class, 'import'])->name('siswa.import');
+        // Fitur Tambahan Guru
+        Route::get('/guru/template', [AdminGuruController::class, 'downloadTemplate'])->name('guru.template');
+        Route::post('/guru/import', [AdminGuruController::class, 'import'])->name('guru.import');
+        Route::post('/guru/{guru}/reset-password', [AdminGuruController::class, 'resetPassword'])->name('guru.reset-password');
+        Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
 
-    // FITUR CETAK KARTU UJIAN (Sesuaikan namanya agar cocok dengan pemanggilan)
-    Route::get('/siswa/cetak-kartu/{id?}', [AdminSiswaController::class, 'cetakKartu'])->name('siswa.cetak-kartu');
-    Route::get('/siswa/cetak-kartu-kelas', [AdminSiswaController::class, 'cetakKartuKelas'])->name('siswa.cetak-kartu-kelas');
-    Route::get('/siswa/print-preview', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-preview');
-    Route::get('/siswa/print-pure', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-pure');
-    // Alias tambahan untuk mencegah error pemanggilan nama rute lama
-    Route::get('/siswa/admin.cetak-kartu', [AdminSiswaController::class, 'cetakKartu'])->name('admin.cetak-kartu');
+        //SISWA 
+        Route::post('/siswa/import', [AdminSiswaController::class, 'import'])->name('siswa.import');
 
-    // Cetak Absensi Mapel
-    Route::get('/absensi/cetak-mapel', [CetakAbsensiMapelController::class, 'index'])->name('absensi.cetak-mapel');
+        // FITUR CETAK KARTU UJIAN
+        Route::get('/siswa/cetak-kartu/{id?}', [AdminSiswaController::class, 'cetakKartu'])->name('siswa.cetak-kartu');
+        Route::get('/siswa/cetak-kartu-kelas', [AdminSiswaController::class, 'cetakKartuKelas'])->name('siswa.cetak-kartu-kelas');
+        Route::get('/siswa/print-preview', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-preview');
+        Route::get('/siswa/print-pure', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-pure');
+        Route::get('/siswa/admin.cetak-kartu', [AdminSiswaController::class, 'cetakKartu'])->name('admin.cetak-kartu');
 
-    // Route Resource Utama
-    Route::resource('absensi', AdminAbsensiController::class);
-    Route::resource('guru', AdminGuruController::class);
-    Route::resource('kelas', AdminKelasController::class);
-    Route::resource('sekolah', AdminSekolahController::class);
-    Route::resource('siswa', AdminSiswaController::class);
-    Route::resource('jurnal', AdminJurnalController::class);
-    Route::resource('kepala-sekolah', AdminKepalaSekolahController::class);
-    Route::resource('mapel', AdminMapelController::class);
-    Route::resource('modul_ajar', ModulAjarController::class);
+        // Cetak Absensi Mapel
+        Route::get('/absensi/cetak-mapel', [CetakAbsensiMapelController::class, 'index'])->name('absensi.cetak-mapel');
 
-    // Route Kurikulum (CP, TP, ATP)
-    Route::resource('capaian-pembelajaran', CapaianPembelajaranController::class)->except(['create', 'edit', 'show']);
-    Route::get('/get-elemen-cp', [TujuanPembelajaranController::class, 'getElemenByMapelFase'])->name('get_elemen_cp');
-    Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
-    Route::resource('atp', AlurTujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
-    
-    // Route API / AJAX
-    Route::get('/api/atp/by-tp', [AlurTujuanPembelajaranController::class, 'getByTp'])->name('api.atp.get_by_tp');
+        // Route Resource Utama
+        Route::resource('absensi', AdminAbsensiController::class);
+        Route::resource('guru', AdminGuruController::class);
+        Route::resource('kelas', AdminKelasController::class);
+        Route::resource('sekolah', AdminSekolahController::class);
+        Route::resource('siswa', AdminSiswaController::class);
+        Route::resource('jurnal', AdminJurnalController::class);
+        Route::resource('kepala-sekolah', AdminKepalaSekolahController::class);
+        Route::resource('mapel', AdminMapelController::class);
+        Route::resource('modul_ajar', ModulAjarController::class);
 
-    // Route Ruang & Sesi Ujian (Pengelolaan Admin)
-    Route::get('/sesi', [RuangSesiController::class, 'index'])->name('sesi.index');
-    Route::post('/ruang/store', [RuangSesiController::class, 'storeRuang'])->name('ruang.store');
-    Route::delete('/ruang/{id}', [RuangSesiController::class, 'destroyRuang'])->name('ruang.destroy');
-    
-    Route::post('/sesi/store', [RuangSesiController::class, 'storeSesi'])->name('sesi.store');
-    Route::put('/sesi/{id}', [RuangSesiController::class, 'updateSesi'])->name('sesi.update');
-    Route::delete('/sesi/{id}', [RuangSesiController::class, 'destroySesi'])->name('sesi.destroy');
+        // Route Kurikulum (CP, TP, ATP)
+        Route::resource('capaian-pembelajaran', CapaianPembelajaranController::class)->except(['create', 'edit', 'show']);
+        Route::get('/get-elemen-cp', [TujuanPembelajaranController::class, 'getElemenByMapelFase'])->name('get_elemen_cp');
+        Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
+        Route::resource('atp', AlurTujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
 
-    // Rute Admin Sekolah untuk MELIHAT Daftar Paket Soal
-    Route::get('/soal/paket', [AdminSoalController::class, 'paketIndex'])->name('soal.paket');
-});
+        // Route API / AJAX
+        Route::get('/api/atp/by-tp', [AlurTujuanPembelajaranController::class, 'getByTp'])->name('api.atp.get_by_tp');
+
+        // Route Ruang & Sesi Ujian (Pengelolaan Admin)
+        Route::get('/sesi', [RuangSesiController::class, 'index'])->name('sesi.index');
+        Route::post('/ruang/store', [RuangSesiController::class, 'storeRuang'])->name('ruang.store');
+        Route::delete('/ruang/{id}', [RuangSesiController::class, 'destroyRuang'])->name('ruang.destroy');
+
+        Route::post('/sesi/store', [RuangSesiController::class, 'storeSesi'])->name('sesi.store');
+        Route::put('/sesi/{id}', [RuangSesiController::class, 'updateSesi'])->name('sesi.update');
+        Route::delete('/sesi/{id}', [RuangSesiController::class, 'destroySesi'])->name('sesi.destroy');
+
+        // Rute Admin Sekolah untuk MELIHAT Daftar Paket Soal
+        Route::get('/soal/paket', [AdminSoalController::class, 'paketIndex'])->name('soal.paket');
+    });
 
 
 // ==========================================
@@ -245,11 +255,15 @@ Route::prefix('siswa')->name('siswa.')->group(function () {
     Route::middleware('auth:siswa')->group(function () {
         Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
         Route::post('/konfirmasi', [SiswaDashboardController::class, 'konfirmasiUjian'])->name('konfirmasi');
-        
-        // --- RUTE UJIAN SISWA (Verifikasi Token & Mulai Ujian) ---
+
+        // --- RUTE UJIAN SISWA ---
         Route::post('/ujian/verifikasi', [SiswaUjianController::class, 'verifikasiToken'])->name('ujian.verifikasi');
         Route::get('/ujian/mulai', [SiswaUjianController::class, 'mulai'])->name('ujian.mulai');
-        // ---------------------------------------------------------
+
+        // PERBAIKAN: Hapus duplikasi kata 'siswa.' di depannya
+        Route::post('/ujian/simpan-jawaban', [App\Http\Controllers\Siswa\UjianController::class, 'simpanJawaban'])->name('ujian.simpan-jawaban');
+        Route::post('/ujian/selesai', [App\Http\Controllers\Siswa\UjianController::class, 'selesaiUjian'])->name('ujian.selesai');
+        // -------------------------
 
         Route::post('/logout', [SiswaAuthController::class, 'logout'])->name('logout');
     });
@@ -265,7 +279,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 
 // ==========================================

@@ -19,6 +19,7 @@
             </button>
         </div>
     </div>
+    
 
     <!-- Alert Notifikasi -->
     @if(session('success'))
@@ -94,8 +95,9 @@
                         <th class="py-3.5 px-4">Durasi & Waktu</th>
                         <th class="py-3.5 px-4 text-center">Token</th>
                         <th class="py-3.5 px-4 text-center">Status</th>
+                        <th class="py-3.5 px-4 text-center w-28">Rekap</th>
                         <th class="py-3.5 px-4 text-center w-28">Aksi</th>
-                    </tr>
+                        
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @if(isset($ujians) && count($ujians) > 0)
@@ -144,6 +146,11 @@
                                         </span>
                                     @endif
                                 </td>
+                                  <td class="py-3.5 px-4 text-center">
+                                  <a href="{{ route('superadmin.ujian.rekap', $item->id) }}" class="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition inline-block" title="Rekap Nilai Siswa">
+    <i class="fa-solid fa-chart-bar"></i>
+</a>
+                                </td>
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center space-x-2">
                                         <!-- MENGGUNAKAN BASE64 AGAR DATA AMAN DARI ERROR ENTER/KUTIP -->
@@ -157,6 +164,8 @@
                                             class="px-2.5 py-1 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition font-medium">
                                             Hapus
                                         </button>
+
+                                        
                                     </div>
                                 </td>
                             </tr>

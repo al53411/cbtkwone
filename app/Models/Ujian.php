@@ -23,6 +23,7 @@ class Ujian extends Model
         'acak_soal',
         'acak_jawaban',
         'status',
+        'aturan_ujian',
     ];
 
     // Hapus casting boolean di sini agar tidak memaksa konversi PDO PostgreSQL
@@ -50,5 +51,10 @@ class Ujian extends Model
     public function scopeAktif($query)
     {
         return $query->where('status', 'aktif');
+    }
+
+    public function nilaiUjians()
+    {
+        return $this->hasMany(NilaiUjian::class, 'ujian_id');
     }
 }

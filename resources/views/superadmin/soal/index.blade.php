@@ -474,31 +474,35 @@
                 document.getElementById('preview-kelas').innerText = data.kelas ? data.kelas.nama_kelas : '-';
                 document.getElementById('preview-tipe').innerText = (data.tipe || 'pg').toUpperCase();
 
-                // 2. Tampilkan Teks Pertanyaan (Gunakan innerHTML jika menggunakan editor WYSIWYG)
+                // 2. Tampilkan Teks Pertanyaan
                 document.getElementById('preview-teks-soal').innerHTML = data.soal || '<em>Tidak ada isi soal.</em>';
 
-                // 3. Tampilkan Gambar (Bila ada)
+                // 3. Tampilkan Gambar (Diperbaiki menyesuaikan kolom database: 'gambar')
                 const imgContainer = document.getElementById('preview-gambar-container');
-                if (data.file_gambar && data.file_gambar.trim() !== '') {
+                // Mengecek variabel 'gambar' sesuai nama kolom tabel soals
+                const gambarSoal = data.gambar || data.file_gambar;
+
+                if (gambarSoal && gambarSoal.trim() !== '') {
                     imgContainer.classList.remove('hidden');
-                    // Ganti rute storage sesuai setup penyimpanan gambar Laravel Anda
-                    document.getElementById('preview-gambar').src = '/storage/' + data.file_gambar;
+                    // Mengarahkan ke storage publik Laravel
+                    document.getElementById('preview-gambar').src = '/storage/' + gambarSoal;
                 } else {
                     imgContainer.classList.add('hidden');
                     document.getElementById('preview-gambar').src = '';
                 }
 
-                // 4. Handle Opsi Pilihan Ganda (Tampilkan yang ada datanya)
+                // 4. Handle Opsi Pilihan Ganda (Mendukung option_a / opsi_a)
                 const pgContainer = document.getElementById('preview-pilihan-ganda');
                 if (data.tipe !== 'esai' && data.tipe !== 'essay') {
                     pgContainer.classList.remove('hidden');
 
-                    // Cek opsi A sampai E
                     const opsiData = ['a', 'b', 'c', 'd', 'e'];
                     opsiData.forEach(function (huruf) {
                         const container = document.getElementById('opsi-' + huruf + '-container');
                         const textElem = document.getElementById('opsi-' + huruf + '-text');
-                        const opsiIsi = data['opsi_' + huruf];
+
+                        // Menangani opsi apakah menggunakan format 'option_a' atau 'opsi_a'
+                        const opsiIsi = data['option_' + huruf] || data['opsi_' + huruf];
 
                         if (opsiIsi) {
                             container.classList.remove('hidden');

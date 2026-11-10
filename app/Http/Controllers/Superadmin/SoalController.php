@@ -17,8 +17,8 @@ class SoalController extends Controller
 {
     public function index(Request $request)
     {
-        $mapels = Mapel::all();
-        $kelass = Kelas::all();
+        $mapels = Mapel::orderBy('nama_mapel', 'asc')->get();
+        $kelass = Kelas::orderBy('nama_kelas', 'asc')->get();
 
         $kodeSoals = Soal::select('kode_soal')
             ->whereNotNull('kode_soal')
@@ -88,9 +88,15 @@ class SoalController extends Controller
             'soal'          => 'required',
             'jumlah_opsi'   => 'required|integer',
             'kunci_jawaban' => 'required',
+            'gambar'        => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $jumlahOpsi = (int) $request->jumlah_opsi;
+        $gambarPath = null;
+
+        if ($request->hasFile('gambar')) {
+            $gambarPath = $request->file('gambar')->store('soal', 'public');
+        }
 
         Soal::create([
             'mapel_id'      => $request->mapel_id,
@@ -98,6 +104,7 @@ class SoalController extends Controller
             'kode_soal'     => 'SOAL-' . strtoupper(uniqid()),
             'nomor_soal'    => $request->nomor_soal ?? null,
             'soal'          => $request->soal,
+            'gambar'        => $gambarPath,
             'jumlah_opsi'   => $jumlahOpsi,
             'option_a'      => $request->option_a,
             'option_b'      => $request->option_b,
@@ -127,12 +134,13 @@ class SoalController extends Controller
             'soal'          => 'required',
             'jumlah_opsi'   => 'required|integer',
             'kunci_jawaban' => 'required',
+            'gambar'        => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $soal = Soal::findOrFail($id);
         $jumlahOpsi = (int) $request->jumlah_opsi;
 
-        $soal->update([
+        $updateData = [
             'mapel_id'      => $request->mapel_id,
             'kelas_id'      => $request->kelas_id,
             'soal'          => $request->soal,
@@ -144,7 +152,16 @@ class SoalController extends Controller
             'option_d'      => $jumlahOpsi >= 4 ? $request->option_d : null,
             'option_e'      => $jumlahOpsi >= 5 ? $request->option_e : null,
             'kunci_jawaban' => $request->kunci_jawaban,
-        ]);
+        ];
+
+        if ($request->hasFile('gambar')) {
+            if ($soal->gambar && Storage::disk('public')->exists($soal->gambar)) {
+                Storage::disk('public')->delete($soal->gambar);
+            }
+            $updateData['gambar'] = $request->file('gambar')->store('soal', 'public');
+        }
+
+        $soal->update($updateData);
 
         return redirect()->route('superadmin.soal.index')->with('success', 'Soal berhasil diperbarui!');
     }
@@ -167,11 +184,6 @@ class SoalController extends Controller
         $soal = Soal::with(['mapel', 'kelas'])->findOrFail($id);
 
         return view('superadmin.soal.show', compact('soal'));
-    }
-
-    public function import()
-    {
-        return view('superadmin.soal.import');
     }
 
     public function showUploadGambar()
@@ -203,77 +215,61 @@ class SoalController extends Controller
             'gambar.max'          => 'Ukuran gambar maksimal 2MB.',
         ]);
 
-        $query = Soal::where('kode_soal', $request->kode_soal)
-            ->where('kelas_id', $request->kelas_id);
+        $kodeSoal = trim($request->kode_soal);
+        $kelasId  = $request->kelas_id;
+        $nomor    = (int) $request->nomor_soal;
 
+        // 1. Query dasar berdasarkan kode_soal & kelas_id
+        $baseQuery = Soal::where('kode_soal', $kodeSoal);
+
+        if ($kelasId) {
+            $baseQuery->where(function ($q) use ($kelasId) {
+                $q->where('kelas_id', $kelasId)->orWhereNull('kelas_id');
+            });
+        }
+
+        $soal = null;
+
+        // 2. Cek apakah kolom 'nomor_soal' ada di database sebelum me-query
         if (Schema::hasColumn('soals', 'nomor_soal')) {
-            $soal = $query->where('nomor_soal', $request->nomor_soal)->first();
-        } else {
-            $soal = $query->orderBy('id', 'asc')
-                ->skip($request->nomor_soal - 1)
-                ->take(1)
-                ->first();
+            $soal = (clone $baseQuery)->where('nomor_soal', $nomor)->first();
         }
 
+        // 3. Jika kolom tidak ada atau data tidak ditemukan via nomor_soal, cari berdasarkan urutan baris ke-N
         if (!$soal) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', "Soal tidak ditemukan untuk Kode: {$request->kode_soal} pada kelas tersebut dengan Nomor Soal: {$request->nomor_soal}");
+            $soalsCollection = (clone $baseQuery)->orderBy('id', 'asc')->get();
+
+            if ($soalsCollection->isEmpty()) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', "Tidak ada soal ditemukan dengan Kode: '{$kodeSoal}'.");
+            }
+
+            $targetIndex = $nomor - 1; // Nomor 1 = indeks array ke-0
+
+            if (!isset($soalsCollection[$targetIndex])) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', "Nomor soal '{$nomor}' tidak ditemukan! Paket '{$kodeSoal}' hanya memiliki " . $soalsCollection->count() . " butir soal.");
+            }
+
+            $soal = $soalsCollection[$targetIndex];
         }
 
+        // 4. Hapus gambar lama jika ada
         if ($soal->gambar && Storage::disk('public')->exists($soal->gambar)) {
             Storage::disk('public')->delete($soal->gambar);
         }
 
+        // 5. Simpan file gambar baru
         $path = $request->file('gambar')->store('soal', 'public');
 
-        $soal->update([
-            'gambar' => $path
+        // 6. Update database via DB Query Builder agar langsung tersimpan
+        DB::table('soals')->where('id', $soal->id)->update([
+            'gambar'     => $path,
+            'updated_at' => now(),
         ]);
 
-        return redirect()->back()->with('success', "Gambar berhasil diunggah untuk Soal No. {$request->nomor_soal} ({$request->kode_soal})!");
-    }
-
-    public function processImport(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
-        ], [
-            'file.required' => 'File template wajib diunggah!',
-            'file.mimes'    => 'Format file harus berupa .xlsx, .xls, atau .csv',
-            'file.max'      => 'Ukuran file terlalu besar (maksimal 5MB).',
-        ]);
-
-        try {
-            Excel::import(new SoalImport, $request->file('file'));
-
-            return redirect()->route('superadmin.soal.index')->with('success', 'Soal berhasil diimpor!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal mengimpor file: ' . $e->getMessage());
-        }
-    }
-
-    private function cellColumnToIndex($cellRef)
-    {
-        preg_match('/([A-Z]+)/', strtoupper($cellRef), $matches);
-        if (!isset($matches[1])) return 0;
-        $str = $matches[1];
-        $len = strlen($str);
-        $num = 0;
-        for ($i = 0; $i < $len; $i++) {
-            $num = $num * 26 + (ord($str[$i]) - 64);
-        }
-        return $num - 1;
-    }
-
-    public function downloadTemplate()
-    {
-        $filePath = public_path('templates/template_impor_soal.xlsx');
-
-        if (!file_exists($filePath)) {
-            return redirect()->back()->with('error', 'File template_impor_soal.xlsx tidak ditemukan di folder public/templates/');
-        }
-
-        return response()->download($filePath, 'template_impor_soal.xlsx');
+        return redirect()->back()->with('success', "Gambar sukses terpasang pada Soal (ID: {$soal->id}, No: {$nomor}, Kode: {$kodeSoal})!");
     }
 }
