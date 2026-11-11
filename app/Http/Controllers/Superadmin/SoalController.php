@@ -25,6 +25,23 @@ class SoalController extends Controller
             ->distinct()
             ->pluck('kode_soal');
 
+        // Kelompokkan data soal per kode_soal untuk pengisian otomatis di JavaScript
+        $paketGrouped = Soal::select('id', 'kode_soal', 'kelas_id', 'soal')
+            ->get()
+            ->groupBy('kode_soal')
+            ->map(function ($items) {
+                return [
+                    'kelas_id' => $items->first()->kelas_id ?? '',
+                    'items'    => $items->values()->map(function ($item, $idx) {
+                        return [
+                            'no'   => $idx + 1,
+                            'id'   => $item->id,
+                            'text' => \Illuminate\Support\Str::limit(strip_tags($item->soal ?? ''), 45)
+                        ];
+                    })
+                ];
+            });
+
         $query = Soal::with(['mapel', 'kelas']);
 
         if ($request->filled('mapel_id')) {
@@ -65,6 +82,7 @@ class SoalController extends Controller
             'mapels',
             'kelass',
             'kodeSoals',
+            'paketGrouped',
             'totalPaket',
             'totalPg',
             'totalEsai',

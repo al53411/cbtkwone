@@ -220,8 +220,21 @@
         <script>
             const daftarSoal = @json($soals);
             let indeksAktif = 0;
-            let jawabanSiswa = {};
-            let raguSiswa = {};
+
+            // Key unik LocalStorage khusus per Ujian
+            const UJIAN_ID = "{{ $ujian->id }}";
+            const KEY_JAWABAN = `cbt_jawaban_${UJIAN_ID}`;
+            const KEY_RAGU = `cbt_ragu_${UJIAN_ID}`;
+
+            // 1. MEMBACA JAWABAN & STATUS RAGU DARI LOCALSTORAGE (Pencegah hilang saat reload)
+            let jawabanSiswa = JSON.parse(localStorage.getItem(KEY_JAWABAN)) || {};
+            let raguSiswa = JSON.parse(localStorage.getItem(KEY_RAGU)) || {};
+
+            // Helper untuk menyimpan ke LocalStorage
+            function simpanKeLocalStorage() {
+                localStorage.setItem(KEY_JAWABAN, JSON.stringify(jawabanSiswa));
+                localStorage.setItem(KEY_RAGU, JSON.stringify(raguSiswa));
+            }
 
             function muatSoal(index) {
                 if (index < 0 || index >= daftarSoal.length) return;
@@ -270,12 +283,12 @@
                         let borderClass = isChecked ? 'border-blue-700 bg-blue-50/70 ring-1 ring-blue-700 font-semibold' : 'border-slate-300 bg-white hover:bg-slate-50';
 
                         let html = `
-                                <label class="flex items-center gap-3.5 p-3 rounded-lg border ${borderClass} cursor-pointer transition select-none shadow-2xs">
-                                    <input type="radio" name="pilihan_jawaban" value="${opsi.key}" ${isChecked} onclick="pilihJawaban(${index}, '${opsi.key}')" class="text-blue-700 focus:ring-blue-600 w-4 h-4 cursor-pointer">
-                                    <span class="text-xs font-bold text-slate-900 w-7 h-7 flex items-center justify-center bg-slate-100 rounded border border-slate-300 shrink-0">${opsi.key}.</span>
-                                    <span class="text-xs md:text-sm text-slate-900 flex-1 leading-relaxed">${opsi.teks}</span>
-                                </label>
-                            `;
+                        <label class="flex items-center gap-3.5 p-3 rounded-lg border ${borderClass} cursor-pointer transition select-none shadow-2xs">
+                            <input type="radio" name="pilihan_jawaban" value="${opsi.key}" ${isChecked} onclick="pilihJawaban(${index}, '${opsi.key}')" class="text-blue-700 focus:ring-blue-600 w-4 h-4 cursor-pointer">
+                            <span class="text-xs font-bold text-slate-900 w-7 h-7 flex items-center justify-center bg-slate-100 rounded border border-slate-300 shrink-0">${opsi.key}.</span>
+                            <span class="text-xs md:text-sm text-slate-900 flex-1 leading-relaxed">${opsi.teks}</span>
+                        </label>
+                    `;
                         containerOpsi.insertAdjacentHTML('beforeend', html);
                     }
                 });
@@ -286,12 +299,14 @@
                 updateTombolNavigasi();
             }
 
-            // FUNGSI PILIH JAWABAN & AUTO-SAVE KE DATABASE VIA AJAX
+            // FUNGSI PILIH JAWABAN & AUTO-SAVE KE LOCALSTORAGE & DATABASE
             function pilihJawaban(indexSoal, pilihan) {
                 jawabanSiswa[indexSoal] = pilihan;
+                simpanKeLocalStorage(); // Simpan instan ke LocalStorage
+
                 let soalId = daftarSoal[indexSoal].id;
 
-                // Kirim otomatis ke server (Auto-save)
+                // Kirim otomatis ke server (Auto-save Database)
                 fetch("{{ route('siswa.ujian.simpan-jawaban') }}", {
                     method: "POST",
                     headers: {
@@ -306,16 +321,18 @@
                 })
                     .then(response => response.json())
                     .then(data => {
-                        console.log("Jawaban tersimpan otomatis.");
+                        console.log("Jawaban tersimpan otomatis ke database.");
                     })
-                    .catch(error => console.error('Gagal menyimpan:', error));
+                    .catch(error => console.error('Gagal menyimpan ke server, disimpan di LocalStorage:', error));
 
                 updateTombolNavigasi();
                 muatSoal(indexSoal);
             }
 
+            // TOGGLE STATUS RAGU-RAGU
             function toggleRaguRagu(indexSoal) {
                 raguSiswa[indexSoal] = !raguSiswa[indexSoal];
+                simpanKeLocalStorage(); // Simpan status Ragu-Ragu ke LocalStorage
                 muatSoal(indexSoal);
             }
 
@@ -327,7 +344,7 @@
                 daftarSoal.forEach((_, idx) => {
                     let btn = document.getElementById(`nav-btn-${idx}`);
                     if (btn) {
-                        let hasAnswer = jawabanSiswa[idx] !== undefined;
+                        let hasAnswer = jawabanSiswa[idx] !== undefined && jawabanSiswa[idx] !== null && jawabanSiswa[idx] !== '';
                         let isRagu = raguSiswa[idx];
 
                         let baseClass = "w-full aspect-square rounded text-xs font-bold flex items-center justify-center border transition shadow-2xs ";
@@ -362,31 +379,70 @@
                 let menit = Math.floor((timerdetik % 3600) / 60);
                 let detik = timerdetik % 60;
 
-                timerElement.textContent =
-                    String(jam).padStart(2, '0') + ':' +
-                    String(menit).padStart(2, '0') + ':' +
-                    String(detik).padStart(2, '0');
+                if (timerElement) {
+                    timerElement.textContent =
+                        String(jam).padStart(2, '0') + ':' +
+                        String(menit).padStart(2, '0') + ':' +
+                        String(detik).padStart(2, '0');
+                }
 
                 if (timerdetik <= 0) {
                     clearInterval(countdown);
-                    alert('Waktu ujian telah habis! Sistem akan mengirimkan jawaban Anda.');
+                    alert('Waktu ujian telah habis! Sistem akan mengirimkan jawaban Anda secara otomatis.');
                     submitUjianOtomatis();
                 } else {
                     timerdetik--;
                 }
             }, 1000);
 
-            // FUNGSI KONFIRMASI & HITUNG NILAI SELESAI UJIAN
+            // FUNGSI VALIDASI KETAT & KONFIRMASI SELESAI UJIAN
             function konfirmasiSelesai() {
-                let jumlahTerjawab = Object.keys(jawabanSiswa).length;
                 let totalSoal = daftarSoal.length;
+                let belumDijawab = 0;
+                let jumlahRagu = 0;
 
-                if (confirm(`Anda telah menjawab ${jumlahTerjawab} dari ${totalSoal} soal. Apakah Anda yakin ingin mengakhiri dan mengirimkan ujian ini?`)) {
+                // Hitung soal yang belum dijawab dan ragu-ragu
+                daftarSoal.forEach((_, idx) => {
+                    let ans = jawabanSiswa[idx];
+                    let isRagu = raguSiswa[idx];
+
+                    if (ans === undefined || ans === null || ans === '') {
+                        belumDijawab++;
+                    }
+                    if (isRagu) {
+                        jumlahRagu++;
+                    }
+                });
+
+                // VALIDASI VETO: Mencegah kirim jika ada belum dijawab ATAU masih ragu-ragu
+                if (belumDijawab > 0 || jumlahRagu > 0) {
+                    let pesan = "Ujian belum dapat diserahkan!\n\n";
+                    if (belumDijawab > 0) {
+                        pesan += `- Masih ada ${belumDijawab} soal yang BELUM DIJAWAB.\n`;
+                    }
+                    if (jumlahRagu > 0) {
+                        pesan += `- Masih ada ${jumlahRagu} soal berstatus RAGU-RAGU.\n`;
+                    }
+                    pesan += "\nSilakan lengkapi semua jawaban dan hilangkan status Ragu-Ragu terlebih dahulu.";
+
+                    alert(pesan);
+                    return; // Hentikan proses pengiriman
+                }
+
+                // Jika semua soal terisi dan tidak ada yang ragu
+                if (confirm(`Semua ${totalSoal} soal telah terjawab dengan lengkap. Apakah Anda yakin ingin mengakhiri dan mengirimkan ujian ini?`)) {
                     kirimSinyalSelesai();
                 }
             }
 
+            // Helper untuk membersihkan LocalStorage saat ujian selesai
+            function hapusLocalStorage() {
+                localStorage.removeItem(KEY_JAWABAN);
+                localStorage.removeItem(KEY_RAGU);
+            }
+
             function submitUjianOtomatis() {
+                hapusLocalStorage(); // Hapus cache lokal setelah waktu habis
                 fetch("{{ route('siswa.ujian.selesai') }}", {
                     method: "POST",
                     headers: {
@@ -417,6 +473,7 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
+                            hapusLocalStorage(); // Hapus cache lokal saat berhasil diserahkan
                             alert('Ujian berhasil diserahkan! Nilai Anda telah direkap.');
                             window.location.href = "{{ route('siswa.dashboard') }}";
                         } else {

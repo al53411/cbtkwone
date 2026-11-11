@@ -175,7 +175,6 @@
                                     <span class="font-bold text-indigo-600 text-xs block mb-0.5">
                                         {{ $item->kode_soal ?? 'SOAL-' . $item->id }}
                                     </span>
-                                    <!-- Tampilkan teks soal (dibatasi 1 baris di tabel agar rapi) -->
                                     <span class="text-slate-600 text-xs line-clamp-1">
                                         {!! strip_tags($item->soal) !!}
                                     </span>
@@ -207,7 +206,6 @@
                                 </td>
 
                                 <td class="py-4 px-4 text-center space-x-1">
-                                    <!-- TOMBOL LIHAT DETAIL SOAL -->
                                     <button type="button" data-soal="{{ base64_encode(json_encode($item)) }}"
                                         onclick="previewSoal(this)"
                                         class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition inline-block"
@@ -226,7 +224,6 @@
                                         <i class="fa-solid fa-trash-can"></i>
                                     </button>
 
-                                    <!-- Form Hapus Hidden -->
                                     <form id="delete-form-{{ $item->id }}"
                                         action="{{ route('superadmin.soal.destroy', $item->id) }}" method="POST" class="hidden">
                                         @csrf
@@ -247,7 +244,6 @@
                 </table>
             </div>
 
-            <!-- Footer Pagination -->
             <div class="p-4 border-t border-slate-100">
                 {{ $soals->withQueryString()->links() }}
             </div>
@@ -277,10 +273,8 @@
                 </button>
             </div>
 
-            <!-- Modal Body (Bisa di-scroll) -->
+            <!-- Modal Body -->
             <div class="p-6 overflow-y-auto space-y-5 text-sm text-slate-700 bg-white">
-
-                <!-- Metadata: Mapel & Kelas -->
                 <div class="flex gap-3 pb-3 border-b border-slate-100">
                     <span id="preview-mapel"
                         class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -296,23 +290,19 @@
                     </span>
                 </div>
 
-                <!-- Teks Pertanyaan -->
                 <div>
                     <h4 class="font-bold text-slate-800 mb-2">Pertanyaan:</h4>
                     <div id="preview-teks-soal"
                         class="prose prose-sm max-w-none p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <!-- Konten soal (HTML) akan dimasukkan ke sini -->
                     </div>
                 </div>
 
-                <!-- Tempat Gambar Soal Jika Ada -->
                 <div id="preview-gambar-container" class="hidden">
                     <h4 class="font-bold text-slate-800 mb-2">Gambar Soal:</h4>
                     <img id="preview-gambar" src="" alt="Gambar Soal"
                         class="max-w-full h-auto rounded-lg border border-slate-200 max-h-64 object-contain">
                 </div>
 
-                <!-- Pilihan Ganda -->
                 <div id="preview-pilihan-ganda" class="hidden space-y-3">
                     <h4 class="font-bold text-slate-800 mb-1">Pilihan Jawaban:</h4>
                     <div class="grid grid-cols-1 gap-2">
@@ -339,12 +329,10 @@
                     </div>
                 </div>
 
-                <!-- Kunci Jawaban / Pembahasan -->
                 <div class="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
                     <h4 class="font-bold text-emerald-800 mb-1 text-xs uppercase tracking-wider">Kunci Jawaban</h4>
                     <div id="preview-kunci-jawaban" class="font-bold text-emerald-700 text-lg uppercase">A</div>
                 </div>
-
             </div>
 
             <!-- Modal Footer -->
@@ -357,7 +345,7 @@
         </div>
     </div>
 
-    <!-- MODAL UPLOAD GAMBAR SOAL DENGAN BACKDROP BLUR -->
+    <!-- MODAL UPLOAD GAMBAR SOAL DENGAN OTOMATISASI DROPDOWN -->
     <div id="modal-upload-gambar"
         class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden transform transition-all">
@@ -382,7 +370,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Kode Paket Soal <span
                             class="text-rose-500">*</span></label>
-                    <select name="kode_soal" required
+                    <select name="kode_soal" id="upload-kode-soal" required
                         class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
                         <option value="">-- Pilih Kode Paket Soal --</option>
                         @if(isset($kodeSoals))
@@ -397,10 +385,11 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- DROPDOWN KELAS (OTOMATIS TERPILIH) -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Kelas <span
                                 class="text-rose-500">*</span></label>
-                        <select name="kelas_id" required
+                        <select name="kelas_id" id="upload-kelas-id" required
                             class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
                             <option value="">-- Pilih Kelas --</option>
                             @foreach($kelass as $k)
@@ -409,11 +398,14 @@
                         </select>
                     </div>
 
+                    <!-- DROPDOWN NOMOR SOAL (OTOMATIS POPULATE) -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Soal <span
                                 class="text-rose-500">*</span></label>
-                        <input type="number" name="nomor_soal" min="1" required placeholder="Contoh: 1, 2, 3..."
+                        <select name="nomor_soal" id="upload-nomor-soal" required
                             class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 border focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="">-- Pilih Kode Soal Dulu --</option>
+                        </select>
                     </div>
                 </div>
 
@@ -442,7 +434,7 @@
     </div>
 
     <script>
-        // Fungsi untuk memicu SweetAlert Hapus
+        // 1. FUNGSI SWEETALERT HAPUS
         function confirmDelete(id) {
             Swal.fire({
                 title: 'Hapus Soal?',
@@ -461,37 +453,29 @@
             });
         }
 
-        // Fungsi untuk Preview Detail Soal (Dekode Base64)
+        // 2. FUNGSI PREVIEW DETAIL SOAL
         function previewSoal(button) {
             const rawData = button.getAttribute('data-soal');
             if (rawData) {
-                // Decode base64 dan ubah ke JSON object
                 const data = JSON.parse(decodeURIComponent(escape(window.atob(rawData))));
 
-                // 1. Tampilkan Data Metadata
                 document.getElementById('preview-kode-soal').innerText = data.kode_soal || ('SOAL-' + data.id);
                 document.getElementById('preview-mapel').innerHTML = '<i class="fa-solid fa-book text-[10px] mr-1.5"></i> ' + (data.mapel ? data.mapel.nama_mapel : '-');
                 document.getElementById('preview-kelas').innerText = data.kelas ? data.kelas.nama_kelas : '-';
                 document.getElementById('preview-tipe').innerText = (data.tipe || 'pg').toUpperCase();
-
-                // 2. Tampilkan Teks Pertanyaan
                 document.getElementById('preview-teks-soal').innerHTML = data.soal || '<em>Tidak ada isi soal.</em>';
 
-                // 3. Tampilkan Gambar (Diperbaiki menyesuaikan kolom database: 'gambar')
                 const imgContainer = document.getElementById('preview-gambar-container');
-                // Mengecek variabel 'gambar' sesuai nama kolom tabel soals
                 const gambarSoal = data.gambar || data.file_gambar;
 
                 if (gambarSoal && gambarSoal.trim() !== '') {
                     imgContainer.classList.remove('hidden');
-                    // Mengarahkan ke storage publik Laravel
                     document.getElementById('preview-gambar').src = '/storage/' + gambarSoal;
                 } else {
                     imgContainer.classList.add('hidden');
                     document.getElementById('preview-gambar').src = '';
                 }
 
-                // 4. Handle Opsi Pilihan Ganda (Mendukung option_a / opsi_a)
                 const pgContainer = document.getElementById('preview-pilihan-ganda');
                 if (data.tipe !== 'esai' && data.tipe !== 'essay') {
                     pgContainer.classList.remove('hidden');
@@ -500,15 +484,12 @@
                     opsiData.forEach(function (huruf) {
                         const container = document.getElementById('opsi-' + huruf + '-container');
                         const textElem = document.getElementById('opsi-' + huruf + '-text');
-
-                        // Menangani opsi apakah menggunakan format 'option_a' atau 'opsi_a'
                         const opsiIsi = data['option_' + huruf] || data['opsi_' + huruf];
 
                         if (opsiIsi) {
                             container.classList.remove('hidden');
                             textElem.innerHTML = opsiIsi;
 
-                            // Highlight hijau jika itu adalah jawaban yang benar
                             if (data.kunci_jawaban && data.kunci_jawaban.toLowerCase() === huruf) {
                                 container.classList.add('border-emerald-500', 'bg-emerald-50/50');
                                 container.classList.remove('border-slate-200');
@@ -524,12 +505,46 @@
                     pgContainer.classList.add('hidden');
                 }
 
-                // 5. Tampilkan Kunci Jawaban
                 document.getElementById('preview-kunci-jawaban').innerText = data.kunci_jawaban ? data.kunci_jawaban.toUpperCase() : 'BELUM ADA KUNCI';
-
-                // Tampilkan Modal
                 document.getElementById('modal-preview-soal').classList.remove('hidden');
             }
         }
+
+        // 3. LOGIKA OTOMATISASI DROPDOWN KELAS & NOMOR SOAL
+        document.addEventListener('DOMContentLoaded', function () {
+            const dataPaketGrouped = @json($paketGrouped ?? []);
+            const elKodeSoal = document.getElementById('upload-kode-soal');
+
+            if (elKodeSoal) {
+                elKodeSoal.addEventListener('change', function () {
+                    const kodeTerpilih = this.value;
+                    const selectKelas = document.getElementById('upload-kelas-id');
+                    const selectNomor = document.getElementById('upload-nomor-soal');
+
+                    // Reset dropdown Nomor Soal
+                    selectNomor.innerHTML = '<option value="">-- Pilih Nomor Soal --</option>';
+
+                    if (kodeTerpilih && dataPaketGrouped[kodeTerpilih]) {
+                        const paket = dataPaketGrouped[kodeTerpilih];
+
+                        // Otomatis pilih kelas jika ada
+                        if (paket.kelas_id) {
+                            selectKelas.value = paket.kelas_id;
+                        }
+
+                        // Populate opsi nomor soal beserta cuplikan pertanyaan
+                        paket.items.forEach(function (item) {
+                            const opt = document.createElement('option');
+                            opt.value = item.no;
+                            opt.textContent = `No. ${item.no} - ${item.text}`;
+                            selectNomor.appendChild(opt);
+                        });
+                    } else {
+                        selectKelas.value = '';
+                        selectNomor.innerHTML = '<option value="">-- Pilih Kode Soal Dulu --</option>';
+                    }
+                });
+            }
+        });
     </script>
 @endsection
