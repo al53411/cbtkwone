@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Dashboard CAT')</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -74,7 +74,8 @@
                         <span class="text-[10px] text-blue-400 font-medium">Admin Sekolah CAT</span>
                     </div>
                 </div>
-                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white focus:outline-none p-1">
+                <button onclick="toggleSidebar()"
+                    class="md:hidden text-slate-400 hover:text-white focus:outline-none p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -105,7 +106,7 @@
                 </a>
 
                 <!-- TAMBAHAN: Menu Cetak Kartu Ujian -->
-               <!-- MENU CETAK KARTU UJIAN YANG DIPERBAIKI -->
+                <!-- MENU CETAK KARTU UJIAN YANG DIPERBAIKI -->
                 <a href="{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : '#' }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.cetak-kartu*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-id-card w-5 text-center text-blue-400"></i>
@@ -130,7 +131,8 @@
                         <i class="fa-solid fa-key w-5 text-center"></i>
                         <span class="truncate">Token Ujian CAT</span>
                     </div>
-                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <span
+                        class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
                         SuperAdmin
                     </span>
                 </a>
@@ -144,6 +146,12 @@
 
             </div>
 
+            <div
+                class="max-w-4xl mx-auto text-[10px] flex flex-col sm:flex-row items-center justify-between gap-1 text-slate-400">
+                <div>
+                    &copy; {{ date('Y') }} Copyright: MahesAPP. All rights reserved.
+                </div>
+            </div>
             <!-- Footer Sidebar (Tombol Logout) -->
             <div class="p-3 border-t border-slate-800 bg-slate-900/50 shrink-0">
                 <form method="POST" action="{{ route('logout') }}">
@@ -166,7 +174,8 @@
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
 
             <!-- Navbar Top -->
-            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10 shrink-0 shadow-sm">
+            <header
+                class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10 shrink-0 shadow-sm">
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleSidebar()"
                         class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none md:hidden">
@@ -178,6 +187,7 @@
                         <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 hidden sm:inline"></i>
                         <span class="text-slate-800 font-semibold truncate">@yield('page_title', 'Dashboard CAT')</span>
                     </div>
+
                 </div>
 
                 <!-- User Info & Indikator Tahun Ajaran -->
@@ -187,14 +197,16 @@
                     @endphp
 
                     @if($taAktif)
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                        <span
+                            class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                             <i class="fa-solid fa-calendar-days mr-1.5 text-blue-500"></i>
                             <span class="hidden sm:inline">TP: </span>{{ $taAktif->tahun }} ({{ $taAktif->semester }})
                         </span>
                     @endif
 
                     <div class="flex items-center space-x-2 border-l border-slate-200 pl-2 sm:pl-3">
-                        <span class="text-xs sm:text-sm font-bold text-slate-700 hidden md:inline truncate max-w-[120px]">
+                        <span
+                            class="text-xs sm:text-sm font-bold text-slate-700 hidden md:inline truncate max-w-[120px]">
                             {{ Auth::user()->name ?? 'Admin Sekolah' }}
                         </span>
                         <div
@@ -215,67 +227,67 @@
 
     <!-- Script Global UI Interaktif & Pop-up Cetak Kartu -->
     <script>
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
 
-    // 1. Buka / Tutup Sidebar (Mobile)
-    function toggleSidebar() {
-        if (sidebar.classList.contains('-translate-x-full')) {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-        } else {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
+        // 1. Buka / Tutup Sidebar (Mobile)
+        function toggleSidebar() {
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
         }
-    }
 
-    // 2. Pop-up Pilih Kelas untuk Cetak Kartu Massal
-    function pilihKelasCetak() {
-        // Ambil data kelas menggunakan fetch atau masukkan opsi langsung jika tersedia
-        Swal.fire({
-            title: 'Cetak Kartu Ujian',
-            text: 'Masukkan ID Kelas atau pilih metode cetak massal:',
-            input: 'text',
-            inputPlaceholder: 'Ketik ID Kelas...',
-            showCancelButton: true,
-            confirmButtonText: 'Cetak Berdasarkan Kelas',
-            cancelButtonText: 'Batal',
-            confirmButtonColor: '#2563eb',
-        }).then((result) => {
-            if (result.value) {
-                window.open("{{ route('admin.siswa.cetak-kartu') }}?kelas_id=" + result.value, '_blank');
+        // 2. Pop-up Pilih Kelas untuk Cetak Kartu Massal
+        function pilihKelasCetak() {
+            // Ambil data kelas menggunakan fetch atau masukkan opsi langsung jika tersedia
+            Swal.fire({
+                title: 'Cetak Kartu Ujian',
+                text: 'Masukkan ID Kelas atau pilih metode cetak massal:',
+                input: 'text',
+                inputPlaceholder: 'Ketik ID Kelas...',
+                showCancelButton: true,
+                confirmButtonText: 'Cetak Berdasarkan Kelas',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#2563eb',
+            }).then((result) => {
+                if (result.value) {
+                    window.open("{{ route('admin.siswa.cetak-kartu') }}?kelas_id=" + result.value, '_blank');
+                }
+            });
+        }
+
+        // 3. Resizing handler untuk responsivitas layar desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
             }
         });
-    }
 
-    // 3. Resizing handler untuk responsivitas layar desktop
-    window.addEventListener('resize', () => {
-        if (window.innerWidth >= 768) {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.add('hidden');
-        } else {
-            sidebar.classList.add('-translate-x-full');
-        }
-    });
+        // 4. Alert Flash Notification (SweetAlert2)
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: @json(session('success')),
+                showConfirmButton: false,
+                timer: 2000
+            });
+        @endif
 
-    // 4. Alert Flash Notification (SweetAlert2)
-    @if(session('success'))
-    Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: @json(session('success')),
-        showConfirmButton: false,
-        timer: 2000
-    });
-    @endif
-
-    @if(session('error'))
-    Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: @json(session('error'))
-    });
-    @endif
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: @json(session('error'))
+            });
+        @endif
     </script>
 </body>
 

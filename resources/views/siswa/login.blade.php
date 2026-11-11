@@ -17,7 +17,7 @@
         <div class="max-w-6xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div
-                    class="w-12 h-12 bg-white/12 rounded-lg p-1.5 border border-white/20 flex items-center justify-center">
+                    class="w-14 h-14 bg-white/12 rounded-lg p-1.5 border border-red/20 flex items-center justify-center">
                     <img src="{{ asset('logo.png') }}" alt="Logo CAT" class="w-full h-full object-contain">
                 </div>
                 <div>
@@ -44,7 +44,7 @@
                 </div>
 
                 <div
-                    class="inline-flex items-center justify-center w-14 h-14 bg-white/10 rounded-2xl mb-3 border border-white/20 p-2 shadow-inner">
+                    class="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl border border-white/20 p-1.5 shadow-inner">
                     <img src="{{ asset('logo.png') }}" alt="Logo Portal Ujian" class="w-full h-full object-contain">
                 </div>
                 <h2 class="text-xl font-extrabold tracking-wide text-white uppercase">PORTAL UJIAN SISWA</h2>
@@ -146,7 +146,7 @@
     <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500 font-medium">
         <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
             <div>
-                &copy; {{ date('Y') }} Computer Based Test System. All rights reserved.
+                &copy; {{ date('Y') }} Copyrigth:MahesAPP. All rights reserved.
             </div>
             <div class="flex items-center space-x-3 text-[11px] text-slate-400">
                 <span>Versi CAT 2.0</span>

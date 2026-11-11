@@ -203,6 +203,11 @@
                                 <i class="fa-solid fa-check-circle"></i> SELESAI UJIAN
                             </button>
                         </div>
+                        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+                            <div>
+                                &copy; {{ date('Y') }} Copyrigth:MahesAPP. All rights reserved.
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -283,12 +288,12 @@
                         let borderClass = isChecked ? 'border-blue-700 bg-blue-50/70 ring-1 ring-blue-700 font-semibold' : 'border-slate-300 bg-white hover:bg-slate-50';
 
                         let html = `
-                        <label class="flex items-center gap-3.5 p-3 rounded-lg border ${borderClass} cursor-pointer transition select-none shadow-2xs">
-                            <input type="radio" name="pilihan_jawaban" value="${opsi.key}" ${isChecked} onclick="pilihJawaban(${index}, '${opsi.key}')" class="text-blue-700 focus:ring-blue-600 w-4 h-4 cursor-pointer">
-                            <span class="text-xs font-bold text-slate-900 w-7 h-7 flex items-center justify-center bg-slate-100 rounded border border-slate-300 shrink-0">${opsi.key}.</span>
-                            <span class="text-xs md:text-sm text-slate-900 flex-1 leading-relaxed">${opsi.teks}</span>
-                        </label>
-                    `;
+                                <label class="flex items-center gap-3.5 p-3 rounded-lg border ${borderClass} cursor-pointer transition select-none shadow-2xs">
+                                    <input type="radio" name="pilihan_jawaban" value="${opsi.key}" ${isChecked} onclick="pilihJawaban(${index}, '${opsi.key}')" class="text-blue-700 focus:ring-blue-600 w-4 h-4 cursor-pointer">
+                                    <span class="text-xs font-bold text-slate-900 w-7 h-7 flex items-center justify-center bg-slate-100 rounded border border-slate-300 shrink-0">${opsi.key}.</span>
+                                    <span class="text-xs md:text-sm text-slate-900 flex-1 leading-relaxed">${opsi.teks}</span>
+                                </label>
+                            `;
                         containerOpsi.insertAdjacentHTML('beforeend', html);
                     }
                 });
