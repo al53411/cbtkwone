@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ujian;
 use App\Models\Kelas;
 use App\Models\Mapel;
+use App\Models\NilaiUjian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -47,12 +48,10 @@ class UjianController extends Controller
             'acak_jawaban'  => 'nullable',
         ]);
 
-        // Mengatur token ujian
-        $tokenUjian = $request->filled('token') 
-            ? strtoupper(trim($request->token)) 
+        $tokenUjian = $request->filled('token')
+            ? strtoupper(trim($request->token))
             : strtoupper(Str::random(6));
 
-        // Format boolean murni untuk PostgreSQL menggunakan DB::raw
         $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
         $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
 
@@ -88,14 +87,14 @@ class UjianController extends Controller
         ]);
 
         $ujian = Ujian::findOrFail($id);
-        
-        $tokenUjian = $request->filled('token') 
-            ? strtoupper(trim($request->token)) 
+
+        $tokenUjian = $request->filled('token')
+            ? strtoupper(trim($request->token))
             : $ujian->token;
 
         $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
         $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
-        
+
         $ujian->update([
             'nama_ujian'    => $validated['nama_ujian'],
             'kelas_id'      => $validated['kelas_id'],
@@ -110,5 +109,77 @@ class UjianController extends Controller
         ]);
 
         return redirect()->route('admin.ujian.index')->with('success', 'Data sesi ujian dan mapel berhasil diperbarui!');
+    }
+
+    // 1. Halaman Rekap Semua Hasil Ujian (Menu Sidebar)
+    public function rekapNilai(Request $request)
+    {
+        $listUjian = Ujian::with('mapel')->latest()->get();
+        $listKelas = Kelas::orderBy('nama_kelas', 'asc')->get();
+
+        $query = NilaiUjian::with(['siswa.kelas', 'ujian.mapel']);
+
+        if ($request->filled('ujian_id')) {
+            $query->where('ujian_id', $request->ujian_id);
+        }
+
+        if ($request->filled('kelas_id')) {
+            $query->whereHas('siswa', function ($q) use ($request) {
+                $q->where('kelas_id', $request->kelas_id);
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->whereHas('siswa', function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nisn', 'like', "%{$search}%");
+            });
+        }
+
+        $hasilUjians = $query->latest()->paginate(15)->withQueryString();
+
+        return view('admin.ujian.rekap', compact('hasilUjians', 'listUjian', 'listKelas'));
+    }
+
+    // 2. Halaman Detail Hasil Per Sesi Ujian
+    public function hasil(Request $request, string $id)
+    {
+        $ujian = Ujian::with(['kelas', 'mapel'])->findOrFail($id);
+
+        $query = NilaiUjian::with(['siswa.kelas'])
+            ->where('ujian_id', $id);
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->whereHas('siswa', function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nisn', 'like', "%{$search}%");
+            });
+        }
+
+        $hasilUjians = $query->orderBy('nilai', 'desc')->get();
+
+        $statistik = [
+            'total_peserta' => $hasilUjians->count(),
+            'rata_rata'     => $hasilUjians->avg('nilai') ? round($hasilUjians->avg('nilai'), 2) : 0,
+            'tertinggi'     => $hasilUjians->max('nilai') ?? 0,
+            'terendah'      => $hasilUjians->min('nilai') ?? 0,
+        ];
+
+        return view('admin.ujian.hasil', compact('ujian', 'hasilUjians', 'statistik'));
+    }
+
+    // 3. Halaman Cetak Rekap Nilai Per Sesi Ujian
+    public function cetakHasil(string $id)
+    {
+        $ujian = Ujian::with(['kelas', 'mapel'])->findOrFail($id);
+
+        $hasilUjians = NilaiUjian::with(['siswa.kelas'])
+            ->where('ujian_id', $id)
+            ->orderBy('nilai', 'desc')
+            ->get();
+
+        return view('admin.ujian.cetak-hasil', compact('ujian', 'hasilUjians'));
     }
 }

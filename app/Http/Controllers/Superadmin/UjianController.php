@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Ujian;
 use App\Models\Mapel;
 use App\Models\Kelas;
+use App\Models\NilaiUjian;
+use App\Models\Sekolah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,7 @@ class UjianController extends Controller
 
         // 1. Pencarian Nama Ujian atau Nama Mapel
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('nama_ujian', 'LIKE', "%{$search}%")
                     ->orWhereHas('mapel', function ($qm) use ($search) {
@@ -37,7 +39,6 @@ class UjianController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Mengambil data dengan pagination dan mempertahankan parameter query di URL
         $ujians = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
         $mapels = Mapel::where('status', 'aktif')->get();
@@ -60,25 +61,25 @@ class UjianController extends Controller
         $validated = $this->validateRequest($request);
 
         $tokenUjian = !empty($validated['token'])
-            ? strtoupper($validated['token'])
+            ? strtoupper(trim($validated['token']))
             : strtoupper(Str::random(6));
 
-        // Memaksa ekspresi boolean murni untuk PostgreSQL menggunakan DB::raw
         $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
         $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
 
         Ujian::create([
-            'nama_ujian'    => $validated['nama_ujian'],
-            'kelas_id'      => $validated['kelas_id'],
-            'mapel_id'      => $validated['mapel_id'],
-            'waktu_mulai'   => $validated['waktu_mulai'],
-            'waktu_selesai' => $validated['waktu_selesai'],
-            'durasi'        => $validated['durasi'],
-            'token'         => $tokenUjian,
-            'status'        => $validated['status'],
-            'aturan_ujian'  => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null, // MENAMBAHKAN ATURAN UJIAN
-            'acak_soal'     => DB::raw($acakSoalVal),
-            'acak_jawaban'  => DB::raw($acakJawabanVal),
+            'nama_ujian'      => $validated['nama_ujian'],
+            'kelas_id'        => $validated['kelas_id'],
+            'mapel_id'        => $validated['mapel_id'],
+            'waktu_mulai'     => $validated['waktu_mulai'],
+            'waktu_selesai'   => $validated['waktu_selesai'],
+            'durasi'          => $validated['durasi'],
+            'token'           => $tokenUjian,
+            'status'          => $validated['status'],
+            'aturan_ujian'    => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null,
+            'acak_soal'       => DB::raw($acakSoalVal),
+            'acak_jawaban'    => DB::raw($acakJawabanVal),
+            'tampilkan_nilai' => DB::raw('false'), // Default terkunci saat ujian baru dibuat
         ]);
 
         return redirect()->route('superadmin.ujian.index')->with('success', 'Jadwal Ujian berhasil dibuat!');
@@ -99,9 +100,9 @@ class UjianController extends Controller
             'waktu_mulai'   => $validated['waktu_mulai'],
             'waktu_selesai' => $validated['waktu_selesai'],
             'durasi'        => $validated['durasi'],
-            'token'         => !empty($validated['token']) ? strtoupper($validated['token']) : $ujian->token,
+            'token'         => !empty($validated['token']) ? strtoupper(trim($validated['token'])) : $ujian->token,
             'status'        => $validated['status'],
-            'aturan_ujian'  => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null, // MEMPERBARUI ATURAN UJIAN
+            'aturan_ujian'  => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null,
             'acak_soal'     => DB::raw($acakSoalVal),
             'acak_jawaban'  => DB::raw($acakJawabanVal),
         ]);
@@ -118,6 +119,26 @@ class UjianController extends Controller
     }
 
     /**
+     * Toggle Rilis / Kunci Nilai Ujian untuk ditampilkan di panel Admin
+     */
+    public function toggleRilisNilai($id)
+    {
+        $ujian = Ujian::findOrFail($id);
+        $statusBaru = !$ujian->isNilaiDirilis();
+
+        DB::table('ujians')->where('id', $id)->update([
+            'tampilkan_nilai' => DB::raw($statusBaru ? 'true' : 'false'),
+            'updated_at'      => now(),
+        ]);
+
+        $pesan = $statusBaru
+            ? "Nilai ujian '{$ujian->nama_ujian}' berhasil dirilis ke menu Admin."
+            : "Nilai ujian '{$ujian->nama_ujian}' dikunci kembali (Dalam Penilaian).";
+
+        return redirect()->back()->with('success', $pesan);
+    }
+
+    /**
      * Helper private untuk validasi request form Ujian
      */
     private function validateRequest(Request $request)
@@ -131,31 +152,32 @@ class UjianController extends Controller
             'durasi'        => 'required|integer|min:1',
             'token'         => 'nullable|string|max:6',
             'status'        => 'required|in:draft,aktif,selesai',
-            'aturan_ujian'  => 'nullable|string', // VALIDASI ATURAN UJIAN
+            'aturan_ujian'  => 'nullable|string',
             'acak_soal'     => 'nullable',
             'acak_jawaban'  => 'nullable',
         ]);
     }
 
     /**
-     * Menampilkan rekap nilai siswa berdasarkan ujian
+     * Menampilkan rekap nilai siswa (Semua ujian atau per sesi ujian)
      */
-    public function rekapNilai(Request $request, $id)
+    public function rekapNilai(Request $request, $id = null)
     {
-        $ujian = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
+        $ujianId = $id ?? $request->ujian_id;
+        $ujian = $ujianId ? Ujian::with(['mapel', 'kelas'])->findOrFail($ujianId) : null;
 
-        // Query rekap nilai siswa
-        $query = \App\Models\NilaiUjian::where('ujian_id', $id)
-            ->with(['siswa.kelas', 'siswa.sekolah']); // Pastikan relasi sekolah ada di model Siswa
+        $query = NilaiUjian::with(['siswa.kelas', 'siswa.sekolah', 'ujian.mapel']);
 
-        // Filter berdasarkan Sekolah (jika dipilih)
+        if ($ujian) {
+            $query->where('ujian_id', $ujian->id);
+        }
+
         if ($request->filled('sekolah_id')) {
             $query->whereHas('siswa', function ($q) use ($request) {
                 $q->where('sekolah_id', $request->sekolah_id);
             });
         }
 
-        // Filter berdasarkan Kelas (jika dipilih)
         if ($request->filled('kelas_id')) {
             $query->whereHas('siswa', function ($q) use ($request) {
                 $q->where('kelas_id', $request->kelas_id);
@@ -164,31 +186,33 @@ class UjianController extends Controller
 
         $rekapNilais = $query->orderBy('nilai', 'desc')->get();
 
-        // Ambil data untuk dropdown filter
-        $sekolahs = \App\Models\Sekolah::all();
-        $kelases = \App\Models\Kelas::all();
+        $listUjian = Ujian::with(['mapel', 'kelas'])->orderBy('created_at', 'desc')->get();
+        $sekolahs  = Sekolah::all();
+        $kelases   = Kelas::all();
 
-        return view('superadmin.ujian.rekap', compact('ujian', 'rekapNilais', 'sekolahs', 'kelases'));
+        return view('superadmin.ujian.rekap', compact('ujian', 'rekapNilais', 'listUjian', 'sekolahs', 'kelases'));
     }
 
     /**
-     * Cetak rekap nilai ujian
+     * Cetak rekap nilai ujian (Semua ujian atau per sesi ujian)
      */
-    public function cetakRekap(Request $request, $id)
+    public function cetakRekap(Request $request, $id = null)
     {
-        $ujian = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
+        $ujianId = $id ?? $request->ujian_id;
+        $ujian = $ujianId ? Ujian::with(['mapel', 'kelas'])->findOrFail($ujianId) : null;
 
-        $query = \App\Models\NilaiUjian::where('ujian_id', $id)
-            ->with(['siswa.kelas', 'siswa.sekolah']);
+        $query = NilaiUjian::with(['siswa.kelas', 'siswa.sekolah', 'ujian.mapel']);
 
-        // Filter berdasarkan Sekolah (jika ada)
+        if ($ujian) {
+            $query->where('ujian_id', $ujian->id);
+        }
+
         if ($request->filled('sekolah_id')) {
             $query->whereHas('siswa', function ($q) use ($request) {
                 $q->where('sekolah_id', $request->sekolah_id);
             });
         }
 
-        // Filter berdasarkan Kelas (jika ada)
         if ($request->filled('kelas_id')) {
             $query->whereHas('siswa', function ($q) use ($request) {
                 $q->where('kelas_id', $request->kelas_id);

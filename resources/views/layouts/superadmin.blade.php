@@ -51,7 +51,7 @@
 
                         <!-- Informasi Akun -->
                         <div class="flex flex-col truncate">
-                            <span class="text-16px font-bold text-white truncate">
+                            <span class="text-[16px] font-bold text-white truncate">
                                 {{ Auth::user()->name ?? 'Nama Pengguna' }}
                             </span>
                             <span class="text-[12px] text-slate-500 capitalize truncate">
@@ -71,6 +71,10 @@
                 <!-- ========================================== -->
                 <!-- KELOMPOK 1: PUSAT MONITORING               -->
                 <!-- ========================================== -->
+                @php
+                    $isUjianLiveActive = request()->routeIs('superadmin.ujian.*') && !request()->routeIs('superadmin.ujian.rekap*', 'superadmin.ujian.cetak-rekap*');
+                    $isRekapActive = request()->routeIs('superadmin.ujian.rekap*', 'superadmin.ujian.cetak-rekap*');
+                @endphp
                 <div>
                     <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Pusat Monitoring
                     </p>
@@ -82,8 +86,9 @@
                         </a>
 
                         <a href="{{ route('superadmin.ujian.index') }}"
-                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ request()->routeIs('superadmin.ujian.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
-                            <i class="fa-solid fa-tower-broadcast w-5 text-center text-sm text-amber-400"></i>
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ $isUjianLiveActive ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i
+                                class="fa-solid fa-tower-broadcast w-5 text-center text-sm {{ $isUjianLiveActive ? 'text-white' : 'text-amber-400' }}"></i>
                             <span class="text-xs">Ujian Live Realtime</span>
                         </a>
                     </div>
@@ -167,12 +172,14 @@
                     <div class="space-y-1">
                         <a href="{{ route('superadmin.mapel.index') }}"
                             class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('superadmin.mapel.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
-                            <i class="fa-solid fa-book-bookmark w-5 text-center text-sm text-sky-400"></i>
+                            <i
+                                class="fa-solid fa-book-bookmark w-5 text-center text-sm {{ request()->routeIs('superadmin.mapel.*') ? 'text-white' : 'text-sky-400' }}"></i>
                             <span class="text-xs">Mata Pelajaran</span>
                         </a>
                         <a href="{{ route('superadmin.soal.index') }}"
                             class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('superadmin.soal.*') ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
-                            <i class="fa-solid fa-file-signature w-5 text-center text-sm text-indigo-400"></i>
+                            <i
+                                class="fa-solid fa-file-signature w-5 text-center text-sm {{ request()->routeIs('superadmin.soal.*') ? 'text-white' : 'text-indigo-400' }}"></i>
                             <span class="text-xs">Master Bank Soal</span>
                         </a>
                     </div>
@@ -185,35 +192,11 @@
                     <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hasil & Laporan
                     </p>
                     <div class="space-y-1">
-                        <a href="#"
-                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
-                            <i class="fa-solid fa-square-poll-vertical w-5 text-center text-sm text-emerald-400"></i>
-                            <span class="text-xs">Rekap & Nilai CAT</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- ========================================== -->
-                <!-- KELOMPOK 5: AKSES ROLE & SIMULASI          -->
-                <!-- ========================================== -->
-                <div>
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Akses Role &
-                        Simulasi</p>
-                    <div class="space-y-1">
-                        <a href="#"
-                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
-                            <i class="fa-solid fa-user-gear w-5 text-center text-xs text-amber-400"></i>
-                            <span class="text-xs">Mode Admin Sekolah</span>
-                        </a>
-                        <a href="#"
-                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
-                            <i class="fa-solid fa-chalkboard-user w-5 text-center text-xs text-sky-400"></i>
-                            <span class="text-xs">Mode Proktor / Guru</span>
-                        </a>
-                        <a href="#"
-                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition">
-                            <i class="fa-solid fa-graduation-cap w-5 text-center text-xs text-emerald-400"></i>
-                            <span class="text-xs">Simulasi Ujian Siswa</span>
+                        <a href="{{ route('superadmin.ujian.rekap') }}"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ $isRekapActive ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i
+                                class="fa-solid fa-clipboard-check w-5 text-center text-sm {{ $isRekapActive ? 'text-white' : 'text-emerald-400' }}"></i>
+                            <span class="text-xs">Rekap & Rilis Nilai</span>
                         </a>
                     </div>
                 </div>

@@ -144,14 +144,16 @@
                     <span>Daftar Paket Soal</span>
                 </a>
 
+
+                <!-- Menjadi seperti ini: -->
+                <a href="{{ route('admin.ujian.rekap') }}"
+                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold transition duration-150 {{ request()->routeIs('admin.ujian.rekap*') || request()->routeIs('admin.ujian.hasil*') ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                    <i class="fa-solid fa-clipboard-check w-5 text-center text-sm"></i>
+                    <span>Hasil & Rekap Nilai</span>
+                </a>
+
             </div>
 
-            <div
-                class="max-w-4xl mx-auto text-[10px] flex flex-col sm:flex-row items-center justify-between gap-1 text-slate-400">
-                <div>
-                    &copy; {{ date('Y') }} Copyright: MahesAPP. All rights reserved.
-                </div>
-            </div>
             <!-- Footer Sidebar (Tombol Logout) -->
             <div class="p-3 border-t border-slate-800 bg-slate-900/50 shrink-0">
                 <form method="POST" action="{{ route('logout') }}">

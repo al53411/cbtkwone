@@ -22,11 +22,12 @@ class Ujian extends Model
         'token',
         'acak_soal',
         'acak_jawaban',
+        'tampilkan_nilai',
         'status',
         'aturan_ujian',
     ];
 
-    // Hapus casting boolean di sini agar tidak memaksa konversi PDO PostgreSQL
+    // Tanpa casting boolean agar aman untuk PDO PostgreSQL maupun MySQL
     protected $casts = [
         'waktu_mulai'   => 'datetime',
         'waktu_selesai' => 'datetime',
@@ -56,5 +57,11 @@ class Ujian extends Model
     public function nilaiUjians()
     {
         return $this->hasMany(NilaiUjian::class, 'ujian_id');
+    }
+
+    // Helper aman untuk mengecek status rilis nilai lintas database (MySQL / PostgreSQL)
+    public function isNilaiDirilis(): bool
+    {
+        return filter_var($this->tampilkan_nilai, FILTER_VALIDATE_BOOLEAN);
     }
 }

@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\ModulAjarController;
 use App\Http\Controllers\Admin\RuangSesiController;
 use App\Http\Controllers\Admin\TokenController;
 use App\Http\Controllers\Admin\SoalController as AdminSoalController;
+use App\Http\Controllers\Admin\UjianController;
 
 // Import Controller Guru
 use App\Http\Controllers\Guru\DashboardController as GuruDashboardController;
@@ -41,6 +42,7 @@ use App\Http\Controllers\Guru\AbsensiController as GuruAbsensiController;
 use App\Http\Controllers\Guru\SekolahController as GuruSekolahController;
 use App\Http\Controllers\Guru\ProfilController as GuruProfilController;
 use App\Http\Controllers\Guru\ModulAjarController as GuruModulAjarController;
+
 
 // Import Controller Siswa
 use App\Http\Controllers\Siswa\AuthController as SiswaAuthController;
@@ -124,10 +126,13 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     // ==========================================
     Route::get('/ujian/generate-token', [SuperadminUjianController::class, 'generateToken'])->name('ujian.generate-token');
     Route::patch('/ujian/{ujian}/status', [SuperadminUjianController::class, 'updateStatus'])->name('ujian.update-status');
+    Route::patch('/ujian/{id}/toggle-rilis-nilai', [SuperadminUjianController::class, 'toggleRilisNilai'])->name('ujian.toggle-rilis');
 
-    // Rute Rekap & Cetak Rekap Nilai Ujian (Diletakkan di atas sebelum resource ujian)
-    Route::get('/ujian/{id}/rekap', [SuperadminUjianController::class, 'rekapNilai'])->name('ujian.rekap');
-    Route::get('/ujian/{id}/cetak-rekap', [SuperadminUjianController::class, 'cetakRekap'])->name('ujian.cetak-rekap');
+    // Rute Rekap & Cetak Rekap Nilai Ujian
+    // Rute Rekap & Cetak Rekap Nilai Ujian (Bisa diakses langsung dari Sidebar maupun per ID Ujian)
+    Route::get('/rekap-nilai/{id?}', [SuperadminUjianController::class, 'rekapNilai'])->name('ujian.rekap');
+    Route::get('/cetak-rekap/{id?}', [SuperadminUjianController::class, 'cetakRekap'])->name('ujian.cetak-rekap');
+    Route::get('/ujian/cetak-rekap/{id?}', [SuperadminUjianController::class, 'cetakRekap'])->name('ujian.cetak-rekap');
 
     // ==========================================
     // CRUD RESOURCE PENGATURAN UJIAN
@@ -215,6 +220,11 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
 
         // Rute Admin Sekolah untuk MELIHAT Daftar Paket Soal
         Route::get('/soal/paket', [AdminSoalController::class, 'paketIndex'])->name('soal.paket');
+
+        // Rute Hasil Ujian
+        Route::get('/hasil-ujian', [UjianController::class, 'rekapNilai'])->name('ujian.rekap');
+        Route::get('/ujian/{id}/hasil', [UjianController::class, 'hasil'])->name('ujian.hasil');
+        Route::get('/ujian/{id}/cetak-hasil', [UjianController::class, 'cetakHasil'])->name('ujian.cetak-hasil');
     });
 
 

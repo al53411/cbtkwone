@@ -103,6 +103,12 @@
     </div>
     @endif
 </form>
+<div
+            class="max-w-4xl mx-auto-center text-[10px] flex flex-col sm:flex-row items-center justify-between gap-1 text-slate-400">
+            <div>
+                &copy; {{ date('Y') }} Copyright: MahesAPP. All rights reserved.
+            </div>
+        </div>
 </div>
 
 @endsection
