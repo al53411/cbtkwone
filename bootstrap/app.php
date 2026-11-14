@@ -5,21 +5,22 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\CheckRole; // 1. Import middleware custom
+use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\CekSesiTunggalSiswa;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        
-        // 2. Percayai proxy Vercel agar HTTPS terbaca sempurna
+
+        // 1. Percayai proxy (Nginx / Cloudflare / aaPanel) agar HTTPS terbaca sempurna
         $middleware->trustProxies(at: '*');
 
-        // 3. Bypass CSRF untuk seluruh rute login & logout (termasuk siswa)
+        // 2. Bypass CSRF untuk rute login, logout & token
         $middleware->validateCsrfTokens(except: [
             'login',
             'logout',
@@ -28,11 +29,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin/token/*',
         ]);
 
-        // 4. Daftarkan alias 'role'
+        // 3. Daftarkan seluruh alias middleware
         $middleware->alias([
-            'role' => CheckRole::class,
+            'role'         => CheckRole::class,
+            'single.siswa' => CekSesiTunggalSiswa::class,
         ]);
-
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

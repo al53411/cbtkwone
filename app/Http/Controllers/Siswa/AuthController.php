@@ -7,6 +7,7 @@ use App\Models\Siswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -18,10 +19,10 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'nisn' => 'required|string',
+            'nisn'     => 'required|string',
             'password' => 'required|string',
         ], [
-            'nisn.required' => 'NISN wajib diisi.',
+            'nisn.required'     => 'NISN wajib diisi.',
             'password.required' => 'Password wajib diisi.',
         ]);
 
@@ -40,22 +41,37 @@ class AuthController extends Controller
         // 2. Format password standar: NISN + '*'
         $passwordStandar = $siswa->nisn . '*';
 
-        // 3. Validasi kecocokan password (mendukung teks biasa, NISN*, maupun hash DB)
+        // 3. Validasi kecocokan password
         $isPasswordValid = (
-            ($passwordInput === $passwordStandar) || 
+            ($passwordInput === $passwordStandar) ||
             ($passwordInput === $siswa->nisn) ||
             ($siswa->password && Hash::check($passwordInput, $siswa->password)) ||
             ($siswa->password && $passwordInput === $siswa->password)
         );
 
         if ($isPasswordValid) {
-            // Login-kan siswa secara manual menggunakan guard 'siswa'
-            Auth::guard('siswa')->login($siswa);
-            
-            // Regenerate session untuk keamanan
-            $request->session()->regenerate();
+            // 4. CEK KUNCI PERANGKAT: Tolak login jika akun masih aktif di perangkat lain
+            if (!empty($siswa->session_token)) {
+                return back()->withErrors([
+                    'login_error' => 'Akun Anda sedang aktif di perangkat lain! Jika browser tertutup atau ganti perangkat, minta Proktor/Admin menekan tombol Reset Login.',
+                ])->onlyInput('nisn');
+            }
 
-            return redirect()->intended(route('siswa.dashboard'));
+            // 5. Generate token sesi unik & simpan ke DB terlebih dahulu
+            $tokenSesi = Str::random(60);
+            $siswa->session_token = $tokenSesi;
+            $siswa->save();
+
+            // 6. Login-kan siswa menggunakan guard 'siswa'
+            Auth::guard('siswa')->login($siswa);
+
+            // Regenerate session & simpan token ke session aktif
+            $request->session()->regenerate();
+            $request->session()->forget('url.intended');
+            $request->session()->put('siswa_session_token', $tokenSesi);
+            $request->session()->save();
+
+            return redirect()->route('siswa.dashboard');
         }
 
         return back()->withErrors([
@@ -65,6 +81,13 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        $siswa = Auth::guard('siswa')->user();
+
+        if ($siswa instanceof Siswa) {
+            $siswa->session_token = null;
+            $siswa->save();
+        }
+
         Auth::guard('siswa')->logout();
 
         $request->session()->invalidate();

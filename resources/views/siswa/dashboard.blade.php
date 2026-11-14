@@ -253,7 +253,7 @@
 
     <!-- FOOTER -->
     <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white mt-auto">
-        &copy; {{ date('Y') }} Sistem CBT Sekolah &bull; Hak Cipta Dilindungi.
+        &copy; {{ date('Y') }} Copyrigth:MahesAPP. All rights reserved.
     </footer>
 
     <!-- SCRIPT UNTUK TOGGLE TOMBOL SUBMIT -->

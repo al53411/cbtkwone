@@ -8,153 +8,158 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
+    <style>
+        @keyframes waveFloat {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        .wave-animate {
+            animation: waveFloat 4.5s ease-in-out infinite;
+        }
+    </style>
 </head>
 
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col justify-between antialiased">
+<body class="bg-slate-200/80 text-slate-800 font-sans min-h-screen flex items-center justify-center p-4 antialiased">
 
-    <!-- Top Navigation Bar khas CAT BKN -->
-    <header class="bg-slate-900 text-white border-b-4 border-amber-500 shadow-md py-3 px-4 sm:px-8">
-        <div class="max-w-6xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div
-                    class="w-14 h-14 bg-white/12 rounded-lg p-1.5 border border-red/20 flex items-center justify-center">
-                    <img src="{{ asset('logo.png') }}" alt="Logo CAT" class="w-full h-full object-contain">
+    <!-- Kartu Utama Gaya Modern Wave UI -->
+    <div
+        class="w-full max-w-[390px] bg-white rounded-[32px] shadow-2xl overflow-hidden relative flex flex-col justify-between min-h-[640px] border border-blue-100">
+
+        <!-- Gelombang Biru Bagian Atas (2 Lapis) -->
+        <div class="relative w-full h-44 select-none pointer-events-none">
+            <svg viewBox="0 0 400 190" preserveAspectRatio="none" class="w-full h-full">
+                <!-- Lapisan Biru Muda (Belakang) -->
+                <path d="M0,0 L400,0 L400,145 C315,90 215,185 110,165 C55,155 20,175 0,185 Z" fill="#93C5FD"
+                    class="wave-animate" />
+                <!-- Lapisan Biru Utama (Depan) -->
+                <path d="M0,0 L400,0 L400,110 C310,45 190,150 85,135 C40,128 15,142 0,150 Z" fill="#2563EB" />
+            </svg>
+
+            <!-- Identitas Ringkas di Atas Gelombang Biru -->
+            <div class="absolute top-6 left-7 right-7 flex items-center justify-between text-white">
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-white/15 backdrop-blur-xs border border-white/25 p-1.5 flex items-center justify-center">
+                        <img src="{{ asset('logo.png') }}" alt="Logo CAT" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <p class="text-xs font-extrabold tracking-wider uppercase leading-none">CAT SYSTEM</p>
+                        <p class="text-[10px] text-blue-100 font-medium mt-0.5">Portal Ujian Siswa</p>
+                    </div>
                 </div>
+                <span class="px-2.5 py-0.5 rounded-full bg-white/15 text-[10px] font-semibold tracking-wide">
+                    ONLINE
+                </span>
+            </div>
+        </div>
+
+        <!-- Area Form Login Tengah -->
+        <div class="px-8 pt-2 pb-4 flex-1 flex flex-col justify-center relative z-10">
+            <div class="mb-5">
+                <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight">Login</h1>
+                <p class="text-xs text-slate-400 mt-1 font-medium">Masukkan NISN dan PIN untuk memulai ujian</p>
+            </div>
+
+            <!-- Alert Error Validasi -->
+            @if ($errors->any())
+                <div class="mb-4 bg-rose-50 border border-rose-200 text-rose-600 text-[11px] p-3 rounded-xl space-y-0.5">
+                    @foreach ($errors->all() as $error)
+                        <div class="flex items-start gap-1.5 font-medium">
+                            <i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0"></i>
+                            <span>{{ $error }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            <!-- Alert Session Error -->
+            @if (session('error'))
+                <div
+                    class="mb-4 bg-rose-50 border border-rose-200 text-rose-600 text-[11px] p-3 rounded-xl flex items-start gap-1.5 font-medium">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
+
+            <form id="formLoginSiswa" action="{{ route('siswa.login.post') }}" method="POST" class="space-y-4">
+                @csrf
+
+                <!-- Input NISN -->
                 <div>
-                    <h1 class="text-sm sm:text-base font-black tracking-wider uppercase text-white leading-tight">CAT
-                        SYSTEM</h1>
-                    <p class="text-[10px] text-amber-400 font-semibold tracking-wide">COMPUTER ASSISTED TEST PORTAL</p>
-                </div>
-            </div>
-            <div class="hidden sm:flex items-center space-x-2 text-xs text-slate-300">
-                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                <span class="font-medium">Sistem Ujian Terenkripsi & Aman</span>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Container Login -->
-    <main class="flex-1 flex items-center justify-center p-4 my-6">
-        <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
-
-            <!-- Card Header -->
-            <div class="bg-slate-900 text-white p-6 text-center relative overflow-hidden">
-                <div
-                    class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-600/20 rounded-full blur-xl pointer-events-none">
+                    <label for="nisn" class="block text-[11px] font-semibold text-blue-600 mb-1">
+                        NISN Peserta
+                    </label>
+                    <input type="text" id="nisn" name="nisn" value="{{ old('nisn') }}" required autofocus
+                        placeholder="Contoh: 0146752372" autocomplete="username"
+                        class="w-full px-3.5 py-2.5 bg-white border border-blue-400 rounded-lg text-xs sm:text-sm text-slate-700 placeholder-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition font-medium">
                 </div>
 
-                <div
-                    class="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl border border-white/20 p-1.5 shadow-inner">
-                    <img src="{{ asset('logo.png') }}" alt="Logo Portal Ujian" class="w-full h-full object-contain">
+                <!-- Input Password -->
+                <div>
+                    <label for="password" class="block text-[11px] font-semibold text-blue-600 mb-1">
+                        Password / PIN
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required
+                            placeholder="NISN diakhiri tanda *" autocomplete="current-password"
+                            class="w-full pl-3.5 pr-10 py-2.5 bg-white border border-blue-400 rounded-lg text-xs sm:text-sm text-slate-700 placeholder-slate-300 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition font-medium">
+                        <button type="button" onclick="togglePasswordVisibility()"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-400 hover:text-blue-600 transition">
+                            <i id="eye-icon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-end mt-1.5">
+                        <span class="text-[10px] font-semibold text-blue-600">
+                            Format standar: NISN + *
+                        </span>
+                    </div>
                 </div>
-                <h2 class="text-xl font-extrabold tracking-wide text-white uppercase">PORTAL UJIAN SISWA</h2>
-                <p class="text-xs text-slate-300 mt-1 font-medium">Autentikasi Peserta Ujian CAT</p>
-            </div>
+            </form>
+        </div>
 
-            <div class="p-6 sm:p-8 space-y-5">
+        <!-- Gelombang Biru Bagian Bawah + Tombol Login Menyatu -->
+        <div class="relative w-full h-36 mt-2 select-none">
+            <svg viewBox="0 0 400 150" preserveAspectRatio="none" class="w-full h-full block">
+                <!-- Lapisan Biru Muda (Belakang) -->
+                <path d="M0,75 C95,125 215,15 320,35 C360,42 385,28 400,18 L400,150 L0,150 Z" fill="#93C5FD" />
+                <!-- Lapisan Biru Utama (Depan) -->
+                <path d="M0,98 C100,145 225,35 330,52 C365,58 388,45 400,36 L400,150 L0,150 Z" fill="#2563EB" />
+            </svg>
 
-                <!-- Alert Error Global -->
-                @if ($errors->any())
-                    <div
-                        class="bg-rose-50 border-l-4 border-rose-500 text-rose-700 text-xs p-3.5 rounded-r-lg space-y-1 shadow-2xs">
-                        <div class="flex items-center space-x-2 font-bold">
-                            <i class="fa-solid fa-circle-exclamation text-rose-600 text-sm flex-shrink-0"></i>
-                            <span>Gagal Autentikasi:</span>
-                        </div>
-                        <ul class="list-disc list-inside pl-4 space-y-0.5 text-rose-600">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+            <!-- Konten di Atas Gelombang Bawah -->
+            <div class="absolute inset-x-0 bottom-5 px-7 flex items-end justify-between">
+                <div class="text-[10px] text-white/90 font-medium leading-tight">
+                    <span>Butuh reset login?</span><br>
+                    <strong class="font-bold text-white">Hubungi Proktor</strong>
+                </div>
 
-                <!-- Alert Session Error -->
-                @if (session('error'))
-                    <div
-                        class="bg-rose-50 border-l-4 border-rose-500 text-rose-700 text-xs p-3.5 rounded-r-lg flex items-center space-x-2 shadow-2xs">
-                        <i class="fa-solid fa-circle-exclamation text-rose-600 text-sm flex-shrink-0"></i>
-                        <span class="font-medium">{{ session('error') }}</span>
-                    </div>
-                @endif
-
-                <!-- Form Login -->
-                <form action="{{ route('siswa.login.post') }}" method="POST" class="space-y-4">
-                    @csrf
-
-                    <!-- Input NISN -->
-                    <div class="space-y-1.5">
-                        <label for="nisn" class="text-xs font-bold uppercase tracking-wider text-slate-700">NISN (Nomor
-                            Peserta)</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                                <i class="fa-solid fa-id-card text-sm"></i>
-                            </span>
-                            <input type="text" id="nisn" name="nisn" value="{{ old('nisn') }}" required autofocus
-                                placeholder="Masukkan Nomor NISN" autocomplete="username"
-                                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 font-medium transition">
-                        </div>
-                    </div>
-
-                    <!-- Input Password -->
-                    <div class="space-y-1.5">
-                        <div class="flex justify-between items-center">
-                            <label for="password"
-                                class="text-xs font-bold uppercase tracking-wider text-slate-700">Password / PIN
-                                Ujian</label>
-                            <span class="text-[10px] text-blue-600 font-semibold">Contoh: 1234567890*</span>
-                        </div>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                                <i class="fa-solid fa-key text-sm"></i>
-                            </span>
-                            <input type="password" id="password" name="password" required placeholder="NISN + *"
-                                autocomplete="current-password"
-                                class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 font-medium transition">
-                            <button type="button" onclick="togglePasswordVisibility()"
-                                class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600">
-                                <i id="eye-icon" class="fa-solid fa-eye text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Petunjuk Format Login CAT -->
-                    <div class="bg-blue-50/80 p-3.5 rounded-xl border border-blue-200 text-xs text-slate-700 space-y-1">
-                        <div class="font-bold text-blue-900 flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-info text-blue-600"></i>
-                            <span>Petunjuk Login Peserta:</span>
-                        </div>
-                        <ul class="text-[11px] text-slate-600 list-disc list-inside space-y-0.5 font-medium pl-1">
-                            <li>Masukkan <b>NISN resmi</b> yang terdaftar pada sistem.</li>
-                            <li>Password standar: <b>NISN</b> diakhiri tanda bintang (<b>*</b>).</li>
-                        </ul>
-                    </div>
-
-                    <!-- Tombol Login -->
-                    <button type="submit"
-                        class="w-full bg-slate-900 hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-xs sm:text-sm transition duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-slate-900/20 uppercase tracking-wider cursor-pointer">
-                        <span>MASUK UJIAN CAT</span>
-                        <i class="fa-solid fa-right-to-bracket text-xs"></i>
-                    </button>
-                </form>
-
+                <button type="submit" form="formLoginSiswa"
+                    class="px-8 py-2.5 rounded-lg border border-white/85 bg-blue-600/40 hover:bg-white hover:text-blue-600 text-white font-bold text-xs sm:text-sm tracking-wide shadow-md transition duration-200 cursor-pointer">
+                    Login
+                </button>
             </div>
         </div>
-    </main>
 
-    <!-- Footer Formal CAT BKN Style -->
-    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500 font-medium">
-        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div>
-                &copy; {{ date('Y') }} Copyrigth:MahesAPP. All rights reserved.
-            </div>
-            <div class="flex items-center space-x-3 text-[11px] text-slate-400">
-                <span>Versi CAT 2.0</span>
-                <span>•</span>
-                <span>Status Server: <strong class="text-emerald-600">ONLINE</strong></span>
-            </div>
+    </div>
+
+    <!-- Overlay Animasi Saat Form Login Dikirim -->
+    <div id="loadingLoginOverlay"
+        class="hidden fixed inset-0 bg-blue-950/75 backdrop-blur-xs z-50 flex flex-col items-center justify-center text-white px-4 text-center">
+        <div
+            class="w-16 h-16 rounded-2xl bg-white text-blue-600 flex items-center justify-center animate-bounce mb-4 shadow-2xl">
+            <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
         </div>
-    </footer>
+        <h3 class="text-sm font-extrabold tracking-wide uppercase">Memverifikasi Peserta...</h3>
+        <p class="text-xs text-blue-100 mt-1">Menyiapkan ruang ujian CAT Anda.</p>
+    </div>
 
     <script>
         function togglePasswordVisibility() {
@@ -170,6 +175,10 @@
                 icon.classList.remove('fa-eye-slash');
             }
         }
+
+        document.getElementById('formLoginSiswa').addEventListener('submit', function () {
+            document.getElementById('loadingLoginOverlay').classList.remove('hidden');
+        });
     </script>
 </body>
 

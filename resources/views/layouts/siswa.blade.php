@@ -44,7 +44,7 @@
 
     <!-- Footer Minimalis -->
     <footer class="py-3 text-center text-xs text-slate-400 border-t border-slate-200 bg-white">
-        &copy; {{ date('Y') }} Sistem CBT Sekolah. Hak Cipta Dilindungi.
+        &copy; {{ date('Y') }} Copyrigth:MahesAPP. All rights reserved.
     </footer>
 
 </body>

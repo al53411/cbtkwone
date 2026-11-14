@@ -61,23 +61,32 @@
             <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h2 class="text-sm font-bold text-slate-800">Daftar Nilai Peserta Ujian</h2>
 
-                @if(request('ujian_id'))
-                    @php
-                        $ujianTerpilih = $listUjian->firstWhere('id', request('ujian_id'));
-                    @endphp
+                @php
+                    $selectedUjianId = request('ujian_id') ?: ($hasilUjians->first()?->ujian_id);
+                    $ujianTerpilih   = $selectedUjianId ? $listUjian->firstWhere('id', $selectedUjianId) : null;
+                @endphp
 
-                    @if($ujianTerpilih && $ujianTerpilih->isNilaiDirilis())
-                        <a href="{{ route('admin.ujian.cetak-hasil', ['id' => $ujianTerpilih->id, 'kelas_id' => request('kelas_id')]) }}"
-                            target="_blank"
-                            class="inline-flex items-center justify-center px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-xl transition gap-1.5 shadow-xs">
-                            <i class="fa-solid fa-print"></i> Cetak Laporan
+                @if($ujianTerpilih)
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('admin.ujian.monitoring', $ujianTerpilih->id) }}"
+                            class="inline-flex items-center justify-center px-3.5 py-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 font-semibold text-xs rounded-xl transition gap-1.5">
+                            <i class="fa-solid fa-desktop"></i> Monitoring Peserta
                         </a>
-                    @else
-                        <button type="button" disabled
-                            class="inline-flex items-center justify-center px-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 font-semibold text-xs rounded-xl cursor-not-allowed gap-1.5">
-                            <i class="fa-solid fa-lock"></i> Cetak Terkunci (Menunggu Rilis)
-                        </button>
-                    @endif
+
+                        @if($ujianTerpilih->isNilaiDirilis())
+                            <a href="{{ route('admin.ujian.cetak-hasil', ['id' => $ujianTerpilih->id, 'kelas_id' => request('kelas_id')]) }}"
+                                target="_blank"
+                                class="inline-flex items-center justify-center px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-xl transition gap-1.5 shadow-xs">
+                                <i class="fa-solid fa-print"></i> Cetak Laporan
+                            </a>
+                        @else
+                            <button type="button" disabled
+                                title="Menunggu Admin Pusat merilis nilai ujian ini"
+                                class="inline-flex items-center justify-center px-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 font-semibold text-xs rounded-xl cursor-not-allowed gap-1.5 select-none">
+                                <i class="fa-solid fa-lock text-amber-500"></i> Cetak Terkunci (Belum Dirilis Pusat)
+                            </button>
+                        @endif
+                    </div>
                 @endif
             </div>
 
@@ -181,5 +190,7 @@
                 {{ $hasilUjians->links() }}
             </div>
         </div>
+         &copy; {{ date('Y') }} {{ config('app.copyright') }}
+
     </div>
 @endsection

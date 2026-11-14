@@ -275,7 +275,8 @@
                         </a>
                     </div>
                     <p><code>nisn</code>, <code>nama_siswa</code>, <code>jenis_kelamin</code> (L/P), <code>kelas_id</code>,
-                        <code>alamat</code>.</p>
+                        <code>alamat</code>.
+                    </p>
                 </div>
 
                 <div>

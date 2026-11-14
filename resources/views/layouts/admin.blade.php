@@ -144,6 +144,13 @@
                     <span>Daftar Paket Soal</span>
                 </a>
 
+                <!-- Halaman Monitoring: -->
+                <a href="{{ route('admin.ujian.index') }}"
+                    class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                    <i class="fa-solid fa-desktop w-5 text-center text-sm"></i>
+                    <span class="text-xs">Monitoring Ujian</span>
+                </a>
+
 
                 <!-- Menjadi seperti ini: -->
                 <a href="{{ route('admin.ujian.rekap') }}"

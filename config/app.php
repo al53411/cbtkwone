@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'copyright' => 'Copyright: MahesAPP. All rights reserved.',
+
 ];

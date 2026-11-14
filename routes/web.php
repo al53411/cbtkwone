@@ -3,7 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\DB;
 
-// Import Controller Superadmin / Admin Pusat  
+// Import Controller Superadmin / Admin Pusat
 use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardController;
 use App\Http\Controllers\Superadmin\SekolahController as SuperadminSekolahController;
 use App\Http\Controllers\Superadmin\UserController;
@@ -43,7 +43,6 @@ use App\Http\Controllers\Guru\SekolahController as GuruSekolahController;
 use App\Http\Controllers\Guru\ProfilController as GuruProfilController;
 use App\Http\Controllers\Guru\ModulAjarController as GuruModulAjarController;
 
-
 // Import Controller Siswa
 use App\Http\Controllers\Siswa\AuthController as SiswaAuthController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
@@ -51,8 +50,6 @@ use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
 
 // Redirect Halaman Utama langsung ke Login
 Route::get('/', function () {
@@ -105,40 +102,27 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::resource('kelas', SuperadminKelasController::class);
     Route::resource('mapel', SuperadminMapelController::class);
 
-    // ==========================================
-    // RUTE KUSTOM SOAL (HARUS DI ATAS RESOURCE)
-    // ==========================================
+    // Rute Kustom Soal
     Route::get('/soal/import', [SuperadminSoalController::class, 'import'])->name('soal.import');
     Route::post('/soal/import', [SuperadminSoalController::class, 'processImport'])->name('soal.process-import');
     Route::get('/soal/paket', [SuperadminSoalController::class, 'paketIndex'])->name('soal.paket');
-
-    // Rute Upload Gambar Soal (Modal / Redirect Index)
     Route::get('/soal/upload-gambar', fn() => redirect()->route('superadmin.soal.index'))->name('soal.upload-gambar');
     Route::post('/soal/upload-gambar', [SuperadminSoalController::class, 'processUploadGambar'])->name('soal.process-upload-gambar');
-
-    // ==========================================
-    // RESOURCE ROUTE SOAL (DI BAWAH RUTE KUSTOM)
-    // ==========================================
     Route::resource('soal', SuperadminSoalController::class);
 
-    // ==========================================
-    // CUSTOM ROUTE UJIAN (HARUS DI ATAS RESOURCE UJIAN)
-    // ==========================================
+    // Custom Route Ujian (Harus di atas Resource Ujian)
     Route::get('/ujian/generate-token', [SuperadminUjianController::class, 'generateToken'])->name('ujian.generate-token');
     Route::patch('/ujian/{ujian}/status', [SuperadminUjianController::class, 'updateStatus'])->name('ujian.update-status');
     Route::patch('/ujian/{id}/toggle-rilis-nilai', [SuperadminUjianController::class, 'toggleRilisNilai'])->name('ujian.toggle-rilis');
 
     // Rute Rekap & Cetak Rekap Nilai Ujian
-    // Rute Rekap & Cetak Rekap Nilai Ujian (Bisa diakses langsung dari Sidebar maupun per ID Ujian)
     Route::get('/rekap-nilai/{id?}', [SuperadminUjianController::class, 'rekapNilai'])->name('ujian.rekap');
     Route::get('/cetak-rekap/{id?}', [SuperadminUjianController::class, 'cetakRekap'])->name('ujian.cetak-rekap');
-    Route::get('/ujian/cetak-rekap/{id?}', [SuperadminUjianController::class, 'cetakRekap'])->name('ujian.cetak-rekap');
 
-    // ==========================================
-    // CRUD RESOURCE PENGATURAN UJIAN
-    // ==========================================
+    // CRUD Resource Pengaturan Ujian
     Route::resource('ujian', SuperadminUjianController::class);
 });
+
 
 // ==========================================
 // GROUP ROUTE KHUSUS ADMIN SEKOLAH / KEPSEK
@@ -156,10 +140,7 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::get('/token/fetch', [TokenController::class, 'fetchToken'])->name('token.fetch');
         Route::post('/token/generate', [TokenController::class, 'generate'])->name('token.generate');
         Route::post('/token/refresh', [TokenController::class, 'refreshToken'])->name('token.refresh');
-
-        // --- RUTE TAMBAHAN: PROGRESS UJIAN SISWA ---
         Route::get('/token/progress/{id}', [TokenController::class, 'progressUjian'])->name('token.progress');
-        // -------------------------------------------
 
         // Tahun Ajaran
         Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun-ajaran.index');
@@ -176,10 +157,8 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::post('/guru/{guru}/reset-password', [AdminGuruController::class, 'resetPassword'])->name('guru.reset-password');
         Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
 
-        //SISWA 
+        // Siswa & Cetak Kartu Ujian
         Route::post('/siswa/import', [AdminSiswaController::class, 'import'])->name('siswa.import');
-
-        // FITUR CETAK KARTU UJIAN
         Route::get('/siswa/cetak-kartu/{id?}', [AdminSiswaController::class, 'cetakKartu'])->name('siswa.cetak-kartu');
         Route::get('/siswa/cetak-kartu-kelas', [AdminSiswaController::class, 'cetakKartuKelas'])->name('siswa.cetak-kartu-kelas');
         Route::get('/siswa/print-preview', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-preview');
@@ -205,23 +184,26 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::get('/get-elemen-cp', [TujuanPembelajaranController::class, 'getElemenByMapelFase'])->name('get_elemen_cp');
         Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
         Route::resource('atp', AlurTujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
-
-        // Route API / AJAX
         Route::get('/api/atp/by-tp', [AlurTujuanPembelajaranController::class, 'getByTp'])->name('api.atp.get_by_tp');
 
-        // Route Ruang & Sesi Ujian (Pengelolaan Admin)
+        // Route Ruang & Sesi Ujian
         Route::get('/sesi', [RuangSesiController::class, 'index'])->name('sesi.index');
         Route::post('/ruang/store', [RuangSesiController::class, 'storeRuang'])->name('ruang.store');
         Route::delete('/ruang/{id}', [RuangSesiController::class, 'destroyRuang'])->name('ruang.destroy');
-
         Route::post('/sesi/store', [RuangSesiController::class, 'storeSesi'])->name('sesi.store');
         Route::put('/sesi/{id}', [RuangSesiController::class, 'updateSesi'])->name('sesi.update');
         Route::delete('/sesi/{id}', [RuangSesiController::class, 'destroySesi'])->name('sesi.destroy');
 
-        // Rute Admin Sekolah untuk MELIHAT Daftar Paket Soal
+        // Paket Soal Admin
         Route::get('/soal/paket', [AdminSoalController::class, 'paketIndex'])->name('soal.paket');
 
-        // Rute Hasil Ujian
+        // Rute Ujian, Monitoring Live & Hasil Ujian
+        Route::get('/ujian', [UjianController::class, 'index'])->name('ujian.index');
+        Route::get('/ujian/{id}/monitoring', [UjianController::class, 'monitoringPeserta'])->name('ujian.monitoring');
+        Route::post('/ujian/peserta/{nilaiUjianId}/reset-login', [UjianController::class, 'resetLogin'])->name('ujian.reset-login');
+        Route::post('/ujian/peserta/{nilaiUjianId}/paksa-selesai', [UjianController::class, 'paksaSelesai'])->name('ujian.paksa-selesai');
+        Route::delete('/ujian/peserta/{nilaiUjianId}/reset-ujian', [UjianController::class, 'resetUjian'])->name('ujian.reset-ujian');
+
         Route::get('/hasil-ujian', [UjianController::class, 'rekapNilai'])->name('ujian.rekap');
         Route::get('/ujian/{id}/hasil', [UjianController::class, 'hasil'])->name('ujian.hasil');
         Route::get('/ujian/{id}/cetak-hasil', [UjianController::class, 'cetakHasil'])->name('ujian.cetak-hasil');
@@ -262,18 +244,15 @@ Route::prefix('siswa')->name('siswa.')->group(function () {
         Route::post('/login', [SiswaAuthController::class, 'login'])->name('login.post');
     });
 
-    Route::middleware('auth:siswa')->group(function () {
+    // Tambahkan 'single.siswa' di sini setelah alias didaftarkan di bootstrap/app.php
+    Route::middleware(['auth:siswa', 'single.siswa'])->group(function () {
         Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
         Route::post('/konfirmasi', [SiswaDashboardController::class, 'konfirmasiUjian'])->name('konfirmasi');
 
-        // --- RUTE UJIAN SISWA ---
         Route::post('/ujian/verifikasi', [SiswaUjianController::class, 'verifikasiToken'])->name('ujian.verifikasi');
         Route::get('/ujian/mulai', [SiswaUjianController::class, 'mulai'])->name('ujian.mulai');
-
-        // PERBAIKAN: Hapus duplikasi kata 'siswa.' di depannya
-        Route::post('/ujian/simpan-jawaban', [App\Http\Controllers\Siswa\UjianController::class, 'simpanJawaban'])->name('ujian.simpan-jawaban');
-        Route::post('/ujian/selesai', [App\Http\Controllers\Siswa\UjianController::class, 'selesaiUjian'])->name('ujian.selesai');
-        // -------------------------
+        Route::post('/ujian/simpan-jawaban', [SiswaUjianController::class, 'simpanJawaban'])->name('ujian.simpan-jawaban');
+        Route::post('/ujian/selesai', [SiswaUjianController::class, 'selesaiUjian'])->name('ujian.selesai');
 
         Route::post('/logout', [SiswaAuthController::class, 'logout'])->name('logout');
     });
@@ -290,38 +269,3 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__ . '/auth.php';
-
-
-// ==========================================
-// ROUTE UTILITY (RENDER FREE TIER / HOSTING)
-// ==========================================
-Route::get('/run-migrate', function () {
-    if (request('key') !== 'KunciRahasiamu2026') {
-        abort(403, 'Akses ditolak: Key salah!');
-    }
-
-    try {
-        Artisan::call('migrate', ['--force' => true]);
-        return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Migration Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
-    } catch (\Exception $e) {
-        return '<div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;"><h2 style="margin-top:0;">❌ Migration Gagal!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre></div>';
-    }
-});
-
-Route::get('/run-fresh-seed', function () {
-    if (request('key') !== 'KunciRahasiamu2026') {
-        abort(403, 'Akses ditolak: Key salah!');
-    }
-
-    try {
-        DB::statement('DROP SCHEMA public CASCADE;');
-        DB::statement('CREATE SCHEMA public;');
-
-        Artisan::call('migrate', ['--force' => true]);
-        Artisan::call('db:seed', ['--force' => true]);
-
-        return '<div style="font-family: sans-serif; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534;"><h2 style="margin-top:0;">✅ Fresh Migration & Seeding Berhasil!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . Artisan::output() . '</pre></div>';
-    } catch (\Exception $e) {
-        return '<div style="font-family: sans-serif; padding: 20px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b;"><h2 style="margin-top:0;">❌ Proses Gagal!</h2><pre style="background: #ffffff; padding: 15px; border-radius: 5px; border: 1px solid #e2e8f0; overflow-x: auto;">' . $e->getMessage() . '</pre></div>';
-    }
-});
