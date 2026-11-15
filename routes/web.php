@@ -12,6 +12,8 @@ use App\Http\Controllers\Superadmin\SoalController as SuperadminSoalController;
 use App\Http\Controllers\Superadmin\KelasController as SuperadminKelasController;
 use App\Http\Controllers\Superadmin\MapelController as SuperadminMapelController;
 use App\Http\Controllers\Superadmin\UjianController as SuperadminUjianController;
+use App\Http\Controllers\Superadmin\UjianController as SuperadminJadwalController;
+
 
 // Import Controller Admin Sekolah
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -121,6 +123,10 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 
     // CRUD Resource Pengaturan Ujian
     Route::resource('ujian', SuperadminUjianController::class);
+
+    // Di dalam grup prefix('superadmin')->name('superadmin.')
+Route::get('/jadwal-ujian', [\App\Http\Controllers\Superadmin\JadwalController::class, 'index'])
+    ->name('jadwal.index');
 });
 
 

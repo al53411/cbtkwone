@@ -74,6 +74,7 @@
                 @php
                     $isUjianLiveActive = request()->routeIs('superadmin.ujian.*') && !request()->routeIs('superadmin.ujian.rekap*', 'superadmin.ujian.cetak-rekap*');
                     $isRekapActive = request()->routeIs('superadmin.ujian.rekap*', 'superadmin.ujian.cetak-rekap*');
+                    $isJadwalActive = request()->routeIs('superadmin.jadwal.*');
                 @endphp
                 <div>
                     <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Pusat Monitoring
@@ -197,6 +198,13 @@
                             <i
                                 class="fa-solid fa-clipboard-check w-5 text-center text-sm {{ $isRekapActive ? 'text-white' : 'text-emerald-400' }}"></i>
                             <span class="text-xs">Rekap & Rilis Nilai</span>
+                        </a>
+
+                        <a href="{{ route('superadmin.jadwal.index') }}"
+                            class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition duration-200 {{ $isJadwalActive ? 'bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-900/30' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
+                            <i
+                                class="fa-solid fa-calendar-days w-5 text-center text-sm {{ $isJadwalActive ? 'text-white' : 'text-sky-400' }}"></i>
+                            <span class="text-xs">Jadwal Ujian</span>
                         </a>
                     </div>
                 </div>
