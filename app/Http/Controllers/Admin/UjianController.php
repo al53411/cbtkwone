@@ -9,9 +9,12 @@ use App\Models\Mapel;
 use App\Models\NilaiUjian;
 use App\Models\Soal;
 use App\Models\JawabanSiswa;
+use App\Models\Siswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class UjianController extends Controller
 {
@@ -68,7 +71,7 @@ class UjianController extends Controller
         $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
         $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
 
-        Ujian::create([
+        $dataUjian = [
             'nama_ujian'    => $validated['nama_ujian'],
             'kelas_id'      => $validated['kelas_id'],
             'mapel_id'      => $validated['mapel_id'],
@@ -79,7 +82,13 @@ class UjianController extends Controller
             'status'        => $validated['status'],
             'acak_soal'     => DB::raw($acakSoalVal),
             'acak_jawaban'  => DB::raw($acakJawabanVal),
-        ]);
+        ];
+
+        if (Schema::hasColumn('ujians', 'sekolah_id') && Auth::user()?->sekolah_id) {
+            $dataUjian['sekolah_id'] = Auth::user()->sekolah_id;
+        }
+
+        Ujian::create($dataUjian);
 
         return redirect()->route('admin.ujian.index')->with('success', 'Sesi ujian dan token mapel berhasil dibuat!');
     }
@@ -194,6 +203,99 @@ class UjianController extends Controller
             ->get();
 
         return view('admin.ujian.cetak-hasil', compact('ujian', 'hasilUjians'));
+    }
+
+    // 4. Halaman Daftar Sesi Ujian untuk Menu Berita Acara (Sidebar)
+    public function indexBeritaAcara(Request $request)
+    {
+        $user      = Auth::user();
+        $listKelas = Kelas::orderBy('nama_kelas', 'asc')->get();
+
+        $query = Ujian::with(['kelas', 'mapel'])
+            ->withCount('nilaiUjians');
+
+        // Tampilkan ujian milik sekolah ini ATAU ujian lama yang sekolah_id-nya masih NULL
+        if ($user && $user->role !== 'superadmin' && $user->sekolah_id && Schema::hasColumn('ujians', 'sekolah_id')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('sekolah_id', $user->sekolah_id)
+                    ->orWhereNull('sekolah_id');
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_ujian', 'LIKE', "%{$search}%")
+                    ->orWhereHas('mapel', fn($qm) => $qm->where('nama_mapel', 'LIKE', "%{$search}%"));
+            });
+        }
+
+        if ($request->filled('kelas_id')) {
+            $query->where('kelas_id', $request->kelas_id);
+        }
+
+        $ujians = $query->latest()->paginate(12)->withQueryString();
+
+        return view('admin.ujian.berita-acara-index', compact('ujians', 'listKelas'));
+    }
+
+    // 5. Halaman Cetak Berita Acara Pelaksanaan Ujian CAT
+    public function cetakBeritaAcara(Request $request, string $id)
+    {
+        /** @var \App\Models\User|null $user */
+        $user  = Auth::user();
+        $ujian = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
+
+        // Ambil sekolah ujian atau sekolah milik user yang login
+        $sekolahId = $ujian->sekolah_id ?? ($user->sekolah_id ?? null);
+
+        // Proteksi multi-tenant sekolah
+        if ($user && $user->role !== 'superadmin' && $user->sekolah_id && $ujian->sekolah_id && $ujian->sekolah_id !== $user->sekolah_id) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen ujian sekolah lain.');
+        }
+
+        // Ambil daftar hasil ujian peserta
+        $hasilUjians = NilaiUjian::with(['siswa.kelas'])
+            ->where('ujian_id', $id)
+            ->get();
+
+        // Hitung total peserta seharusnya (berdasarkan kelas ujian & sekolah)
+        $totalTerdaftar = Siswa::query()
+            ->when($sekolahId && Schema::hasColumn('siswas', 'sekolah_id'), fn($q) => $q->where('sekolah_id', $sekolahId))
+            ->when($ujian->kelas_id, fn($q) => $q->where('kelas_id', $ujian->kelas_id))
+            ->count();
+
+        $jumlahHadir      = $hasilUjians->count();
+        $jumlahTidakHadir = max(0, $totalTerdaftar - $jumlahHadir);
+
+        // Default pengawas dari relasi guru (jika ada) atau user yang mencetak
+        $defaultPengawas    = $user->name ?? '........................................';
+        $defaultNipPengawas = $user->nip ?? '-';
+
+        if (method_exists($ujian, 'guru') && $ujian->guru) {
+            $defaultPengawas    = $ujian->guru->name ?? $defaultPengawas;
+            $defaultNipPengawas = $ujian->guru->nip ?? $defaultNipPengawas;
+        }
+
+        // Input kustom dari form toolbar berita acara
+        $nomorBa         = $request->input('nomor_ba', 'BA-CAT/' . str_pad($ujian->id, 3, '0', STR_PAD_LEFT) . '/' . date('Y'));
+        $ruangUjian      = $request->input('ruang', 'Ruang Lab Komputer / CAT 01');
+        $namaPengawas    = $request->input('pengawas', $defaultPengawas);
+        $nipPengawas     = $request->input('nip_pengawas', $defaultNipPengawas);
+        $catatanKejadian = $request->input('catatan', 'Pelaksanaan ujian berjalan dengan tertib, lancar, dan aman tanpa kendala teknis yang berarti.');
+
+        return view('admin.ujian.cetak-berita-acara', compact(
+            'ujian',
+            'hasilUjians',
+            'totalTerdaftar',
+            'jumlahHadir',
+            'jumlahTidakHadir',
+            'nomorBa',
+            'ruangUjian',
+            'namaPengawas',
+            'nipPengawas',
+            'catatanKejadian'
+        ));
     }
 
     /**

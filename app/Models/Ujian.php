@@ -12,6 +12,7 @@ class Ujian extends Model
     protected $table = 'ujians';
 
     protected $fillable = [
+        'sekolah_id',
         'user_id',
         'nama_ujian',
         'kelas_id',
@@ -19,6 +20,7 @@ class Ujian extends Model
         'waktu_mulai',
         'waktu_selesai',
         'durasi',
+        'kkm',
         'token',
         'acak_soal',
         'acak_jawaban',
@@ -33,6 +35,11 @@ class Ujian extends Model
         'waktu_selesai' => 'datetime',
         'durasi'        => 'integer',
     ];
+
+    public function sekolah()
+    {
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
+    }
 
     public function mapel()
     {
@@ -49,14 +56,25 @@ class Ujian extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function scopeAktif($query)
+    // Alias relasi guru agar kompatibel dengan pemanggilan $ujian->guru
+    public function guru()
     {
-        return $query->where('status', 'aktif');
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function soals()
+    {
+        return $this->hasMany(Soal::class, 'ujian_id');
     }
 
     public function nilaiUjians()
     {
         return $this->hasMany(NilaiUjian::class, 'ujian_id');
+    }
+
+    public function scopeAktif($query)
+    {
+        return $query->where('status', 'aktif');
     }
 
     // Helper aman untuk mengecek status rilis nilai lintas database (MySQL / PostgreSQL)

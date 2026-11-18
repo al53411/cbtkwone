@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Sekolah;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // <-- DITAMBAHKAN UNTUK MENGHILANGKAN ERROR INTELEPHENSE
+use Illuminate\Support\Facades\Auth;
 
 class SekolahController extends Controller
 {
@@ -27,8 +27,8 @@ class SekolahController extends Controller
 
             // Fallback jika tidak ada query param
             if (!$sekolah) {
-                $sekolah = $user->sekolah_id 
-                    ? Sekolah::find($user->sekolah_id) 
+                $sekolah = $user->sekolah_id
+                    ? Sekolah::find($user->sekolah_id)
                     : Sekolah::first();
             }
         } else {
@@ -38,8 +38,8 @@ class SekolahController extends Controller
 
         // 3. Jika data sekolah tetap tidak ditemukan (Database kosong / User belum terikat)
         if (!$sekolah) {
-            $sekolah = new Sekolah(); // Objek kosong agar Blade view tidak error
-            
+            $sekolah = new Sekolah();
+
             $warningMsg = ($user && $user->role === 'superadmin')
                 ? 'Belum ada data sekolah terdaftar. Silakan tambahkan profil sekolah pertama.'
                 : 'Akun Anda belum terhubung dengan unit sekolah manapun. Silakan hubungi Superadmin.';
@@ -54,7 +54,7 @@ class SekolahController extends Controller
     }
 
     /**
-     * Update / Simpan Data Sekolah
+     * Update / Simpan Data Sekolah, Proktor, & Pengawas Ujian
      */
     public function update(Request $request, $id = null)
     {
@@ -76,13 +76,23 @@ class SekolahController extends Controller
             $sekolah = Sekolah::findOrFail($user->sekolah_id);
 
             $validated = $request->validate([
-                'telepon' => 'nullable|string|max:50',
-                'email'   => 'nullable|email|max:255',
+                'telepon'       => 'nullable|string|max:50',
+                'email'         => 'nullable|email|max:255',
+                'nama_proktor'  => 'nullable|string|max:255',
+                'nip_proktor'   => 'nullable|string|max:50',
+                'nama_pengawas' => 'nullable|string|max:255',
+                'nip_pengawas'  => 'nullable|string|max:50',
+            ], [
+                'email.email'        => 'Format email sekolah tidak valid.',
+                'nama_proktor.max'   => 'Nama proktor maksimal 255 karakter.',
+                'nip_proktor.max'    => 'NIP/NUPTK proktor maksimal 50 karakter.',
+                'nama_pengawas.max'  => 'Nama pengawas maksimal 255 karakter.',
+                'nip_pengawas.max'   => 'NIP/NUPTK pengawas maksimal 50 karakter.',
             ]);
 
             $sekolah->update($validated);
 
-            return redirect()->back()->with('success', 'Kontak sekolah berhasil diperbarui!');
+            return redirect()->back()->with('success', 'Kontak sekolah, data proktor, dan pengawas berhasil diperbarui!');
         }
 
         // B. JIKA USER ADALAH SUPERADMIN
@@ -102,6 +112,10 @@ class SekolahController extends Controller
             'nip_kepsek'     => 'nullable|string|max:255',
             'telepon'        => 'nullable|string|max:50',
             'email'          => 'nullable|email|max:255',
+            'nama_proktor'   => 'nullable|string|max:255',
+            'nip_proktor'    => 'nullable|string|max:50',
+            'nama_pengawas'  => 'nullable|string|max:255',
+            'nip_pengawas'   => 'nullable|string|max:50',
         ]);
 
         $sekolah->fill($validated)->save();
@@ -111,6 +125,6 @@ class SekolahController extends Controller
             $user->update(['sekolah_id' => $sekolah->id]);
         }
 
-        return redirect()->back()->with('success', 'Seluruh data sekolah berhasil diperbarui!');
+        return redirect()->back()->with('success', 'Seluruh data sekolah, proktor, dan pengawas berhasil diperbarui!');
     }
 }

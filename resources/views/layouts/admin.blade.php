@@ -105,9 +105,8 @@
                     <span>Input Data Siswa</span>
                 </a>
 
-                <!-- TAMBAHAN: Menu Cetak Kartu Ujian -->
-                <!-- MENU CETAK KARTU UJIAN YANG DIPERBAIKI -->
-                <a href="{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : '#' }}"
+                <!-- Cetak Kartu Ujian -->
+                <a href="{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : (Route::has('admin.siswa.cetak-kartu-kelas') ? route('admin.siswa.cetak-kartu-kelas') : '#') }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.cetak-kartu*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-id-card w-5 text-center text-blue-400"></i>
                     <span>Cetak Kartu Ujian</span>
@@ -118,14 +117,14 @@
                 </div>
 
                 <!-- Atur Sesi Ujian -->
-                <a href="{{ Route::has('admin.sesi.index') ? route('admin.sesi.index') : 'admin.sesi' }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.cat.sesi.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                <a href="{{ Route::has('admin.sesi.index') ? route('admin.sesi.index') : '#' }}"
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sesi.*', 'admin.cat.sesi.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
                     <span>Atur Sesi Ujian</span>
                 </a>
 
                 <!-- Token Ujian (Dari Super Admin) -->
-                <a href="{{ Route::has('admin.token.index') ? route('admin.token.index') : 'admin.token.index' }}"
+                <a href="{{ Route::has('admin.token.index') ? route('admin.token.index') : '#' }}"
                     class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.token.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <div class="flex items-center space-x-3 truncate">
                         <i class="fa-solid fa-key w-5 text-center"></i>
@@ -137,26 +136,33 @@
                     </span>
                 </a>
 
-                <!-- Menu Lihat Paket Soal -->
-                <a href="{{ route('admin.soal.paket') }}"
+                <!-- Daftar Paket Soal -->
+                <a href="{{ Route::has('admin.soal.paket') ? route('admin.soal.paket') : '#' }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.soal.paket') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-layer-group w-5 text-center"></i>
                     <span>Daftar Paket Soal</span>
                 </a>
 
-                <!-- Halaman Monitoring: -->
+                <!-- Monitoring Ujian -->
                 <a href="{{ route('admin.ujian.index') }}"
-                    class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-desktop w-5 text-center text-sm"></i>
-                    <span class="text-xs">Monitoring Ujian</span>
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    <i class="fa-solid fa-desktop w-5 text-center"></i>
+                    <span>Monitoring Ujian</span>
                 </a>
 
-
-                <!-- Menjadi seperti ini: -->
+                <!-- Hasil & Rekap Nilai -->
                 <a href="{{ route('admin.ujian.rekap') }}"
-                    class="flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold transition duration-150 {{ request()->routeIs('admin.ujian.rekap*') || request()->routeIs('admin.ujian.hasil*') ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
-                    <i class="fa-solid fa-clipboard-check w-5 text-center text-sm"></i>
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.rekap*', 'admin.ujian.hasil*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
                     <span>Hasil & Rekap Nilai</span>
+                </a>
+
+                <!-- MENU BARU: Berita Acara Ujian CAT -->
+                <a href="{{ Route::has('admin.ujian.berita-acara-index') ? route('admin.ujian.berita-acara-index') : '#' }}"
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.berita-acara*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    <i
+                        class="fa-solid fa-file-signature w-5 text-center {{ request()->routeIs('admin.ujian.berita-acara*') ? 'text-white' : 'text-amber-400' }}"></i>
+                    <span>Berita Acara Ujian</span>
                 </a>
 
             </div>
@@ -166,7 +172,7 @@
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit"
-                        class="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-600 hover:text-white transition duration-150">
+                        class="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-600 hover:text-white transition duration-150 cursor-pointer">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <span>Keluar / Logout</span>
                     </button>
@@ -234,6 +240,61 @@
 
     </div>
 
+    @if(Auth::check() && Auth::user()->wajib_ganti_sandi)
+        <!-- MODAL GANTI SANDI BAWAAN -->
+        <div id="modalGantiSandi"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 backdrop-blur-xs p-4">
+            <div class="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
+                <!-- Header Modal -->
+                <div class="bg-amber-500 px-6 py-4 text-white flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wide">Ganti Kata Sandi Bawaan</h3>
+                        <p class="text-[11px] text-amber-50">Demi keamanan akun sekolah, segera perbarui sandi dari
+                            Superadmin.</p>
+                    </div>
+                </div>
+
+                <!-- Form Ganti Sandi -->
+                <form action="{{ route('admin.ganti-sandi-awal') }}" method="POST" class="p-6 space-y-4">
+                    @csrf
+
+                    @if($errors->has('password'))
+                        <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                            {{ $errors->first('password') }}
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi Baru</label>
+                        <input type="password" name="password" required minlength="8" placeholder="Minimal 8 karakter"
+                            class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Ulangi Kata Sandi Baru</label>
+                        <input type="password" name="password_confirmation" required minlength="8"
+                            placeholder="Ketik ulang sandi baru"
+                            class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600">
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-end gap-2">
+                        <button type="button" onclick="document.getElementById('modalGantiSandi').classList.add('hidden')"
+                            class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition cursor-pointer">
+                            Nanti Saja
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition cursor-pointer">
+                            <i class="fa-solid fa-key mr-1"></i> Simpan Sandi Baru
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <!-- Script Global UI Interaktif & Pop-up Cetak Kartu -->
     <script>
         const sidebar = document.getElementById('sidebar');
@@ -252,7 +313,6 @@
 
         // 2. Pop-up Pilih Kelas untuk Cetak Kartu Massal
         function pilihKelasCetak() {
-            // Ambil data kelas menggunakan fetch atau masukkan opsi langsung jika tersedia
             Swal.fire({
                 title: 'Cetak Kartu Ujian',
                 text: 'Masukkan ID Kelas atau pilih metode cetak massal:',

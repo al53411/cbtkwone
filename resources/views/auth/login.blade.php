@@ -8,6 +8,7 @@
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,10 +20,11 @@
     <div id="splash-screen"
         class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-md transition-opacity duration-300 text-white opacity-100">
         <div class="flex flex-col items-center animate-pulse">
-            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/40">
+            <div
+                class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-500/40">
                 <i class="fa-solid fa-laptop-code text-3xl text-white"></i>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold tracking-wider mb-3">E-ADM CATKwOne</h2>
+            <h2 class="text-xl sm:text-2xl font-bold tracking-wider mb-3">CATKwOne</h2>
             <div class="w-8 h-8 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
         </div>
     </div>
@@ -31,13 +33,13 @@
 
         <!-- KIRI: Logo Utama Desktop -->
         <div class="hidden lg:flex lg:col-span-5 xl:col-span-6 items-center justify-center p-8 bg-slate-50">
-            <img src="{{ asset('logo.png') }}" 
-                 alt="CATKwOne SISTEM CAT SDN KAWU 1" 
-                 class="max-w-md xl:max-w-lg w-full h-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300">
+            <img src="{{ asset('logo.png') }}" alt="CATKwOne mahesApp"
+                class="max-w-md xl:max-w-lg w-full h-auto object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300">
         </div>
 
         <!-- KANAN: Container Biru & Form Login -->
-        <div class="lg:col-span-7 xl:col-span-6 bg-blue-600 lg:rounded-l-[3.5rem] flex items-center justify-center p-6 sm:p-12 relative overflow-hidden min-h-screen">
+        <div
+            class="lg:col-span-7 xl:col-span-6 bg-blue-600 lg:rounded-l-[3.5rem] flex items-center justify-center p-6 sm:p-12 relative overflow-hidden min-h-screen">
 
             <!-- Card Putih Form -->
             <div class="w-full max-w-sm sm:max-w-md bg-white rounded-3xl shadow-2xl p-8 sm:p-10 z-10 relative">
@@ -55,13 +57,13 @@
 
                 <!-- Alert Error Laravel -->
                 @if ($errors->any())
-                <div class="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs sm:text-sm">
-                    <ul class="list-disc list-inside space-y-1">
-                        @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
+                    <div class="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs sm:text-sm">
+                        <ul class="list-disc list-inside space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                 @endif
 
                 <!-- Form Login -->
@@ -87,7 +89,8 @@
                         <input type="password" id="password" name="password" required autocomplete="current-password"
                             class="w-full pl-11 pr-11 py-3.5 bg-slate-50/50 border border-slate-200 rounded-full text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                             placeholder="Password">
-                        <button type="button" id="togglePassword" aria-label="Tampilkan password" class="absolute right-4 text-slate-400 hover:text-slate-600 focus:outline-none">
+                        <button type="button" id="togglePassword" aria-label="Tampilkan password"
+                            class="absolute right-4 text-slate-400 hover:text-slate-600 focus:outline-none">
                             <i class="fa-solid fa-eye text-sm" id="eyeIcon"></i>
                         </button>
                     </div>
@@ -95,7 +98,8 @@
                     <!-- Remember Me Option -->
                     <div class="flex items-center justify-between px-2 pt-1">
                         <label class="flex items-center text-xs text-slate-600 cursor-pointer select-none">
-                            <input type="checkbox" name="remember" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mr-2">
+                            <input type="checkbox" name="remember"
+                                class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mr-2">
                             Ingat Saya
                         </label>
                     </div>
@@ -108,11 +112,12 @@
 
                     <!-- Lupa Password Link -->
                     @if (Route::has('password.request'))
-                    <div class="text-center pt-2">
-                        <a href="{{ route('password.request') }}" class="text-xs text-slate-500 hover:text-blue-600 font-medium transition-colors">
-                            Forgot Password?
-                        </a>
-                    </div>
+                        <div class="text-center pt-2">
+                            <a href="{{ route('password.request') }}"
+                                class="text-xs text-slate-500 hover:text-blue-600 font-medium transition-colors">
+                                Forgot Password?
+                            </a>
+                        </div>
                     @endif
                 </form>
 
@@ -125,7 +130,8 @@
 
             <!-- Dekorasi Garis Melengkung -->
             <div class="absolute -bottom-24 -right-24 w-96 h-96 pointer-events-none opacity-40">
-                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-white fill-none stroke-current stroke-[1.5]">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"
+                    class="w-full h-full text-white fill-none stroke-current stroke-[1.5]">
                     <circle cx="200" cy="200" r="160" />
                     <circle cx="200" cy="200" r="120" />
                     <circle cx="200" cy="200" r="80" />
@@ -138,30 +144,30 @@
 
     <!-- Script Splash Screen & Toggle Password -->
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-            setTimeout(() => {
-                splash.classList.add('opacity-0', 'pointer-events-none');
+        document.addEventListener('DOMContentLoaded', function () {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
                 setTimeout(() => {
-                    splash.style.display = 'none';
-                }, 300);
-            }, 400);
-        }
+                    splash.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                    }, 300);
+                }, 400);
+            }
 
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-        const eyeIcon = document.getElementById('eyeIcon');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
 
-        if (togglePassword && passwordInput && eyeIcon) {
-            togglePassword.addEventListener('click', function() {
-                const isPassword = passwordInput.getAttribute('type') === 'password';
-                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
-                eyeIcon.classList.toggle('fa-eye', !isPassword);
-                eyeIcon.classList.toggle('fa-eye-slash', isPassword);
-            });
-        }
-    });
+            if (togglePassword && passwordInput && eyeIcon) {
+                togglePassword.addEventListener('click', function () {
+                    const isPassword = passwordInput.getAttribute('type') === 'password';
+                    passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                    eyeIcon.classList.toggle('fa-eye', !isPassword);
+                    eyeIcon.classList.toggle('fa-eye-slash', isPassword);
+                });
+            }
+        });
     </script>
 </body>
 

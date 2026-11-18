@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'wajib_ganti_sandi',
     ];
 
     /**
@@ -47,6 +48,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'wajib_ganti_sandi' => 'boolean',
         ];
     }
 
@@ -55,12 +57,12 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin' || $this->role === 'superadmin';
+        return in_array($this->role, ['admin', 'superadmin', 'kepsek']);
     }
 
     public function isGuru(): bool
     {
-        return $this->role === 'guru' || $this->role === 'guru_mapel';
+        return in_array($this->role, ['guru', 'guru_mapel']);
     }
 
     /**

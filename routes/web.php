@@ -125,8 +125,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::resource('ujian', SuperadminUjianController::class);
 
     // Di dalam grup prefix('superadmin')->name('superadmin.')
-Route::get('/jadwal-ujian', [\App\Http\Controllers\Superadmin\JadwalController::class, 'index'])
-    ->name('jadwal.index');
+    Route::get('/jadwal-ujian', [\App\Http\Controllers\Superadmin\JadwalController::class, 'index'])
+        ->name('jadwal.index');
 });
 
 
@@ -203,7 +203,7 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         // Paket Soal Admin
         Route::get('/soal/paket', [AdminSoalController::class, 'paketIndex'])->name('soal.paket');
 
-        // Rute Ujian, Monitoring Live & Hasil Ujian
+        // Rute Ujian, Monitoring Live, Hasil Ujian & Berita Acara
         Route::get('/ujian', [UjianController::class, 'index'])->name('ujian.index');
         Route::get('/ujian/{id}/monitoring', [UjianController::class, 'monitoringPeserta'])->name('ujian.monitoring');
         Route::post('/ujian/peserta/{nilaiUjianId}/reset-login', [UjianController::class, 'resetLogin'])->name('ujian.reset-login');
@@ -213,6 +213,14 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::get('/hasil-ujian', [UjianController::class, 'rekapNilai'])->name('ujian.rekap');
         Route::get('/ujian/{id}/hasil', [UjianController::class, 'hasil'])->name('ujian.hasil');
         Route::get('/ujian/{id}/cetak-hasil', [UjianController::class, 'cetakHasil'])->name('ujian.cetak-hasil');
+
+        // Berita Acara Ujian CAT (Menu Sidebar & Cetak PDF)
+        Route::get('/berita-acara-ujian', [UjianController::class, 'indexBeritaAcara'])->name('ujian.berita-acara-index');
+        Route::get('/ujian/{id}/berita-acara', [UjianController::class, 'cetakBeritaAcara'])->name('ujian.berita-acara');
+
+        // Route untuk memproses ganti sandi bawaan dari popup login pertama
+        Route::post('/ganti-sandi-awal', [\App\Http\Controllers\Admin\ProfilController::class, 'updateSandiAwal'])
+            ->name('ganti-sandi-awal');
     });
 
 

@@ -14,16 +14,18 @@ use Illuminate\Validation\Rules;
 class KepalaSekolahController extends Controller
 {
     /**
-     * Tampilkan daftar Kepala Sekolah (Superadmin).
+     * Tampilkan daftar Kepala Sekolah / Proktor (Superadmin).
      */
     public function index()
     {
         $kepalaSekolahs = User::where('role', 'kepsek')
-            ->with('sekolah') // Mengambil relasi data sekolah
+            ->with('sekolah')
             ->latest()
             ->paginate(10);
 
-        return view('superadmin.kepsek.index', compact('kepalaSekolahs'));
+        $users = $kepalaSekolahs;
+
+        return view('superadmin.kepsek.index', compact('kepalaSekolahs', 'users'));
     }
 
     /**
@@ -31,19 +33,17 @@ class KepalaSekolahController extends Controller
      */
     public function create()
     {
-        // Ambil semua daftar sekolah untuk opsi pada dropdown
         $sekolahs = Sekolah::orderBy('nama_sekolah', 'asc')->get();
 
-        // Mengembalikan view superadmin.kepsek.create
         return view('superadmin.kepsek.create', compact('sekolahs'));
     }
 
     /**
-     * Menyimpan data akun Kepala Sekolah baru ke database (Superadmin).
+     * Menyimpan data akun Kepala Sekolah baru ke database (Superadmin)
+     * sekaligus menyinkronkan Nama & NIP Kepala Sekolah ke tabel sekolahs.
      */
     public function store(Request $request)
     {
-        // 1. Validasi Input Form
         $request->validate([
             'name'       => ['required', 'string', 'max:255'],
             'email'      => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -51,7 +51,6 @@ class KepalaSekolahController extends Controller
             'sekolah_id' => ['required', 'exists:sekolahs,id'],
             'nip'        => ['nullable', 'string', 'max:30', 'unique:users,nip'],
         ], [
-            // Custom Message Bahasa Indonesia
             'name.required'       => 'Nama lengkap wajib diisi.',
             'email.required'      => 'Email wajib diisi.',
             'email.unique'        => 'Email tersebut sudah terdaftar di sistem.',
@@ -62,20 +61,53 @@ class KepalaSekolahController extends Controller
             'nip.unique'          => 'NIP/NIK tersebut sudah terdaftar.',
         ]);
 
-        // 2. Simpan Data User Baru dengan Role Kepsek
         User::create([
-            'name'       => $request->name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-            'role'       => 'kepsek',
-            'sekolah_id' => $request->sekolah_id,
-            'nip'        => $request->nip,
+            'name'              => $request->name,
+            'email'             => $request->email,
+            'password'          => Hash::make($request->password),
+            'role'              => 'kepsek',
+            'sekolah_id'        => $request->sekolah_id,
+            'nip'               => $request->nip,
+            'wajib_ganti_sandi' => true,
         ]);
 
-        // 3. Redirect Kembali dengan Notifikasi Sukses
+        // Sinkronkan otomatis ke tabel sekolahs agar kartu ujian & cetak hasil langsung dinamis
+        Sekolah::where('id', $request->sekolah_id)->update([
+            'nama_kepsek' => $request->name,
+            'nip_kepsek'  => $request->nip,
+        ]);
+
         return redirect()
-            ->route('superadmin.dashboard')
-            ->with('success', 'Akun Kepala Sekolah "' . $request->name . '" berhasil dibuat!');
+            ->route('superadmin.kepsek.index')
+            ->with('success', 'Akun Kepala Sekolah "' . $request->name . '" berhasil dibuat dan disinkronkan ke profil sekolah!');
+    }
+
+    /**
+     * Reset Password akun Kepala Sekolah oleh Superadmin.
+     */
+    public function resetPassword(Request $request, $id)
+    {
+        $user = User::where('role', 'kepsek')->findOrFail($id);
+        $passwordDefault = $request->input('password', '12345678');
+
+        $user->update([
+            'password'          => Hash::make($passwordDefault),
+            'wajib_ganti_sandi' => true,
+        ]);
+
+        return back()->with('success', 'Password untuk "' . $user->name . '" berhasil direset ke: ' . $passwordDefault);
+    }
+
+    /**
+     * Hapus akun Kepala Sekolah (Superadmin).
+     */
+    public function destroy($id)
+    {
+        $user = User::where('role', 'kepsek')->findOrFail($id);
+        $nama = $user->name;
+        $user->delete();
+
+        return back()->with('success', 'Akun Kepala Sekolah "' . $nama . '" berhasil dihapus.');
     }
 
     /**
@@ -83,17 +115,15 @@ class KepalaSekolahController extends Controller
      */
     public function indexValidasiJurnal(Request $request)
     {
-        $status = $request->input('status', 'Pending'); 
+        $status = $request->input('status', 'Pending');
         $user   = Auth::user();
 
         $jurnals = JurnalGuru::with(['guru', 'kelas'])
-            // Filter jurnal berdasarkan sekolah tempat Kepala Sekolah bertugas
             ->when($user && $user->sekolah_id, function ($query) use ($user) {
                 return $query->whereHas('guru', function ($q) use ($user) {
                     $q->where('sekolah_id', $user->sekolah_id);
                 });
             })
-            // Filter status validasi
             ->when($status, function ($query, $status) {
                 return $query->where('status_validasi', $status);
             })
@@ -104,7 +134,7 @@ class KepalaSekolahController extends Controller
     }
 
     /**
-     * Mengupdate status validasi jurnal (Sesuai route updateStatusJurnal).
+     * Mengupdate status validasi jurnal.
      */
     public function updateStatusJurnal(Request $request, $id)
     {

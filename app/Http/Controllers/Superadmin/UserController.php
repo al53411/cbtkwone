@@ -11,47 +11,43 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     /**
-     * Tampilkan semua daftar pengguna (Kepala Sekolah / User lain)
+     * Tampilkan semua daftar pengguna (Kepala Sekolah / Proktor)
      */
     public function index(Request $request)
     {
         $query = User::with('sekolah');
 
-        // Filter berdasarkan pencarian nama atau email
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('nip', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%");
             });
         }
 
-        // Ambil data user dengan pagination
         $users = $query->latest()->paginate(10);
 
         return view('superadmin.kepsek.index', compact('users'));
     }
 
     /**
-     * Tampilkan form pembuatan akun Kepala Sekolah baru
+     * Tampilkan form pembuatan akun baru
      */
     public function create()
     {
-        // Ambil data sekolah untuk di-looping pada dropdown <select> di Blade
         $sekolahs = Sekolah::select('id', 'nama_sekolah', 'npsn', 'nama_kepsek', 'nip_kepsek', 'email')
-                           ->orderBy('nama_sekolah', 'asc')
-                           ->get();
+            ->orderBy('nama_sekolah', 'asc')
+            ->get();
 
         return view('superadmin.kepsek.create', compact('sekolahs'));
     }
 
     /**
-     * Simpan akun Kepala Sekolah baru ke database
+     * Simpan akun baru ke database
      */
     public function store(Request $request)
     {
-        // 1. Validasi Input
         $validatedData = $request->validate([
             'sekolah_id' => 'required|exists:sekolahs,id',
             'name'       => 'required|string|max:255',
@@ -69,19 +65,18 @@ class UserController extends Controller
             'password.confirmed'  => 'Konfirmasi password tidak cocok.',
         ]);
 
-        // 2. Buat User Baru
         User::create([
-            'sekolah_id' => $validatedData['sekolah_id'],
-            'name'       => $validatedData['name'],
-            'email'      => $validatedData['email'],
-            'nip'        => $validatedData['nip'] ?? null,
-            'password'   => Hash::make($validatedData['password']),
-            'role'       => 'kepsek', // Set role otomatis menjadi kepsek
+            'sekolah_id'        => $validatedData['sekolah_id'],
+            'name'              => $validatedData['name'],
+            'email'             => $validatedData['email'],
+            'nip'               => $validatedData['nip'] ?? null,
+            'password'          => Hash::make($validatedData['password']),
+            'role'              => 'kepsek', // Sesuaikan jika menggunakan 'admin' atau 'kepsek'
+            'wajib_ganti_sandi' => true, // Memunculkan popup ganti sandi saat login pertama
         ]);
 
-        // 3. Redirect Kembali dengan Pesan Sukses
-        return redirect()->route('superadmin.sekolah.index')
-                         ->with('success', 'Akun Kepala Sekolah berhasil dibuat!');
+        return redirect()->route('superadmin.kepsek.index')
+            ->with('success', 'Akun berhasil dibuat! Pengguna akan diminta mengganti sandi saat login pertama.');
     }
 
     /**
@@ -119,24 +114,25 @@ class UserController extends Controller
             'password'   => 'nullable|string|min:8|confirmed',
         ], [
             'email.unique'       => 'Email ini sudah digunakan oleh akun lain.',
+            'password.min'       => 'Password minimal berisi 8 karakter.',
             'password.confirmed' => 'Konfirmasi password baru tidak cocok.',
         ]);
 
-        // Update data dasar
         $user->sekolah_id = $validatedData['sekolah_id'];
         $user->name       = $validatedData['name'];
         $user->email      = $validatedData['email'];
         $user->nip        = $validatedData['nip'] ?? null;
 
-        // Hanya update password jika diisi
+        // Jika Superadmin mereset/mengisi password baru, wajibkan ganti sandi lagi saat login
         if ($request->filled('password')) {
-            $user->password = Hash::make($validatedData['password']);
+            $user->password          = Hash::make($validatedData['password']);
+            $user->wajib_ganti_sandi = true;
         }
 
         $user->save();
 
-        return redirect()->route('superadmin.sekolah.index')
-                         ->with('success', 'Data akun Kepala Sekolah berhasil diperbarui!');
+        return redirect()->route('superadmin.kepsek.index')
+            ->with('success', 'Data akun berhasil diperbarui!');
     }
 
     /**
@@ -147,7 +143,7 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
 
-        return redirect()->route('superadmin.sekolah.index')
-                         ->with('success', 'Akun Kepala Sekolah berhasil dihapus!');
+        return redirect()->route('superadmin.kepsek.index')
+            ->with('success', 'Akun berhasil dihapus!');
     }
 }
