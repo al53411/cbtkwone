@@ -206,6 +206,12 @@
                                 class="fa-solid fa-calendar-days w-5 text-center text-sm {{ $isJadwalActive ? 'text-white' : 'text-sky-400' }}"></i>
                             <span class="text-xs">Jadwal Ujian</span>
                         </a>
+
+                        <a href="{{ route('superadmin.berita-acara.index') }}"
+                            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition {{ request()->routeIs('superadmin.berita-acara.*') ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                            <i class="fa-solid fa-file-shield w-4 text-center"></i>
+                            <span>Arsip Berita Acara</span>
+                        </a>
                     </div>
                 </div>
 

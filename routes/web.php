@@ -127,6 +127,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     // Di dalam grup prefix('superadmin')->name('superadmin.')
     Route::get('/jadwal-ujian', [\App\Http\Controllers\Superadmin\JadwalController::class, 'index'])
         ->name('jadwal.index');
+
+   Route::get('/berita-acara', [App\Http\Controllers\Superadmin\UjianController::class, 'superadminBeritaAcara'])->name('berita-acara.index');
 });
 
 
@@ -221,6 +223,9 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         // Route untuk memproses ganti sandi bawaan dari popup login pertama
         Route::post('/ganti-sandi-awal', [\App\Http\Controllers\Admin\ProfilController::class, 'updateSandiAwal'])
             ->name('ganti-sandi-awal');
+
+        Route::post('/ujian/{id}/upload-berita-acara', [UjianController::class, 'uploadBeritaAcara'])->name('ujian.upload-berita-acara');
+        Route::delete('/ujian/{id}/hapus-berita-acara', [UjianController::class, 'hapusBeritaAcara'])->name('ujian.hapus-berita-acara');
     });
 
 

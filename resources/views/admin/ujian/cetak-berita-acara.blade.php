@@ -84,7 +84,18 @@
 
     @php
         $user = Auth::user();
-        $sekolah = $ujian->sekolah ?? ($user->sekolah ?? null);
+        $sekolah = null;
+
+        if (!empty($ujian->sekolah_id)) {
+            $sekolah = \App\Models\Sekolah::find($ujian->sekolah_id);
+        }
+        if (!$sekolah && !empty($user?->sekolah_id)) {
+            $sekolah = \App\Models\Sekolah::find($user->sekolah_id);
+        }
+        if (!$sekolah) {
+            $sekolah = \App\Models\Sekolah::first();
+        }
+
         $namaSekolah = $sekolah->nama_sekolah ?? 'NAMA SEKOLAH BELUM DIATUR';
         $npsnSekolah = $sekolah->npsn ?? '00000000';
         $alamatSekolah = $sekolah->alamat ?? 'Alamat Satuan Pendidikan';
@@ -92,7 +103,7 @@
         $logoSekolah = !empty($sekolah->logo) ? asset('storage/' . $sekolah->logo) : asset('logo.png');
         $logoUtama = asset('logo.png');
 
-        // Data Kepala Sekolah Dinamis
+        // 1. Data Kepala Sekolah Dinamis
         $kepsekUser = \App\Models\User::where('role', 'kepsek')
             ->when($sekolah, fn($q) => $q->where('sekolah_id', $sekolah->id))
             ->first();
@@ -103,7 +114,7 @@
             ? $sekolah->nip_kepsek
             : ($kepsekUser->nip ?? '-');
 
-        // Data Proktor Dinamis
+        // 2. Data Proktor Dinamis
         $proktorUser = \App\Models\User::where('role', 'proktor')
             ->when($sekolah, fn($q) => $q->where('sekolah_id', $sekolah->id))
             ->first();
@@ -113,6 +124,15 @@
         $nipProktor = !empty($sekolah->nip_proktor)
             ? $sekolah->nip_proktor
             : ($proktorUser->nip ?? ($user->nip ?? '-'));
+
+        // 3. Data Pengawas Ruang Dinamis (Prioritas: Input Form -> Profil Sekolah -> Controller)
+        $pengawasTampil = request()->filled('pengawas')
+            ? request('pengawas')
+            : (!empty($sekolah->nama_pengawas) ? $sekolah->nama_pengawas : ($namaPengawas ?? '........................................'));
+
+        $nipPengawasTampil = request()->filled('nip_pengawas')
+            ? request('nip_pengawas')
+            : (!empty($sekolah->nip_pengawas) ? $sekolah->nip_pengawas : ($nipPengawas ?? '-'));
 
         // Format Hari & Tanggal Pelaksanaan
         $tanggalUjian = !empty($ujian->waktu_mulai)
@@ -130,7 +150,7 @@
             : \Carbon\Carbon::parse($jamMulaiText)->addMinutes((int) ($ujian->durasi ?? 60))->format('H:i');
 
         $kodeValidasi = 'BA-' . ($ujian->id ?? '1') . '-' . strtoupper(substr(md5($nomorBa . $npsnSekolah), 0, 8));
-        $payloadQr = "BERITA ACARA UJIAN CAT\nNomor: {$nomorBa}\nSekolah: {$namaSekolah}\nUjian: " . ($ujian->nama_ujian ?? '-') . "\nHadir: {$jumlahHadir}/{$totalTerdaftar} Peserta\nProktor: {$namaProktor}\nKode: {$kodeValidasi}";
+        $payloadQr = "BERITA ACARA UJIAN CAT\nNomor: {$nomorBa}\nSekolah: {$namaSekolah}\nUjian: " . ($ujian->nama_ujian ?? '-') . "\nHadir: {$jumlahHadir}/{$totalTerdaftar} Peserta\nPengawas: {$pengawasTampil}\nProktor: {$namaProktor}\nKode: {$kodeValidasi}";
     @endphp
 
     <!-- PANEL PENGATURAN CEPAT BERITA ACARA (FLAT - HILANG SAAT PRINT) -->
@@ -168,12 +188,12 @@
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Nama Pengawas Ruang</label>
-                <input type="text" name="pengawas" value="{{ $namaPengawas }}"
+                <input type="text" name="pengawas" value="{{ $pengawasTampil }}"
                     class="w-full px-2.5 py-1.5 border border-slate-300 bg-slate-50 focus:bg-white focus:border-slate-900 outline-none text-xs">
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">NIP Pengawas</label>
-                <input type="text" name="nip_pengawas" value="{{ $nipPengawas }}"
+                <input type="text" name="nip_pengawas" value="{{ $nipPengawasTampil }}"
                     class="w-full px-2.5 py-1.5 border border-slate-300 bg-slate-50 focus:bg-white focus:border-slate-900 outline-none text-xs font-mono">
             </div>
             <div class="sm:col-span-3">
@@ -338,10 +358,10 @@
                         <p class="text-slate-700">Pengawas Ruang Ujian,</p>
                         <div class="h-16"></div>
                         <p class="font-bold underline uppercase text-slate-900 leading-tight">
-                            {{ $namaPengawas }}
+                            {{ $pengawasTampil }}
                         </p>
                         <p class="font-mono text-[8.5px] text-slate-700 mt-0.5">
-                            NIP. {{ $nipPengawas }}
+                            NIP. {{ $nipPengawasTampil }}
                         </p>
                     </div>
 

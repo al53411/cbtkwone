@@ -11,6 +11,8 @@ use App\Models\Sekolah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class UjianController extends Controller
 {
@@ -222,5 +224,76 @@ class UjianController extends Controller
         $rekapNilais = $query->orderBy('nilai', 'desc')->get();
 
         return view('superadmin.ujian.cetak-rekap', compact('ujian', 'rekapNilais'));
+    }
+
+    /**
+     * Monitoring Arsip Berita Acara Semua Sekolah (Khusus Superadmin)
+     */
+    public function superadminBeritaAcara(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'superadmin') {
+            abort(403, 'Halaman ini khusus untuk Superadmin.');
+        }
+
+        $listSekolah = Sekolah::orderBy('nama_sekolah', 'asc')->get();
+
+        $hasFileCol    = Schema::hasTable('ujians') && Schema::hasColumn('ujians', 'file_berita_acara');
+        $hasSekolahCol = Schema::hasTable('ujians') && Schema::hasColumn('ujians', 'sekolah_id');
+
+        $query = Ujian::with(['kelas', 'mapel'])
+            ->withCount('nilaiUjians');
+
+        if (method_exists(Ujian::class, 'sekolah')) {
+            $query->with('sekolah');
+        }
+
+        // Filter berdasarkan sekolah (cek sekolah_id di ujians ATAU sekolah siswa peserta)
+        if ($request->filled('sekolah_id')) {
+            $sekolahId = $request->sekolah_id;
+            $query->where(function ($q) use ($sekolahId, $hasSekolahCol) {
+                if ($hasSekolahCol) {
+                    $q->where('sekolah_id', $sekolahId);
+                }
+                $q->orWhereHas('nilaiUjians.siswa', function ($qs) use ($sekolahId) {
+                    $qs->where('sekolah_id', $sekolahId);
+                });
+            });
+        }
+
+        // Filter status upload (default: tampilkan yang sudah upload)
+        if ($hasFileCol) {
+            if ($request->input('status_upload') === 'belum') {
+                $query->whereNull('file_berita_acara');
+            } elseif ($request->input('status_upload') === 'semua') {
+                // Tampilkan semua sesi ujian
+            } else {
+                $query->whereNotNull('file_berita_acara');
+            }
+        }
+
+        // Pencarian nama ujian / mapel
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_ujian', 'LIKE', "%{$search}%")
+                    ->orWhereHas('mapel', fn($qm) => $qm->where('nama_mapel', 'LIKE', "%{$search}%"));
+            });
+        }
+
+        $ujians = $query->orderByDesc($hasFileCol ? 'uploaded_ba_at' : 'created_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        // Statistik ringkas arsip berita acara
+        $totalSudahUpload = $hasFileCol ? Ujian::whereNotNull('file_berita_acara')->count() : 0;
+        $totalBelumUpload = $hasFileCol ? Ujian::whereNull('file_berita_acara')->count() : Ujian::count();
+
+        return view('superadmin.berita-acara.index', compact(
+            'ujians',
+            'listSekolah',
+            'totalSudahUpload',
+            'totalBelumUpload'
+        ));
     }
 }

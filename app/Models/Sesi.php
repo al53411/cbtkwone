@@ -18,8 +18,18 @@ class Sesi extends Model
         'waktu_selesai',
     ];
 
+    protected $casts = [
+        'waktu_mulai'   => 'datetime',
+        'waktu_selesai' => 'datetime',
+    ];
+
     public function sekolah()
     {
-        return $this->belongsTo(Sekolah::class);
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
+    }
+
+    public function ujians()
+    {
+        return $this->hasMany(Ujian::class, 'sesi_id');
     }
 }

@@ -10,11 +10,14 @@ use App\Models\NilaiUjian;
 use App\Models\Soal;
 use App\Models\JawabanSiswa;
 use App\Models\Siswa;
+use App\Models\Sekolah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Schema\Blueprint;
 
 class UjianController extends Controller
 {
@@ -248,6 +251,7 @@ class UjianController extends Controller
 
         // Ambil sekolah ujian atau sekolah milik user yang login
         $sekolahId = $ujian->sekolah_id ?? ($user->sekolah_id ?? null);
+        $sekolah   = $sekolahId ? Sekolah::find($sekolahId) : Sekolah::first();
 
         // Proteksi multi-tenant sekolah
         if ($user && $user->role !== 'superadmin' && $user->sekolah_id && $ujian->sekolah_id && $ujian->sekolah_id !== $user->sekolah_id) {
@@ -268,11 +272,15 @@ class UjianController extends Controller
         $jumlahHadir      = $hasilUjians->count();
         $jumlahTidakHadir = max(0, $totalTerdaftar - $jumlahHadir);
 
-        // Default pengawas dari relasi guru (jika ada) atau user yang mencetak
-        $defaultPengawas    = $user->name ?? '........................................';
-        $defaultNipPengawas = $user->nip ?? '-';
+        // Prioritas Pengawas: Profil Sekolah -> Relasi Guru Ujian -> User yang mencetak
+        $defaultPengawas    = !empty($sekolah?->nama_pengawas)
+            ? $sekolah->nama_pengawas
+            : ($user->name ?? '........................................');
+        $defaultNipPengawas = !empty($sekolah?->nip_pengawas)
+            ? $sekolah->nip_pengawas
+            : ($user->nip ?? '-');
 
-        if (method_exists($ujian, 'guru') && $ujian->guru) {
+        if (empty($sekolah?->nama_pengawas) && method_exists($ujian, 'guru') && $ujian->guru) {
             $defaultPengawas    = $ujian->guru->name ?? $defaultPengawas;
             $defaultNipPengawas = $ujian->guru->nip ?? $defaultNipPengawas;
         }
@@ -433,5 +441,72 @@ class UjianController extends Controller
         });
 
         return redirect()->back()->with('success', "Data ujian {$namaSiswa} berhasil direset total untuk ujian susulan/remedial.");
+    }
+
+    // 6. Upload Arsip Scan Berita Acara (PDF / JPG / PNG)
+    public function uploadBeritaAcara(Request $request, string $id)
+    {
+        $user  = Auth::user();
+        $ujian = Ujian::findOrFail($id);
+
+        if ($user && $user->role !== 'superadmin' && $user->sekolah_id && $ujian->sekolah_id && $ujian->sekolah_id !== $user->sekolah_id) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen ujian sekolah lain.');
+        }
+
+        // Otomatis tambahkan kolom arsip di tabel ujians jika belum ada
+        if (Schema::hasTable('ujians') && !Schema::hasColumn('ujians', 'file_berita_acara')) {
+            Schema::table('ujians', function (Blueprint $table) {
+                $table->string('file_berita_acara')->nullable();
+                $table->timestamp('uploaded_ba_at')->nullable();
+            });
+        }
+
+        $request->validate([
+            'file_berita_acara' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // Maks 5 MB
+        ], [
+            'file_berita_acara.required' => 'Pilih file scan Berita Acara terlebih dahulu.',
+            'file_berita_acara.mimes'    => 'Format file harus berupa PDF, JPG, atau PNG.',
+            'file_berita_acara.max'      => 'Ukuran file maksimal 5 MB.',
+        ]);
+
+        // Hapus file lama jika mengganti arsip
+        if (!empty($ujian->file_berita_acara) && Storage::disk('public')->exists($ujian->file_berita_acara)) {
+            Storage::disk('public')->delete($ujian->file_berita_acara);
+        }
+
+        $file     = $request->file('file_berita_acara');
+        $namaFile = 'BA_' . $ujian->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $path     = $file->storeAs('berita-acara', $namaFile, 'public');
+
+        DB::table('ujians')->where('id', $ujian->id)->update([
+            'file_berita_acara' => $path,
+            'uploaded_ba_at'    => now(),
+            'updated_at'        => now(),
+        ]);
+
+        return redirect()->back()->with('success', "Arsip scan Berita Acara untuk \"{$ujian->nama_ujian}\" berhasil diunggah!");
+    }
+
+    // 7. Hapus Arsip Scan Berita Acara
+    public function hapusBeritaAcara(string $id)
+    {
+        $user  = Auth::user();
+        $ujian = Ujian::findOrFail($id);
+
+        if ($user && $user->role !== 'superadmin' && $user->sekolah_id && $ujian->sekolah_id && $ujian->sekolah_id !== $user->sekolah_id) {
+            abort(403, 'Anda tidak memiliki akses ke dokumen ujian sekolah lain.');
+        }
+
+        if (!empty($ujian->file_berita_acara) && Storage::disk('public')->exists($ujian->file_berita_acara)) {
+            Storage::disk('public')->delete($ujian->file_berita_acara);
+        }
+
+        DB::table('ujians')->where('id', $ujian->id)->update([
+            'file_berita_acara' => null,
+            'uploaded_ba_at'    => null,
+            'updated_at'        => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Arsip scan Berita Acara berhasil dihapus.');
     }
 }

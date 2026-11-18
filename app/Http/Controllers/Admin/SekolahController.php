@@ -4,11 +4,32 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sekolah;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class SekolahController extends Controller
 {
+    /**
+     * Pastikan kolom pengawas tersedia di tabel sekolahs secara otomatis
+     */
+    private function ensurePengawasColumnsExist(): void
+    {
+        if (Schema::hasTable('sekolahs')) {
+            if (!Schema::hasColumn('sekolahs', 'nama_pengawas') || !Schema::hasColumn('sekolahs', 'nip_pengawas')) {
+                Schema::table('sekolahs', function (Blueprint $table) {
+                    if (!Schema::hasColumn('sekolahs', 'nama_pengawas')) {
+                        $table->string('nama_pengawas')->nullable();
+                    }
+                    if (!Schema::hasColumn('sekolahs', 'nip_pengawas')) {
+                        $table->string('nip_pengawas', 50)->nullable();
+                    }
+                });
+            }
+        }
+    }
+
     /**
      * Tampilkan Profil Sekolah milik user yang sedang login
      */
@@ -20,12 +41,10 @@ class SekolahController extends Controller
 
         // 1. Jika Superadmin
         if ($user && $user->role === 'superadmin') {
-            // Mengakomodasi filter query jika superadmin memilih sekolah tertentu (?sekolah_id=1)
             if ($request->has('sekolah_id')) {
                 $sekolah = Sekolah::find($request->sekolah_id);
             }
 
-            // Fallback jika tidak ada query param
             if (!$sekolah) {
                 $sekolah = $user->sekolah_id
                     ? Sekolah::find($user->sekolah_id)
@@ -36,7 +55,7 @@ class SekolahController extends Controller
             $sekolah = ($user && $user->sekolah_id) ? Sekolah::find($user->sekolah_id) : null;
         }
 
-        // 3. Jika data sekolah tetap tidak ditemukan (Database kosong / User belum terikat)
+        // 3. Jika data sekolah tetap tidak ditemukan
         if (!$sekolah) {
             $sekolah = new Sekolah();
 
@@ -65,14 +84,16 @@ class SekolahController extends Controller
             return redirect()->route('login');
         }
 
+        // Otomatis tambahkan kolom nama_pengawas & nip_pengawas di DB jika belum ada
+        $this->ensurePengawasColumnsExist();
+
         // A. JIKA USER ADALAH ADMIN SEKOLAH / KEPSEK (BUKAN SUPERADMIN)
         if ($user->role !== 'superadmin') {
-            // Proteksi 1: Wajib memiliki sekolah_id
             if (!$user->sekolah_id) {
                 return redirect()->back()->with('error', 'Akun Anda tidak terikat dengan sekolah manapun.');
             }
 
-            // Proteksi 2: Paksa update HANYA pada sekolah miliknya (Abaikan ID dari URL)
+            // Paksa update HANYA pada sekolah miliknya (Abaikan ID dari URL)
             $sekolah = Sekolah::findOrFail($user->sekolah_id);
 
             $validated = $request->validate([
@@ -120,7 +141,6 @@ class SekolahController extends Controller
 
         $sekolah->fill($validated)->save();
 
-        // Ikat superadmin ke sekolah ini HANYA jika akun superadmin belum punya sekolah_id sama sekali
         if (!$user->sekolah_id) {
             $user->update(['sekolah_id' => $sekolah->id]);
         }
