@@ -120,7 +120,7 @@ class UjianController extends Controller
         $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
         $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
 
-        $ujian->update([
+        $updateData = [
             'nama_ujian'    => $validated['nama_ujian'],
             'kelas_id'      => $validated['kelas_id'],
             'mapel_id'      => $validated['mapel_id'],
@@ -131,7 +131,13 @@ class UjianController extends Controller
             'status'        => $validated['status'],
             'acak_soal'     => DB::raw($acakSoalVal),
             'acak_jawaban'  => DB::raw($acakJawabanVal),
-        ]);
+        ];
+
+        if (Schema::hasColumn('ujians', 'sekolah_id') && empty($ujian->sekolah_id) && Auth::user()?->sekolah_id) {
+            $updateData['sekolah_id'] = Auth::user()->sekolah_id;
+        }
+
+        $ujian->update($updateData);
 
         return redirect()->route('admin.ujian.index')->with('success', 'Data sesi ujian dan mapel berhasil diperbarui!');
     }
@@ -478,11 +484,18 @@ class UjianController extends Controller
         $namaFile = 'BA_' . $ujian->id . '_' . time() . '.' . $file->getClientOriginalExtension();
         $path     = $file->storeAs('berita-acara', $namaFile, 'public');
 
-        DB::table('ujians')->where('id', $ujian->id)->update([
+        $updateData = [
             'file_berita_acara' => $path,
             'uploaded_ba_at'    => now(),
             'updated_at'        => now(),
-        ]);
+        ];
+
+        // Otomatis ikat sekolah_id jika sesi ujian lama belum memiliki sekolah_id
+        if (Schema::hasColumn('ujians', 'sekolah_id') && empty($ujian->sekolah_id) && !empty($user?->sekolah_id)) {
+            $updateData['sekolah_id'] = $user->sekolah_id;
+        }
+
+        DB::table('ujians')->where('id', $ujian->id)->update($updateData);
 
         return redirect()->back()->with('success', "Arsip scan Berita Acara untuk \"{$ujian->nama_ujian}\" berhasil diunggah!");
     }

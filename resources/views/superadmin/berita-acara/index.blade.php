@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.superadmin')
 
 @section('title', 'Arsip Berita Acara Sekolah')
 @section('page_title', 'Arsip Berita Acara Sekolah')

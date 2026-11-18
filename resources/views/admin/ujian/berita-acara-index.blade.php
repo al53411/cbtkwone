@@ -26,9 +26,9 @@
         <!-- Header & Filter Sesi Ujian -->
         <div class="flat-card p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-                <div class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-file-signature"></i>
+                <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-file-signature text-sm"></i>
                     </span>
                     <div>
                         <h1 class="text-lg font-extrabold text-slate-900 tracking-tight">
@@ -116,11 +116,11 @@
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-bold">
                             <th class="py-3.5 px-4 w-12 text-center">No</th>
                             <th class="py-3.5 px-4">Nama Ujian &amp; Mata Pelajaran</th>
-                            <th class="py-3.5 px-4">Kelas / Rombel</th>
-                            <th class="py-3.5 px-4">Jadwal Pelaksanaan</th>
-                            <th class="py-3.5 px-4 text-center">Peserta Hadir</th>
-                            <th class="py-3.5 px-4 text-center">Arsip Scan BA</th>
-                            <th class="py-3.5 px-4 text-right">Cetak &amp; Upload Dokumen</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap">Kelas / Rombel</th>
+                            <th class="py-3.5 px-4 whitespace-nowrap">Jadwal Pelaksanaan</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap">Peserta Hadir</th>
+                            <th class="py-3.5 px-4 text-center whitespace-nowrap">Arsip Scan BA</th>
+                            <th class="py-3.5 px-4 text-right whitespace-nowrap">Cetak &amp; Upload Dokumen</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -129,9 +129,9 @@
                                 <td class="py-3.5 px-4 text-center font-mono text-slate-500">
                                     {{ $ujians->firstItem() + $index }}
                                 </td>
-                                <td class="py-3.5 px-4">
-                                    <p class="font-bold text-slate-900 text-sm">{{ $ujian->nama_ujian }}</p>
-                                    <div class="flex items-center gap-2 mt-0.5">
+                                <td class="py-3.5 px-4 min-w-[200px]">
+                                    <p class="font-bold text-slate-900 text-sm leading-snug">{{ $ujian->nama_ujian }}</p>
+                                    <div class="flex flex-wrap items-center gap-2 mt-1">
                                         <span class="text-[11px] text-blue-700 font-semibold">
                                             <i class="fa-solid fa-book-open mr-1"></i>{{ $ujian->mapel->nama_mapel ?? '-' }}
                                         </span>
@@ -143,32 +143,32 @@
                                             };
                                         @endphp
                                         <span
-                                            class="px-2 py-0.2 rounded border text-[9.5px] font-extrabold uppercase {{ $badgeClass }}">
+                                            class="px-2 py-0.5 rounded border text-[9.5px] font-extrabold uppercase whitespace-nowrap {{ $badgeClass }}">
                                             {{ $ujian->status }}
                                         </span>
                                     </div>
                                 </td>
-                                <td class="py-3.5 px-4 font-semibold text-slate-700">
+                                <td class="py-3.5 px-4 font-semibold text-slate-700 whitespace-nowrap">
                                     {{ $ujian->kelas->nama_kelas ?? 'Semua Kelas' }}
                                 </td>
-                                <td class="py-3.5 px-4 text-slate-600 font-mono text-[11px]">
+                                <td class="py-3.5 px-4 text-slate-600 font-mono text-[11px] whitespace-nowrap">
                                     @if(!empty($ujian->waktu_mulai))
                                         {{ \Carbon\Carbon::parse($ujian->waktu_mulai)->format('d/m/Y H:i') }} WIB
                                     @else
                                         -
                                     @endif
                                 </td>
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                     <span
-                                        class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 font-mono font-bold text-[11px]">
+                                        class="inline-block whitespace-nowrap px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 font-mono font-bold text-[11px]">
                                         {{ $ujian->nilai_ujians_count ?? 0 }} Siswa
                                     </span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center">
+                                <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                     @if(!empty($ujian->file_berita_acara))
                                         <div class="inline-flex items-center gap-1.5">
                                             <a href="{{ asset('storage/' . $ujian->file_berita_acara) }}" target="_blank"
-                                                class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-md text-[11px] font-bold transition">
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-md text-[11px] font-bold whitespace-nowrap transition">
                                                 <i class="fa-solid fa-file-pdf"></i>
                                                 <span>Lihat Arsip</span>
                                             </a>
@@ -183,21 +183,21 @@
                                             </form>
                                         </div>
                                     @else
-                                        <span class="text-[11px] text-slate-400 italic">Belum diunggah</span>
+                                        <span class="text-[11px] text-slate-400 italic whitespace-nowrap">Belum diunggah</span>
                                     @endif
                                 </td>
-                                <td class="py-3.5 px-4 text-right">
-                                    <div class="inline-flex flex-wrap items-center justify-end gap-1.5">
+                                <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center justify-end gap-1.5">
                                         <!-- Tombol Cetak Berita Acara -->
                                         <a href="{{ route('admin.ujian.berita-acara', $ujian->id) }}" target="_blank"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold shadow-2xs transition">
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold shadow-2xs whitespace-nowrap transition">
                                             <i class="fa-solid fa-file-signature"></i>
                                             <span>Berita Acara</span>
                                         </a>
 
                                         <!-- Tombol Cetak Rekap Hasil CAT -->
                                         <a href="{{ route('admin.ujian.cetak-hasil', $ujian->id) }}" target="_blank"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-800 hover:bg-blue-900 text-white rounded-md text-xs font-bold shadow-2xs transition">
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-800 hover:bg-blue-900 text-white rounded-md text-xs font-bold shadow-2xs whitespace-nowrap transition">
                                             <i class="fa-solid fa-print"></i>
                                             <span>Hasil CAT</span>
                                         </a>
@@ -205,7 +205,7 @@
                                         <!-- Tombol Upload Scan Berita Acara -->
                                         <button type="button"
                                             onclick="bukaModalUploadBa('{{ route('admin.ujian.upload-berita-acara', $ujian->id) }}', @js($ujian->nama_ujian))"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold shadow-2xs transition cursor-pointer">
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-bold shadow-2xs whitespace-nowrap transition cursor-pointer">
                                             <i class="fa-solid fa-cloud-arrow-up"></i>
                                             <span>{{ !empty($ujian->file_berita_acara) ? 'Ganti Scan' : 'Upload BA' }}</span>
                                         </button>
@@ -236,7 +236,8 @@
     </div>
 
     <!-- MODAL UPLOAD SCAN BERITA ACARA -->
-    <div id="modal-upload-ba" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+    <div id="modal-upload-ba" onclick="if (event.target === this) tutupModalUploadBa()"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
         <div class="flat-card bg-white w-full max-w-md overflow-hidden shadow-lg">
             <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                 <div>
@@ -244,18 +245,20 @@
                     <p id="modal-nama-ujian" class="text-[11px] text-slate-500 mt-0.5">-</p>
                 </div>
                 <button type="button" onclick="tutupModalUploadBa()"
-                    class="text-slate-400 hover:text-slate-700 cursor-pointer">
+                    class="text-slate-400 hover:text-slate-700 cursor-pointer p-1">
                     <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <form id="form-upload-ba" method="POST" enctype="multipart/form-data" class="p-5 space-y-4">
+            <form id="form-upload-ba" method="POST" enctype="multipart/form-data"
+                onsubmit="const btn = document.getElementById('btn-submit-ba'); btn.disabled = true; btn.innerHTML = '<i class=\'fa-solid fa-spinner fa-spin\'></i><span>Mengunggah...</span>';"
+                class="p-5 space-y-4">
                 @csrf
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">
                         File Scan Berita Acara (PDF / JPG / PNG)
                     </label>
-                    <input type="file" name="file_berita_acara" accept=".pdf,.jpg,.jpeg,.png" required
+                    <input id="input-file-ba" type="file" name="file_berita_acara" accept=".pdf,.jpg,.jpeg,.png" required
                         class="flat-input w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-white hover:file:bg-slate-900 p-1.5">
                     <p class="text-[11px] text-slate-500 mt-1.5">
                         * Unggah dokumen Berita Acara yang telah ditandatangani &amp; distempel basah (Maks. 5 MB).
@@ -267,7 +270,7 @@
                         class="px-4 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">
                         Batal
                     </button>
-                    <button type="submit"
+                    <button id="btn-submit-ba" type="submit"
                         class="px-4 py-2 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
                         <i class="fa-solid fa-upload"></i>
                         <span>Simpan Arsip</span>
@@ -282,9 +285,11 @@
             const modal = document.getElementById('modal-upload-ba');
             const form = document.getElementById('form-upload-ba');
             const label = document.getElementById('modal-nama-ujian');
+            const input = document.getElementById('input-file-ba');
 
             form.action = actionUrl;
             label.textContent = 'Sesi Ujian: ' + namaUjian;
+            if (input) input.value = '';
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -295,5 +300,11 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                tutupModalUploadBa();
+            }
+        });
     </script>
 @endsection
