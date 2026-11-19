@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class UjianController extends Controller
 {
@@ -43,10 +44,18 @@ class UjianController extends Controller
 
         $ujians = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        $mapels = Mapel::where('status', 'aktif')->get();
-        $kelases = Kelas::all();
+        $mapels    = Mapel::where('status', 'aktif')->get();
+        $kelases   = Kelas::orderBy('nama_kelas', 'asc')->get();
+        $listMapel = $mapels;
+        $listKelas = $kelases;
 
-        return view('superadmin.ujian.index', compact('ujians', 'mapels', 'kelases'));
+        return view('superadmin.ujian.index', compact(
+            'ujians',
+            'mapels',
+            'kelases',
+            'listMapel',
+            'listKelas'
+        ));
     }
 
     /**
@@ -66,10 +75,10 @@ class UjianController extends Controller
             ? strtoupper(trim($validated['token']))
             : strtoupper(Str::random(6));
 
-        $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
+        $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
         $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
 
-        Ujian::create([
+        $dataUjian = [
             'nama_ujian'      => $validated['nama_ujian'],
             'kelas_id'        => $validated['kelas_id'],
             'mapel_id'        => $validated['mapel_id'],
@@ -82,17 +91,23 @@ class UjianController extends Controller
             'acak_soal'       => DB::raw($acakSoalVal),
             'acak_jawaban'    => DB::raw($acakJawabanVal),
             'tampilkan_nilai' => DB::raw('false'), // Default terkunci saat ujian baru dibuat
-        ]);
+        ];
+
+        if (Schema::hasColumn('ujians', 'tampilkan_soal')) {
+            $dataUjian['tampilkan_soal'] = DB::raw('false');
+        }
+
+        Ujian::create($dataUjian);
 
         return redirect()->route('superadmin.ujian.index')->with('success', 'Jadwal Ujian berhasil dibuat!');
     }
 
     public function update(Request $request, $id)
     {
-        $ujian = Ujian::findOrFail($id);
+        $ujian     = Ujian::findOrFail($id);
         $validated = $this->validateRequest($request);
 
-        $acakSoalVal = $request->has('acak_soal') ? 'true' : 'false';
+        $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
         $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
 
         $ujian->update([
@@ -125,7 +140,7 @@ class UjianController extends Controller
      */
     public function toggleRilisNilai($id)
     {
-        $ujian = Ujian::findOrFail($id);
+        $ujian      = Ujian::findOrFail($id);
         $statusBaru = !$ujian->isNilaiDirilis();
 
         DB::table('ujians')->where('id', $id)->update([
@@ -136,6 +151,32 @@ class UjianController extends Controller
         $pesan = $statusBaru
             ? "Nilai ujian '{$ujian->nama_ujian}' berhasil dirilis ke menu Admin."
             : "Nilai ujian '{$ujian->nama_ujian}' dikunci kembali (Dalam Penilaian).";
+
+        return redirect()->back()->with('success', $pesan);
+    }
+
+    /**
+     * Toggle Izin Tampilkan / Kunci Daftar Soal ke Menu Admin Sekolah
+     */
+    public function toggleTampilSoal($id)
+    {
+        if (Schema::hasTable('ujians') && !Schema::hasColumn('ujians', 'tampilkan_soal')) {
+            Schema::table('ujians', function (Blueprint $table) {
+                $table->boolean('tampilkan_soal')->default(false);
+            });
+        }
+
+        $ujian      = Ujian::findOrFail($id);
+        $statusBaru = !((bool) ($ujian->tampilkan_soal ?? false));
+
+        DB::table('ujians')->where('id', $id)->update([
+            'tampilkan_soal' => DB::raw($statusBaru ? 'true' : 'false'),
+            'updated_at'     => now(),
+        ]);
+
+        $pesan = $statusBaru
+            ? "Akses lihat butir soal untuk ujian '{$ujian->nama_ujian}' berhasil DIBUKA bagi Admin Sekolah."
+            : "Akses lihat butir soal untuk ujian '{$ujian->nama_ujian}' DIKUNCI kembali dari Admin Sekolah.";
 
         return redirect()->back()->with('success', $pesan);
     }
@@ -166,7 +207,7 @@ class UjianController extends Controller
     public function rekapNilai(Request $request, $id = null)
     {
         $ujianId = $id ?? $request->ujian_id;
-        $ujian = $ujianId ? Ujian::with(['mapel', 'kelas'])->findOrFail($ujianId) : null;
+        $ujian   = $ujianId ? Ujian::with(['mapel', 'kelas'])->findOrFail($ujianId) : null;
 
         $query = NilaiUjian::with(['siswa.kelas', 'siswa.sekolah', 'ujian.mapel']);
 
@@ -201,7 +242,7 @@ class UjianController extends Controller
     public function cetakRekap(Request $request, $id = null)
     {
         $ujianId = $id ?? $request->ujian_id;
-        $ujian = $ujianId ? Ujian::with(['mapel', 'kelas'])->findOrFail($ujianId) : null;
+        $ujian   = $ujianId ? Ujian::with(['mapel', 'kelas'])->findOrFail($ujianId) : null;
 
         $query = NilaiUjian::with(['siswa.kelas', 'siswa.sekolah', 'ujian.mapel']);
 
