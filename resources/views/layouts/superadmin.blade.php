@@ -10,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') . '?v=' . filemtime(public_path('logo.png')) }}">
 
     <style>
         /* Custom Scrollbar */
@@ -47,7 +47,8 @@
                 <div class="flex items-center space-x-3 truncate">
                     <div class="flex items-center gap-3 truncate">
                         <!-- Logo -->
-                        <img src="{{ asset('logo.png') }}" alt="Logo" class="w-12 h-12 object-contain shrink-0">
+                        <img src="{{ asset('logo.png') . '?v=' . filemtime(public_path('logo.png')) }}" alt="Logo"
+                            class="w-12 h-12 object-contain shrink-0">
 
                         <!-- Informasi Akun -->
                         <div class="flex flex-col truncate">
