@@ -116,6 +116,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::get('/ujian/generate-token', [SuperadminUjianController::class, 'generateToken'])->name('ujian.generate-token');
     Route::patch('/ujian/{ujian}/status', [SuperadminUjianController::class, 'updateStatus'])->name('ujian.update-status');
     Route::patch('/ujian/{id}/toggle-rilis-nilai', [SuperadminUjianController::class, 'toggleRilisNilai'])->name('ujian.toggle-rilis');
+    Route::patch('/ujian/{id}/toggle-tampil-soal', [SuperadminUjianController::class, 'toggleTampilSoal'])->name('ujian.toggle-tampil-soal');
 
     // Rute Rekap & Cetak Rekap Nilai Ujian
     Route::get('/rekap-nilai/{id?}', [SuperadminUjianController::class, 'rekapNilai'])->name('ujian.rekap');
@@ -124,11 +125,9 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     // CRUD Resource Pengaturan Ujian
     Route::resource('ujian', SuperadminUjianController::class);
 
-    // Di dalam grup prefix('superadmin')->name('superadmin.')
-    Route::get('/jadwal-ujian', [\App\Http\Controllers\Superadmin\JadwalController::class, 'index'])
-        ->name('jadwal.index');
-
-   Route::get('/berita-acara', [App\Http\Controllers\Superadmin\UjianController::class, 'superadminBeritaAcara'])->name('berita-acara.index');
+    // Jadwal Ujian & Monitoring Berita Acara Superadmin
+    Route::get('/jadwal-ujian', [\App\Http\Controllers\Superadmin\JadwalController::class, 'index'])->name('jadwal.index');
+    Route::get('/berita-acara', [SuperadminUjianController::class, 'superadminBeritaAcara'])->name('berita-acara.index');
 });
 
 

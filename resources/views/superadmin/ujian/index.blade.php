@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.superadmin')
 
 @section('title', 'Jadwal & Monitoring Ujian')
 @section('header', 'Jadwal & Monitoring Ujian')
