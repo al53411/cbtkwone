@@ -7,76 +7,89 @@
     <div class="w-full space-y-6">
 
         <!-- Header & Action Buttons -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="min-w-0">
                 <h1 class="text-xl font-bold text-slate-800">Master Bank Soal</h1>
-                <p class="text-xs text-slate-500 mt-1">Kelola bank soal ujian, filter berdasarkan mata pelajaran dan tingkat
-                    kelas.</p>
+                <p class="text-xs text-slate-500 mt-1">Kelola bank soal Pilihan Ganda, Menjodohkan, dan Esai berdasarkan
+                    mata pelajaran serta tingkat kelas.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
+
+            <div class="flex items-center gap-2 shrink-0 overflow-x-auto pb-1 lg:pb-0">
                 <!-- Tombol Pemicu Modal Upload Gambar Soal -->
                 <button type="button" onclick="document.getElementById('modal-upload-gambar').classList.remove('hidden')"
-                    class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 border border-blue-300 transition duration-150">
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 border border-blue-300 whitespace-nowrap shrink-0 transition duration-150">
                     <i class="fa-solid fa-image text-sm"></i>
                     <span>Upload Gambar Soal</span>
                 </button>
 
                 <a href="{{ route('superadmin.soal.import') }}"
-                    class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition duration-150">
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 whitespace-nowrap shrink-0 transition duration-150">
                     <i class="fa-solid fa-file-excel text-sm"></i>
-                    <span>Impor Soal (Excel/Word)</span>
+                    <span>Impor Soal</span>
                 </a>
+
                 <a href="{{ route('superadmin.soal.create') }}"
-                    class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition duration-150">
+                    class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 whitespace-nowrap shrink-0 transition duration-150">
                     <i class="fa-solid fa-plus text-sm"></i>
                     <span>Buat Bank Soal</span>
                 </a>
             </div>
         </div>
 
-        <!-- Ringkasan Statistik -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+        <!-- Ringkasan Statistik (5 Kartu: Paket, PG, Menjodohkan, Esai, Mapel) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3.5">
                 <div
-                    class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                    class="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-lg font-bold shrink-0">
                     <i class="fa-solid fa-folder-open"></i>
                 </div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Paket Soal</p>
-                    <h3 class="text-lg font-bold text-slate-800">{{ number_format($totalPaket ?? 0) }} Paket</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Paket</p>
+                    <h3 class="text-base font-bold text-slate-800">{{ number_format($totalPaket ?? 0) }} Paket</h3>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3.5">
                 <div
-                    class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-xl font-bold">
+                    class="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-lg font-bold shrink-0">
                     <i class="fa-solid fa-list-check"></i>
                 </div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soal Pilihan Ganda</p>
-                    <h3 class="text-lg font-bold text-slate-800">{{ number_format($totalPg ?? 0) }} Butir</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pilihan Ganda</p>
+                    <h3 class="text-base font-bold text-slate-800">{{ number_format($totalPg ?? 0) }} Butir</h3>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3.5">
                 <div
-                    class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl font-bold">
+                    class="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center text-lg font-bold shrink-0">
+                    <i class="fa-solid fa-arrows-left-right"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Menjodohkan</p>
+                    <h3 class="text-base font-bold text-slate-800">{{ number_format($totalMenjodohkan ?? 0) }} Butir</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3.5">
+                <div
+                    class="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Soal Esai / Uraian</p>
-                    <h3 class="text-lg font-bold text-slate-800">{{ number_format($totalEsai ?? 0) }} Butir</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Esai / Uraian</p>
+                    <h3 class="text-base font-bold text-slate-800">{{ number_format($totalEsai ?? 0) }} Butir</h3>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3.5">
                 <div
-                    class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-xl font-bold">
+                    class="w-11 h-11 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-lg font-bold shrink-0">
                     <i class="fa-solid fa-book"></i>
                 </div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Mata Pelajaran Aktif</p>
-                    <h3 class="text-lg font-bold text-slate-800">{{ number_format($totalMapel ?? 0) }} Mapel</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mapel Aktif</p>
+                    <h3 class="text-base font-bold text-slate-800">{{ number_format($totalMapel ?? 0) }} Mapel</h3>
                 </div>
             </div>
         </div>
@@ -84,14 +97,14 @@
         <!-- Filter & Pencarian -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
             <form method="GET" action="{{ route('superadmin.soal.index') }}"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
                 <!-- Filter Mata Pelajaran -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1.5">Mata Pelajaran</label>
                     <select name="mapel_id"
                         class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition">
-                        <option value="">-- Semua Mata Pelajaran --</option>
+                        <option value="">-- Semua Mapel --</option>
                         @foreach ($mapels as $mapel)
                             <option value="{{ $mapel->id }}" @selected(request('mapel_id') == $mapel->id)>
                                 {{ $mapel->nama_mapel }}
@@ -114,9 +127,21 @@
                     </select>
                 </div>
 
+                <!-- Filter Tipe Soal -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tipe Soal</label>
+                    <select name="tipe"
+                        class="w-full text-xs rounded-xl border-slate-200 bg-slate-50 p-2.5 text-slate-700 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition">
+                        <option value="">-- Semua Tipe Soal --</option>
+                        <option value="pg" @selected(request('tipe') === 'pg')>Pilihan Ganda (PG)</option>
+                        <option value="menjodohkan" @selected(request('tipe') === 'menjodohkan')>Menjodohkan</option>
+                        <option value="esai" @selected(request('tipe') === 'esai')>Esai / Uraian</option>
+                    </select>
+                </div>
+
                 <!-- Search Keyword -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cari Kode / Pertanyaan Soal</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Cari Kode / Pertanyaan</label>
                     <div class="relative">
                         <input type="text" name="search" value="{{ request('search') }}"
                             placeholder="Cari isi soal atau kode..."
@@ -129,10 +154,11 @@
                 <div class="flex items-end space-x-2">
                     <button type="submit"
                         class="flex-1 px-4 py-2.5 bg-slate-900 text-white font-semibold text-xs rounded-xl hover:bg-slate-800 transition">
-                        <i class="fa-solid fa-filter mr-1.5"></i> Terapkan Filter
+                        <i class="fa-solid fa-filter mr-1.5"></i> Filter
                     </button>
                     <a href="{{ route('superadmin.soal.index') }}"
-                        class="px-3 py-2.5 bg-slate-100 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-200 transition">
+                        class="px-3 py-2.5 bg-slate-100 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-200 transition"
+                        title="Reset Filter">
                         <i class="fa-solid fa-rotate-left"></i>
                     </a>
                 </div>
@@ -143,10 +169,10 @@
         <!-- Tabel Master Bank Soal -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                <h2 class="text-sm font-bold text-slate-800">Daftar Paket Bank Soal</h2>
+                <h2 class="text-sm font-bold text-slate-800">Daftar Butir Bank Soal</h2>
                 <span class="text-xs text-slate-500">
                     Menampilkan <b>{{ $soals->firstItem() ?? 0 }}</b> - <b>{{ $soals->lastItem() ?? 0 }}</b> dari
-                    <b>{{ $soals->total() }}</b> paket
+                    <b>{{ $soals->total() }}</b> soal
                 </span>
             </div>
 
@@ -156,25 +182,44 @@
                         class="bg-slate-50/80 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-100">
                         <tr>
                             <th class="py-3.5 px-4 text-center w-12">No</th>
-                            <th class="py-3.5 px-4">Kode & Judul / Pertanyaan Soal</th>
+                            <th class="py-3.5 px-4">Kode & Pertanyaan Soal</th>
                             <th class="py-3.5 px-4">Mata Pelajaran</th>
                             <th class="py-3.5 px-4">Kelas</th>
-                            <th class="py-3.5 px-4 text-center">Tipe & Opsi</th>
+                            <th class="py-3.5 px-4 text-center">Tipe & Detail</th>
                             <th class="py-3.5 px-4 text-center w-36">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-medium">
 
                         @forelse ($soals as $index => $item)
+                            @php
+                                $tipeSoal = strtolower($item->tipe_soal ?? $item->tipe ?? 'pg');
+                                if ($tipeSoal === 'essay') {
+                                    $tipeSoal = 'esai';
+                                }
+                                $pasanganList = is_string($item->pasangan_menjodohkan ?? null)
+                                    ? json_decode($item->pasangan_menjodohkan, true)
+                                    : ($item->pasangan_menjodohkan ?? []);
+                                $jumlahPasangan = is_array($pasanganList) ? count($pasanganList) : 0;
+                            @endphp
                             <tr class="hover:bg-slate-50/50 transition">
                                 <td class="py-4 px-4 text-center font-bold text-slate-400">
                                     {{ $soals->firstItem() + $index }}
                                 </td>
 
                                 <td class="py-4 px-4">
-                                    <span class="font-bold text-indigo-600 text-xs block mb-0.5">
-                                        {{ $item->kode_soal ?? 'SOAL-' . $item->id }}
-                                    </span>
+                                    <div class="flex items-center gap-2 mb-0.5">
+                                        <span class="font-bold text-indigo-600 text-xs">
+                                            {{ $item->kode_soal ?? 'SOAL-' . $item->id }}
+                                        </span>
+                                        @if (!empty($item->gambar) || !empty($item->file_gambar))
+                                            <span
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-semibold"
+                                                title="Memiliki Gambar">
+                                                <i class="fa-solid fa-image mr-1"></i> Gambar
+                                            </span>
+                                        @endif
+                                    </div>
                                     <span class="text-slate-600 text-xs line-clamp-1">
                                         {!! strip_tags($item->soal) !!}
                                     </span>
@@ -196,13 +241,31 @@
                                 </td>
 
                                 <td class="py-4 px-4 text-center">
-                                    <span
-                                        class="uppercase font-bold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px]">
-                                        {{ $item->tipe ?? 'pg' }}
-                                    </span>
-                                    <span class="text-slate-500 text-[11px] block mt-0.5">
-                                        ({{ $item->jumlah_opsi ?? 5 }} Opsi)
-                                    </span>
+                                    @if ($tipeSoal === 'menjodohkan')
+                                        <span
+                                            class="uppercase font-bold px-2.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md text-[10px]">
+                                            MENJODOHKAN
+                                        </span>
+                                        <span class="text-slate-500 text-[11px] block mt-0.5">
+                                            ({{ $jumlahPasangan }} Pasangan)
+                                        </span>
+                                    @elseif ($tipeSoal === 'esai')
+                                        <span
+                                            class="uppercase font-bold px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-md text-[10px]">
+                                            ESAI / URAIAN
+                                        </span>
+                                        <span class="text-slate-500 text-[11px] block mt-0.5">
+                                            (Bobot: {{ $item->bobot_soal ?? 1 }})
+                                        </span>
+                                    @else
+                                        <span
+                                            class="uppercase font-bold px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-[10px]">
+                                            PILIHAN GANDA
+                                        </span>
+                                        <span class="text-slate-500 text-[11px] block mt-0.5">
+                                            ({{ $item->jumlah_opsi ?? 5 }} Opsi)
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="py-4 px-4 text-center space-x-1">
@@ -252,7 +315,7 @@
 
     </div>
 
-    <!-- MODAL PREVIEW (DETAIL SOAL) -->
+    <!-- MODAL PREVIEW (DETAIL SOAL PG, MENJODOHKAN, & ESAI) -->
     <div id="modal-preview-soal"
         class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div
@@ -275,7 +338,7 @@
 
             <!-- Modal Body -->
             <div class="p-6 overflow-y-auto space-y-5 text-sm text-slate-700 bg-white">
-                <div class="flex gap-3 pb-3 border-b border-slate-100">
+                <div class="flex flex-wrap gap-2 pb-3 border-b border-slate-100">
                     <span id="preview-mapel"
                         class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Mapel
@@ -291,7 +354,7 @@
                 </div>
 
                 <div>
-                    <h4 class="font-bold text-slate-800 mb-2">Pertanyaan:</h4>
+                    <h4 class="font-bold text-slate-800 mb-2">Pertanyaan / Instruksi Soal:</h4>
                     <div id="preview-teks-soal"
                         class="prose prose-sm max-w-none p-4 bg-slate-50 rounded-xl border border-slate-200">
                     </div>
@@ -303,6 +366,7 @@
                         class="max-w-full h-auto rounded-lg border border-slate-200 max-h-64 object-contain">
                 </div>
 
+                <!-- BLOK PILIHAN GANDA -->
                 <div id="preview-pilihan-ganda" class="hidden space-y-3">
                     <h4 class="font-bold text-slate-800 mb-1">Pilihan Jawaban:</h4>
                     <div class="grid grid-cols-1 gap-2">
@@ -329,9 +393,18 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                    <h4 class="font-bold text-emerald-800 mb-1 text-xs uppercase tracking-wider">Kunci Jawaban</h4>
-                    <div id="preview-kunci-jawaban" class="font-bold text-emerald-700 text-lg uppercase">A</div>
+                <!-- BLOK MENJODOHKAN (PASANGAN KIRI <-> KANAN) -->
+                <div id="preview-menjodohkan" class="hidden space-y-2.5">
+                    <h4 class="font-bold text-slate-800 mb-1">Kunci Pasangan Menjodohkan (Premis Kiri &harr; Jawaban Kanan):
+                    </h4>
+                    <div id="preview-menjodohkan-list" class="space-y-2"></div>
+                </div>
+
+                <!-- BLOK KUNCI JAWABAN / RUBRIK ESAI -->
+                <div id="preview-kunci-container" class="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                    <h4 id="preview-kunci-label" class="font-bold text-emerald-800 mb-1 text-xs uppercase tracking-wider">
+                        Kunci Jawaban</h4>
+                    <div id="preview-kunci-jawaban" class="font-bold text-emerald-700 text-base">A</div>
                 </div>
             </div>
 
@@ -453,61 +526,109 @@
             });
         }
 
-        // 2. FUNGSI PREVIEW DETAIL SOAL
+        // 2. FUNGSI PREVIEW DETAIL SOAL (PG, MENJODOHKAN, & ESAI)
         function previewSoal(button) {
             const rawData = button.getAttribute('data-soal');
-            if (rawData) {
-                const data = JSON.parse(decodeURIComponent(escape(window.atob(rawData))));
+            if (!rawData) return;
 
-                document.getElementById('preview-kode-soal').innerText = data.kode_soal || ('SOAL-' + data.id);
-                document.getElementById('preview-mapel').innerHTML = '<i class="fa-solid fa-book text-[10px] mr-1.5"></i> ' + (data.mapel ? data.mapel.nama_mapel : '-');
-                document.getElementById('preview-kelas').innerText = data.kelas ? data.kelas.nama_kelas : '-';
-                document.getElementById('preview-tipe').innerText = (data.tipe || 'pg').toUpperCase();
-                document.getElementById('preview-teks-soal').innerHTML = data.soal || '<em>Tidak ada isi soal.</em>';
+            const data = JSON.parse(decodeURIComponent(escape(window.atob(rawData))));
+            let tipe = (data.tipe_soal || data.tipe || 'pg').toLowerCase();
+            if (tipe === 'essay') tipe = 'esai';
 
-                const imgContainer = document.getElementById('preview-gambar-container');
-                const gambarSoal = data.gambar || data.file_gambar;
+            document.getElementById('preview-kode-soal').innerText = data.kode_soal || ('SOAL-' + data.id);
+            document.getElementById('preview-mapel').innerHTML = '<i class="fa-solid fa-book text-[10px] mr-1.5"></i> ' + (data.mapel ? data.mapel.nama_mapel : '-');
+            document.getElementById('preview-kelas').innerText = data.kelas ? data.kelas.nama_kelas : '-';
+            document.getElementById('preview-tipe').innerText = tipe === 'menjodohkan' ? 'MENJODOHKAN' : (tipe === 'esai' ? 'ESAI / URAIAN' : 'PILIHAN GANDA');
+            document.getElementById('preview-teks-soal').innerHTML = data.soal || '<em>Tidak ada isi soal.</em>';
 
-                if (gambarSoal && gambarSoal.trim() !== '') {
-                    imgContainer.classList.remove('hidden');
-                    document.getElementById('preview-gambar').src = '/storage/' + gambarSoal;
-                } else {
-                    imgContainer.classList.add('hidden');
-                    document.getElementById('preview-gambar').src = '';
+            // Gambar Soal
+            const imgContainer = document.getElementById('preview-gambar-container');
+            const gambarSoal = data.gambar || data.file_gambar;
+            if (gambarSoal && gambarSoal.trim() !== '') {
+                imgContainer.classList.remove('hidden');
+                document.getElementById('preview-gambar').src = '/storage/' + gambarSoal;
+            } else {
+                imgContainer.classList.add('hidden');
+                document.getElementById('preview-gambar').src = '';
+            }
+
+            const pgContainer = document.getElementById('preview-pilihan-ganda');
+            const menjodohkanContainer = document.getElementById('preview-menjodohkan');
+            const menjodohkanList = document.getElementById('preview-menjodohkan-list');
+            const kunciContainer = document.getElementById('preview-kunci-container');
+            const kunciLabel = document.getElementById('preview-kunci-label');
+            const kunciElem = document.getElementById('preview-kunci-jawaban');
+
+            // Reset semua tampilan tipe
+            pgContainer.classList.add('hidden');
+            menjodohkanContainer.classList.add('hidden');
+            kunciContainer.classList.remove('hidden');
+
+            if (tipe === 'menjodohkan') {
+                menjodohkanContainer.classList.remove('hidden');
+                kunciContainer.classList.add('hidden');
+                menjodohkanList.innerHTML = '';
+
+                let pasangan = data.pasangan_menjodohkan || [];
+                if (typeof pasangan === 'string') {
+                    try { pasangan = JSON.parse(pasangan); } catch (e) { pasangan = []; }
                 }
 
-                const pgContainer = document.getElementById('preview-pilihan-ganda');
-                if (data.tipe !== 'esai' && data.tipe !== 'essay') {
-                    pgContainer.classList.remove('hidden');
-
-                    const opsiData = ['a', 'b', 'c', 'd', 'e'];
-                    opsiData.forEach(function (huruf) {
-                        const container = document.getElementById('opsi-' + huruf + '-container');
-                        const textElem = document.getElementById('opsi-' + huruf + '-text');
-                        const opsiIsi = data['option_' + huruf] || data['opsi_' + huruf];
-
-                        if (opsiIsi) {
-                            container.classList.remove('hidden');
-                            textElem.innerHTML = opsiIsi;
-
-                            if (data.kunci_jawaban && data.kunci_jawaban.toLowerCase() === huruf) {
-                                container.classList.add('border-emerald-500', 'bg-emerald-50/50');
-                                container.classList.remove('border-slate-200');
-                            } else {
-                                container.classList.remove('border-emerald-500', 'bg-emerald-50/50');
-                                container.classList.add('border-slate-200');
-                            }
-                        } else {
-                            container.classList.add('hidden');
-                        }
+                if (Array.isArray(pasangan) && pasangan.length > 0) {
+                    pasangan.forEach(function (item, idx) {
+                        const row = document.createElement('div');
+                        row.className = 'grid grid-cols-1 sm:grid-cols-11 gap-2 items-center p-3 bg-indigo-50/40 border border-indigo-200 rounded-xl text-xs';
+                        row.innerHTML = `
+                                <div class="sm:col-span-5 font-semibold text-slate-800 bg-white p-2.5 rounded-lg border border-slate-200">
+                                    <span class="text-indigo-600 font-bold mr-1">${idx + 1}.</span> ${item.kiri || '-'}
+                                </div>
+                                <div class="sm:col-span-1 text-center text-indigo-600 font-bold">
+                                    <i class="fa-solid fa-arrows-left-right"></i>
+                                </div>
+                                <div class="sm:col-span-5 font-semibold text-emerald-800 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
+                                    ${item.kanan || '-'}
+                                </div>
+                            `;
+                        menjodohkanList.appendChild(row);
                     });
                 } else {
-                    pgContainer.classList.add('hidden');
+                    menjodohkanList.innerHTML = '<p class="text-xs text-slate-400 italic">Belum ada data pasangan menjodohkan.</p>';
                 }
+            } else if (tipe === 'esai') {
+                kunciLabel.innerText = 'Pedoman / Kunci Jawaban Esai';
+                kunciElem.className = 'font-medium text-emerald-800 text-sm whitespace-pre-line';
+                kunciElem.innerText = data.kunci_jawaban ? data.kunci_jawaban : 'Dikoreksi manual oleh guru / admin (belum ada kunci pedoman).';
+            } else {
+                // Pilihan Ganda
+                pgContainer.classList.remove('hidden');
+                kunciLabel.innerText = 'Kunci Jawaban Pilihan Ganda';
+                kunciElem.className = 'font-bold text-emerald-700 text-lg uppercase';
+                kunciElem.innerText = data.kunci_jawaban ? data.kunci_jawaban.toUpperCase() : 'BELUM ADA KUNCI';
 
-                document.getElementById('preview-kunci-jawaban').innerText = data.kunci_jawaban ? data.kunci_jawaban.toUpperCase() : 'BELUM ADA KUNCI';
-                document.getElementById('modal-preview-soal').classList.remove('hidden');
+                const opsiData = ['a', 'b', 'c', 'd', 'e'];
+                opsiData.forEach(function (huruf) {
+                    const container = document.getElementById('opsi-' + huruf + '-container');
+                    const textElem = document.getElementById('opsi-' + huruf + '-text');
+                    const opsiIsi = data['option_' + huruf] || data['opsi_' + huruf];
+
+                    if (opsiIsi) {
+                        container.classList.remove('hidden');
+                        textElem.innerHTML = opsiIsi;
+
+                        if (data.kunci_jawaban && data.kunci_jawaban.toLowerCase() === huruf) {
+                            container.classList.add('border-emerald-500', 'bg-emerald-50/50');
+                            container.classList.remove('border-slate-200');
+                        } else {
+                            container.classList.remove('border-emerald-500', 'bg-emerald-50/50');
+                            container.classList.add('border-slate-200');
+                        }
+                    } else {
+                        container.classList.add('hidden');
+                    }
+                });
             }
+
+            document.getElementById('modal-preview-soal').classList.remove('hidden');
         }
 
         // 3. LOGIKA OTOMATISASI DROPDOWN KELAS & NOMOR SOAL
@@ -521,18 +642,15 @@
                     const selectKelas = document.getElementById('upload-kelas-id');
                     const selectNomor = document.getElementById('upload-nomor-soal');
 
-                    // Reset dropdown Nomor Soal
                     selectNomor.innerHTML = '<option value="">-- Pilih Nomor Soal --</option>';
 
                     if (kodeTerpilih && dataPaketGrouped[kodeTerpilih]) {
                         const paket = dataPaketGrouped[kodeTerpilih];
 
-                        // Otomatis pilih kelas jika ada
                         if (paket.kelas_id) {
                             selectKelas.value = paket.kelas_id;
                         }
 
-                        // Populate opsi nomor soal beserta cuplikan pertanyaan
                         paket.items.forEach(function (item) {
                             const opt = document.createElement('option');
                             opt.value = item.no;

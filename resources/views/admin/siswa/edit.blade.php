@@ -13,7 +13,7 @@
         </p>
     </div>
 
-    <form action="{{ route('admin.siswa.update', $siswa->id) }}" method="POST" class="space-y-5 sm:space-y-8">
+    <form action="{{ route('admin.siswa.update', $siswa->id) }}" method="POST" enctype="multipart/form-data" class="space-y-5 sm:space-y-8">
         @csrf
         @method('PUT')
 
@@ -108,9 +108,44 @@
                     <label for="alamat" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                         Alamat Lengkap
                     </label>
-                    <textarea name="alamat" id="alamat" rows="3" placeholder="Masukkan alamat domisili siswa"
+                    <textarea name="alamat" id="alamat" rows="2" placeholder="Masukkan alamat domisili siswa"
                         class="w-full px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-xs sm:text-sm @error('alamat') border-red-500 @enderror">{{ old('alamat', $siswa->alamat) }}</textarea>
                     @error('alamat')
+                    <p class="text-xs text-red-500 mt-1 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-exclamation"></i>{{ $message }}
+                    </p>
+                    @enderror
+                </div>
+
+                <!-- Foto Siswa (Pas Foto 3x4) -->
+                <div class="md:col-span-2">
+                    <label for="foto" class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                        Pas Foto Siswa (Tampil di Kartu Ujian)
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-20 border-2 {{ !empty($siswa->foto) ? 'border-blue-500' : 'border-dashed border-gray-300' }} rounded-lg flex flex-col items-center justify-center bg-white text-gray-400 overflow-hidden shrink-0 shadow-xs" id="preview-foto-box">
+                            @if(!empty($siswa->foto))
+                                <img src="{{ asset('storage/' . $siswa->foto) }}" alt="Foto Siswa" class="w-full h-full object-cover">
+                            @else
+                                <i class="fa-solid fa-user text-xl"></i>
+                                <span class="text-[9px] mt-1 font-bold">3x4</span>
+                            @endif
+                        </div>
+                        <div class="flex-1">
+                            <input type="file" name="foto" id="foto" accept="image/jpeg,image/png,image/jpg,image/webp"
+                                onchange="previewFoto(this)"
+                                class="w-full px-3 py-2 sm:px-4 sm:py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-xs sm:text-sm @error('foto') border-red-500 @enderror">
+                            <p class="text-[11px] text-gray-500 mt-1">
+                                Format: JPG, PNG, atau WEBP. Maksimal 2MB. 
+                                @if(!empty($siswa->foto))
+                                    <span class="text-blue-600 font-semibold">(Biarkan kosong jika tidak ingin mengubah foto)</span>
+                                @else
+                                    <span>Disarankan pas foto resmi rasio 3x4.</span>
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                    @error('foto')
                     <p class="text-xs text-red-500 mt-1 flex items-center gap-1">
                         <i class="fa-solid fa-circle-exclamation"></i>{{ $message }}
                     </p>
@@ -132,4 +167,19 @@
         </div>
     </form>
 </div>
+
+<script>
+    function previewFoto(input) {
+        const box = document.getElementById('preview-foto-box');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                box.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                box.classList.remove('border-dashed');
+                box.classList.add('border-blue-500');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
 @endsection

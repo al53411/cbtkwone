@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class SiswaController extends Controller
@@ -58,16 +59,16 @@ class SiswaController extends Controller
             if (!empty($allKelasIds)) {
                 $query->whereIn('siswas.kelas_id', $allKelasIds);
             } else if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
-                $query->where(function($q) use ($sekolahId) {
+                $query->where(function ($q) use ($sekolahId) {
                     $q->where('siswas.sekolah_id', $sekolahId)
-                      ->orWhereNull('siswas.sekolah_id');
+                        ->orWhereNull('siswas.sekolah_id');
                 });
             }
         } else {
             if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
-                $query->where(function($q) use ($sekolahId) {
+                $query->where(function ($q) use ($sekolahId) {
                     $q->where('siswas.sekolah_id', $sekolahId)
-                      ->orWhereNull('siswas.sekolah_id');
+                        ->orWhereNull('siswas.sekolah_id');
                 });
             }
         }
@@ -78,7 +79,7 @@ class SiswaController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 if (Schema::hasColumn('siswas', 'nama_siswa')) {
                     $q->where('siswas.nama_siswa', 'like', "%{$search}%");
                 } else {
@@ -90,17 +91,17 @@ class SiswaController extends Controller
 
         // URUTKAN BERDASARKAN KELAS TERKECIL, LALU NAMA SISWA
         $siswas = $query->orderBy('kelas.nama_kelas', 'asc')
-                        ->orderBy('siswas.nama_siswa', 'asc')
-                        ->paginate(10)
-                        ->withQueryString();
+            ->orderBy('siswas.nama_siswa', 'asc')
+            ->paginate(10)
+            ->withQueryString();
 
         if ($siswas->isEmpty() && !$request->filled('search') && !$request->filled('kelas_id') && $user && ($user->isGuru() || $user->role === 'guru' || $user->guru) && $sekolahId) {
             $siswas = Siswa::with('kelas')
                 ->select('siswas.*')
                 ->leftJoin('kelas', 'siswas.kelas_id', '=', 'kelas.id')
-                ->where(function($q) use ($sekolahId) {
+                ->where(function ($q) use ($sekolahId) {
                     $q->where('siswas.sekolah_id', $sekolahId)
-                      ->orWhereNull('siswas.sekolah_id');
+                        ->orWhereNull('siswas.sekolah_id');
                 })
                 ->orderBy('kelas.nama_kelas', 'asc')
                 ->orderBy('siswas.nama_siswa', 'asc')
@@ -134,6 +135,7 @@ class SiswaController extends Controller
             'jenis_kelamin' => 'required|in:L,P',
             'alamat'        => 'nullable|string',
             'password'      => 'nullable|string|min:6',
+            'foto'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $emailUser = $validated['nisn'];
@@ -163,6 +165,10 @@ class SiswaController extends Controller
             'jenis_kelamin' => $validated['jenis_kelamin'],
             'alamat'        => $validated['alamat'] ?? null,
         ];
+
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('foto_siswa', 'public');
+        }
 
         if (Schema::hasColumn('siswas', 'user_id')) {
             $data['user_id'] = $user->id;
@@ -228,17 +234,27 @@ class SiswaController extends Controller
             'jenis_kelamin' => 'required|in:L,P',
             'alamat'        => 'nullable|string',
             'password'      => 'nullable|string|min:6',
+            'foto'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $oldNisn = $siswa->nisn;
 
-        $siswa->update([
+        $updateData = [
             'nama_siswa'    => $validated['nama_siswa'],
             'nisn'          => $validated['nisn'],
             'kelas_id'      => $validated['kelas_id'] ?? null,
             'jenis_kelamin' => $validated['jenis_kelamin'],
             'alamat'        => $validated['alamat'] ?? null,
-        ]);
+        ];
+
+        if ($request->hasFile('foto')) {
+            if (!empty($siswa->foto) && Storage::disk('public')->exists($siswa->foto)) {
+                Storage::disk('public')->delete($siswa->foto);
+            }
+            $updateData['foto'] = $request->file('foto')->store('foto_siswa', 'public');
+        }
+
+        $siswa->update($updateData);
 
         $user = null;
         if (Schema::hasColumn('siswas', 'user_id') && $siswa->user_id) {
@@ -274,12 +290,16 @@ class SiswaController extends Controller
         }
         $siswa = $siswaQuery->findOrFail($id);
 
+        if (!empty($siswa->foto) && Storage::disk('public')->exists($siswa->foto)) {
+            Storage::disk('public')->delete($siswa->foto);
+        }
+
         if (Schema::hasColumn('siswas', 'user_id') && $siswa->user_id) {
             User::where('id', $siswa->user_id)->delete();
         } else {
             User::where('email', $siswa->nisn)
                 ->orWhere('email', $siswa->nisn . '@siswa.com')
-            ->delete();
+                ->delete();
         }
         $siswa->delete();
 
@@ -334,7 +354,7 @@ class SiswaController extends Controller
             DB::transaction(function () use ($rows, $header, $kelasMap, $sekolahId, &$imported, &$skipped) {
                 foreach ($rows as $row) {
                     if (empty(array_filter($row))) continue;
-                    
+
                     $dataRow = [];
                     foreach ($header as $index => $colName) {
                         $dataRow[$colName] = isset($row[$index]) ? trim((string)$row[$index]) : '';
@@ -387,7 +407,7 @@ class SiswaController extends Controller
                         if ($sekolahId && Schema::hasColumn('siswas', 'sekolah_id')) {
                             $payload['sekolah_id'] = $sekolahId;
                         }
-                        
+
                         Siswa::updateOrCreate(['nisn' => $nisn], $payload);
                         $imported++;
                     } else {
@@ -401,7 +421,6 @@ class SiswaController extends Controller
             }
 
             return redirect()->route('admin.siswa.index')->with('success', "Berhasil mengimport {$imported} data siswa.");
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
@@ -470,7 +489,7 @@ class SiswaController extends Controller
     public function cetakKartu($id = null)
     {
         $sekolahId = $this->getSekolahId();
-        
+
         $semuaKelasQuery = Kelas::query();
         if ($sekolahId && Schema::hasColumn('kelas', 'sekolah_id')) {
             $semuaKelasQuery->where('sekolah_id', $sekolahId);
@@ -487,8 +506,8 @@ class SiswaController extends Controller
 
         if (!$id || !is_numeric($id)) {
             $siswas = $query->orderBy('kelas.nama_kelas', 'asc')
-                            ->orderBy('siswas.nama_siswa', 'asc')
-                            ->get();
+                ->orderBy('siswas.nama_siswa', 'asc')
+                ->get();
             $kelasPilih = null;
             $namaKelasDipilih = 'Semua Kelas';
         } else {
@@ -536,13 +555,16 @@ class SiswaController extends Controller
             return redirect()->back()->with('error', 'Tidak ada data siswa pada kelas tersebut.');
         }
 
-        return view('admin.siswa.cetak-kartu', compact('siswas', 'semuaKelas', 'kelasPilih', 'namaKelasDipilih'));
+        $judulUjian = $request->judul_ujian;
+
+        return view('admin.siswa.cetak-kartu', compact('siswas', 'semuaKelas', 'kelasPilih', 'namaKelasDipilih', 'judulUjian'));
     }
 
     public function printPreview(Request $request)
     {
         $sekolahId = $this->getSekolahId();
         $kelasId = $request->kelas_id;
+        $judulUjian = $request->judul_ujian;
 
         $query = Siswa::with(['kelas', 'sekolah'])
             ->select('siswas.*')
@@ -561,9 +583,9 @@ class SiswaController extends Controller
         }
 
         $siswas = $query->orderBy('kelas.nama_kelas', 'asc')
-                        ->orderBy('siswas.nama_siswa', 'asc')
-                        ->get();
+            ->orderBy('siswas.nama_siswa', 'asc')
+            ->get();
 
-        return view('admin.siswa.print-pure', compact('siswas', 'namaKelasDipilih'));
+        return view('admin.siswa.print-pure', compact('siswas', 'namaKelasDipilih', 'judulUjian'));
     }
 }

@@ -145,7 +145,9 @@
                 $nipKepsek = $sekolah->nip_kepsek
                     ?? $sekolah->nip
                     ?? ($kepsekUser->nip ?? '-');
-                $logoSekolah = !empty($sekolah->logo) ? asset('storage/' . $sekolah->logo) : asset('logo.png');
+                $logoSekolah = (!empty($sekolah->logo) && file_exists(public_path('storage/' . $sekolah->logo)))
+                    ? asset('storage/' . $sekolah->logo)
+                    : asset('logo.png');
 
                 $inisialKelas = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $siswa->kelas->nama_kelas ?? 'UMUM'));
                 $nomorMejaPanjang = 'MJ-' . $inisialKelas . '-' . str_pad($noMejaPerKelas, 3, '0', STR_PAD_LEFT);
@@ -207,7 +209,7 @@
                     <div class="pt-2 border-t border-slate-300 flex justify-between items-end gap-2">
                         <div
                             class="w-11 h-14 bg-slate-100 border border-slate-400 rounded-md flex flex-col items-center justify-center text-[7px] text-slate-400 shrink-0 font-bold text-center overflow-hidden">
-                            @if(!empty($siswa->foto))
+                            @if(!empty($siswa->foto) && file_exists(public_path('storage/' . $siswa->foto)))
                                 <img src="{{ asset('storage/' . $siswa->foto) }}" alt="Foto" class="w-full h-full object-cover">
                             @else
                                 <span>FOTO</span>

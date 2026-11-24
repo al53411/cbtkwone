@@ -8,6 +8,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class SekolahController extends Controller
 {
@@ -103,17 +104,27 @@ class SekolahController extends Controller
                 'nip_proktor'   => 'nullable|string|max:50',
                 'nama_pengawas' => 'nullable|string|max:255',
                 'nip_pengawas'  => 'nullable|string|max:50',
+                'logo'          => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
             ], [
                 'email.email'        => 'Format email sekolah tidak valid.',
                 'nama_proktor.max'   => 'Nama proktor maksimal 255 karakter.',
                 'nip_proktor.max'    => 'NIP/NUPTK proktor maksimal 50 karakter.',
                 'nama_pengawas.max'  => 'Nama pengawas maksimal 255 karakter.',
                 'nip_pengawas.max'   => 'NIP/NUPTK pengawas maksimal 50 karakter.',
+                'logo.image'         => 'Logo harus berupa berkas gambar.',
+                'logo.max'           => 'Ukuran logo maksimal 2MB.',
             ]);
+
+            if ($request->hasFile('logo')) {
+                if (!empty($sekolah->logo) && Storage::disk('public')->exists($sekolah->logo)) {
+                    Storage::disk('public')->delete($sekolah->logo);
+                }
+                $validated['logo'] = $request->file('logo')->store('logo_sekolah', 'public');
+            }
 
             $sekolah->update($validated);
 
-            return redirect()->back()->with('success', 'Kontak sekolah, data proktor, dan pengawas berhasil diperbarui!');
+            return redirect()->back()->with('success', 'Kontak sekolah, logo, data proktor, dan pengawas berhasil diperbarui!');
         }
 
         // B. JIKA USER ADALAH SUPERADMIN
@@ -137,7 +148,15 @@ class SekolahController extends Controller
             'nip_proktor'    => 'nullable|string|max:50',
             'nama_pengawas'  => 'nullable|string|max:255',
             'nip_pengawas'   => 'nullable|string|max:50',
+            'logo'           => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
         ]);
+
+        if ($request->hasFile('logo')) {
+            if (!empty($sekolah->logo) && Storage::disk('public')->exists($sekolah->logo)) {
+                Storage::disk('public')->delete($sekolah->logo);
+            }
+            $validated['logo'] = $request->file('logo')->store('logo_sekolah', 'public');
+        }
 
         $sekolah->fill($validated)->save();
 

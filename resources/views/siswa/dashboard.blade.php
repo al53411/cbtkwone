@@ -38,6 +38,14 @@
     </style>
 </head>
 
+@php
+    $daftarUjian = $ujianAktif ?? collect();
+    $ujianUtama = $daftarUjian->firstWhere('status', 'aktif') ?? $daftarUjian->first();
+    $actionFormUjian = \Illuminate\Support\Facades\Route::has('siswa.ujian.verifikasi')
+        ? route('siswa.ujian.verifikasi')
+        : route('siswa.konfirmasi');
+@endphp
+
 <body class="bg-slate-100 min-h-screen flex flex-col antialiased">
 
     <!-- TOP NAVBAR -->
@@ -97,7 +105,7 @@
         </div>
 
         <!-- Alert Notifikasi Error -->
-        @if(session('error'))
+        @if (session('error'))
             <div
                 class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold flex items-center gap-3 shadow-2xs">
                 <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base shrink-0"></i>
@@ -106,7 +114,7 @@
         @endif
 
         <!-- Alert Notifikasi Sukses -->
-        @if(session('success'))
+        @if (session('success'))
             <div
                 class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-3 shadow-2xs">
                 <i class="fa-solid fa-circle-check text-emerald-600 text-base shrink-0"></i>
@@ -114,31 +122,54 @@
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs space-y-1 shadow-2xs">
+                <div class="font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-rose-600"></i> Periksa kembali isian Anda:
+                </div>
+                <ul class="list-disc list-inside space-y-0.5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
             <!-- KOLOM KIRI: Form Input Token & Aturan Ujian -->
             <div class="lg:col-span-7 bg-white p-6 md:p-8 rounded-2xl border border-slate-300 shadow-xs space-y-5">
-                <div>
-                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Mulai Mengerjakan Ujian</h2>
-                    <p class="text-xs text-slate-600 mt-0.5">Silakan baca tata tertib, masukkan token dari pengawas,
-                        lalu centang persetujuan.</p>
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Mulai Mengerjakan Ujian
+                        </h2>
+                        <p class="text-xs text-slate-600 mt-0.5">Pilih jadwal di sebelah kanan (jika lebih dari satu),
+                            baca tata tertib, masukkan token, lalu centang persetujuan.</p>
+                    </div>
+                    @if ($ujianUtama)
+                        <span id="badge-ujian-terpilih"
+                            class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
+                            Sesi: {{ $ujianUtama->nama_ujian ?? ($ujianUtama->mapel->nama_mapel ?? 'Ujian CBT') }}
+                        </span>
+                    @endif
                 </div>
 
-                <form action="{{ route('siswa.konfirmasi') }}" method="POST" class="space-y-6">
+                <form action="{{ $actionFormUjian }}" method="POST" class="space-y-6">
                     @csrf
+                    <input type="hidden" name="ujian_id" id="input-ujian-id"
+                        value="{{ old('ujian_id', $ujianUtama?->id) }}">
 
                     <!-- Tata Tertib Area -->
                     <div class="space-y-2">
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wide">
                             <i class="fa-solid fa-clipboard-list text-blue-600 mr-1"></i> Tata Tertib Ujian
                         </label>
-                        <div
+                        <div id="box-tata-tertib"
                             class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-700 h-32 overflow-y-auto custom-scrollbar leading-relaxed">
-
-                            @if(isset($aturan_global) && $aturan_global != '')
+                            @if (isset($aturan_global) && $aturan_global != '')
                                 {!! nl2br(e($aturan_global)) !!}
-                            @elseif(isset($ujianAktif) && $ujianAktif->count() > 0 && !empty($ujianAktif->first()->aturan_ujian))
-                                {!! nl2br(e($ujianAktif->first()->aturan_ujian)) !!}
+                            @elseif ($ujianUtama && !empty($ujianUtama->aturan_ujian))
+                                {!! nl2br(e($ujianUtama->aturan_ujian)) !!}
                             @else
                                 1. Peserta ujian wajib menjunjung tinggi kejujuran.<br>
                                 2. Dilarang membuka tab lain, browser, atau aplikasi tambahan selama ujian berlangsung
@@ -149,7 +180,6 @@
                                 5. Dilarang mendokumentasikan atau menyebarkan soal ujian dalam bentuk apapun.<br>
                                 6. Pastikan koneksi internet stabil sebelum mulai mengerjakan.
                             @endif
-
                         </div>
                     </div>
 
@@ -209,32 +239,35 @@
                 </div>
 
                 <div class="space-y-3">
-                    @forelse ($ujianAktif as $ujian)
+                    @forelse ($daftarUjian as $ujian)
                         @php
                             $pengerjaan = isset($riwayatPengerjaan) ? $riwayatPengerjaan->get($ujian->id) : null;
                             $sudahSelesai = $pengerjaan && ($pengerjaan->status === 'selesai' || !empty($pengerjaan->waktu_selesai));
                             $sedangMengerjakan = $pengerjaan && !$sudahSelesai;
                             $isAktif = ($ujian->status ?? 'aktif') === 'aktif';
+                            $namaSesi = $ujian->nama_ujian ?? $ujian->judul ?? ($ujian->mapel->nama_mapel ?? 'Ujian CBT');
+                            $isTerpilih = (string) old('ujian_id', $ujianUtama?->id) === (string) $ujian->id;
                         @endphp
 
-                        <div onclick="fokusInputToken()"
-                            class="p-4 border rounded-xl transition group cursor-pointer {{ $isAktif && !$sudahSelesai ? 'border-emerald-200 bg-emerald-50/30 hover:bg-white hover:border-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white' }}">
+                        <div data-ujian-card="{{ $ujian->id }}" data-ujian-nama="{{ $namaSesi }}"
+                            data-ujian-aturan="{{ $ujian->aturan_ujian ?? '' }}" onclick="pilihUjian(this)"
+                            class="p-4 border rounded-xl transition group cursor-pointer {{ $isTerpilih ? 'ring-2 ring-blue-500 border-blue-400 bg-blue-50/20' : ($isAktif && !$sudahSelesai ? 'border-emerald-200 bg-emerald-50/30 hover:bg-white hover:border-emerald-400' : 'border-slate-200 bg-slate-50 hover:bg-white') }}">
                             <div class="flex justify-between items-start gap-2 mb-2">
                                 <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-700 transition">
-                                    {{ $ujian->nama_ujian ?? $ujian->judul ?? ($ujian->mapel->nama_mapel ?? 'Ujian CBT') }}
+                                    {{ $namaSesi }}
                                 </h3>
 
-                                @if($sudahSelesai)
+                                @if ($sudahSelesai)
                                     <span
                                         class="shrink-0 px-2 py-0.5 bg-indigo-100 text-indigo-800 border border-indigo-200 rounded text-[10px] font-extrabold uppercase tracking-wide">
                                         Selesai
                                     </span>
-                                @elseif($sedangMengerjakan)
+                                @elseif ($sedangMengerjakan)
                                     <span
                                         class="shrink-0 px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 rounded text-[10px] font-extrabold uppercase tracking-wide">
                                         Lanjutkan
                                     </span>
-                                @elseif($isAktif)
+                                @elseif ($isAktif)
                                     <span
                                         class="shrink-0 px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded text-[10px] font-extrabold uppercase tracking-wide">
                                         Aktif
@@ -258,12 +291,12 @@
                                     <span
                                         class="font-semibold text-slate-700">{{ $ujian->kelas->nama_kelas ?? 'Semua Kelas' }}</span>
                                 </div>
-                                @if(!empty($ujian->waktu_mulai))
+                                @if (!empty($ujian->waktu_mulai))
                                     <div class="flex items-center gap-2">
                                         <i class="fa-regular fa-calendar w-4 text-center text-slate-400"></i>
                                         <span>
                                             {{ \Carbon\Carbon::parse($ujian->waktu_mulai)->locale('id')->translatedFormat('d M Y, H:i') }}
-                                            @if(!empty($ujian->waktu_selesai))
+                                            @if (!empty($ujian->waktu_selesai))
                                                 - {{ \Carbon\Carbon::parse($ujian->waktu_selesai)->format('H:i') }} WIB
                                             @endif
                                         </span>
@@ -275,10 +308,10 @@
                                 </div>
                             </div>
 
-                            @if($isAktif && !$sudahSelesai)
+                            @if ($isAktif && !$sudahSelesai)
                                 <div
                                     class="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[11px] font-semibold text-blue-700">
-                                    <span>Ketik token di sebelah kiri untuk mulai</span>
+                                    <span>Klik untuk memilih sesi & ketik token</span>
                                     <i class="fa-solid fa-arrow-left hidden lg:inline"></i>
                                 </div>
                             @endif
@@ -301,30 +334,80 @@
         &copy; {{ date('Y') }} Copyright: MahesAPP. All rights reserved.
     </footer>
 
-    <!-- SCRIPT UNTUK TOGGLE TOMBOL SUBMIT & FOKUS TOKEN -->
+    <!-- SCRIPT UNTUK TOGGLE TOMBOL SUBMIT & PILIH JADWAL UJIAN -->
     <script>
+        const defaultTataTertibHtml = `1. Peserta ujian wajib menjunjung tinggi kejujuran.<br>
+2. Dilarang membuka tab lain, browser, atau aplikasi tambahan selama ujian berlangsung (sistem layar penuh/fullscreen akan aktif).<br>
+3. Jika keluar dari layar ujian lebih dari batas yang ditentukan, sistem otomatis menyimpan jawaban dan mengakhiri sesi ujian Anda.<br>
+4. Waktu pengerjaan akan terus berjalan meskipun Anda keluar sistem atau perangkat mati.<br>
+5. Dilarang mendokumentasikan atau menyebarkan soal ujian dalam bentuk apapun.<br>
+6. Pastikan koneksi internet stabil sebelum mulai mengerjakan.`;
+
         function toggleSubmitButton() {
             const checkbox = document.getElementById('persetujuan');
             const btnSubmit = document.getElementById('btn-submit');
 
-            if (checkbox.checked) {
+            if (checkbox && checkbox.checked) {
                 btnSubmit.disabled = false;
                 btnSubmit.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
                 btnSubmit.classList.add('bg-blue-700', 'hover:bg-blue-800', 'active:bg-blue-900', 'text-white', 'cursor-pointer');
-            } else {
+            } else if (btnSubmit) {
                 btnSubmit.disabled = true;
                 btnSubmit.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
                 btnSubmit.classList.remove('bg-blue-700', 'hover:bg-blue-800', 'active:bg-blue-900', 'text-white', 'cursor-pointer');
             }
         }
 
-        function fokusInputToken() {
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
+        function pilihUjian(cardEl) {
+            if (!cardEl) return;
+
+            const ujianId = cardEl.getAttribute('data-ujian-id') || '';
+            const ujianNama = cardEl.getAttribute('data-ujian-nama') || 'Ujian CBT';
+            const ujianAturan = cardEl.getAttribute('data-ujian-aturan') || '';
+
+            const hiddenUjian = document.getElementById('input-ujian-id');
+            if (hiddenUjian && ujianId) {
+                hiddenUjian.value = ujianId;
+            }
+
+            const badgeEl = document.getElementById('badge-ujian-terpilih');
+            if (badgeEl) {
+                badgeEl.textContent = `Sesi: ${ujianNama}`;
+            }
+
+            const aturanBox = document.getElementById('box-tata-tertib');
+            if (aturanBox && ujianAturan.trim() !== '') {
+                aturanBox.innerHTML = escapeHtml(ujianAturan);
+            }
+
+            document.querySelectorAll('[data-ujian-card]').forEach(el => {
+                el.classList.remove('ring-2', 'ring-blue-500', 'border-blue-400', 'bg-blue-50/20');
+            });
+            cardEl.classList.add('ring-2', 'ring-blue-500', 'border-blue-400', 'bg-blue-50/20');
+
             const inputToken = document.getElementById('input-token');
             if (inputToken) {
                 inputToken.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 inputToken.focus();
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleSubmitButton();
+
+            const inputToken = document.getElementById('input-token');
+            if (inputToken) {
+                inputToken.addEventListener('input', function () {
+                    this.value = this.value.toUpperCase().replace(/\s+/g, '');
+                });
+            }
+        });
     </script>
 </body>
 

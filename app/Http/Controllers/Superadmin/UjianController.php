@@ -9,9 +9,9 @@ use App\Models\Kelas;
 use App\Models\NilaiUjian;
 use App\Models\Sekolah;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 
@@ -19,6 +19,8 @@ class UjianController extends Controller
 {
     public function index(Request $request)
     {
+        $this->ensureUjianMultiTipeColumns();
+
         $query = Ujian::with(['mapel', 'kelas']);
 
         // 1. Pencarian Nama Ujian atau Nama Mapel
@@ -44,7 +46,7 @@ class UjianController extends Controller
 
         $ujians = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        $mapels    = Mapel::where('status', 'aktif')->get();
+        $mapels    = Mapel::where('status', 'aktif')->orderBy('nama_mapel', 'asc')->get();
         $kelases   = Kelas::orderBy('nama_kelas', 'asc')->get();
         $listMapel = $mapels;
         $listKelas = $kelases;
@@ -67,64 +69,152 @@ class UjianController extends Controller
         return response()->json($ujian);
     }
 
+    /**
+     * Halaman pengaturan / edit sesi ujian
+     */
+    public function edit($id)
+    {
+        $this->ensureUjianMultiTipeColumns();
+
+        $ujian     = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
+        $ujianItem = $ujian;
+        $mapels    = Mapel::where('status', 'aktif')->orderBy('nama_mapel', 'asc')->get();
+        $kelases   = Kelas::orderBy('nama_kelas', 'asc')->get();
+        $listMapel = $mapels;
+        $listKelas = $kelases;
+
+        $viewName = view()->exists('superadmin.ujian.settings')
+            ? 'superadmin.ujian.settings'
+            : 'superadmin.ujian.edit';
+
+        return view($viewName, compact(
+            'ujian',
+            'ujianItem',
+            'mapels',
+            'kelases',
+            'listMapel',
+            'listKelas'
+        ));
+    }
+
+    /**
+     * Endpoint generate token ujian unik
+     */
+    public function generateToken()
+    {
+        return response()->json([
+            'status' => 'success',
+            'token'  => $this->createUniqueToken(),
+        ]);
+    }
+
     public function store(Request $request)
     {
+        $this->ensureUjianMultiTipeColumns();
         $validated = $this->validateRequest($request);
+
+        // Parse & validasi komposisi tipe soal + bobot 100%
+        $komposisi = $this->parseKomposisiDanBobot($request);
+        if (!$komposisi['valid']) {
+            return redirect()->back()->withInput()->with('error', $komposisi['message']);
+        }
 
         $tokenUjian = !empty($validated['token'])
             ? strtoupper(trim($validated['token']))
-            : strtoupper(Str::random(6));
-
-        $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
-        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
+            : $this->createUniqueToken();
 
         $dataUjian = [
-            'nama_ujian'      => $validated['nama_ujian'],
-            'kelas_id'        => $validated['kelas_id'],
-            'mapel_id'        => $validated['mapel_id'],
-            'waktu_mulai'     => $validated['waktu_mulai'],
-            'waktu_selesai'   => $validated['waktu_selesai'],
-            'durasi'          => $validated['durasi'],
-            'token'           => $tokenUjian,
-            'status'          => $validated['status'],
-            'aturan_ujian'    => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null,
-            'acak_soal'       => DB::raw($acakSoalVal),
-            'acak_jawaban'    => DB::raw($acakJawabanVal),
-            'tampilkan_nilai' => DB::raw('false'), // Default terkunci saat ujian baru dibuat
+            'nama_ujian'         => $validated['nama_ujian'],
+            'kelas_id'           => $validated['kelas_id'],
+            'mapel_id'           => $validated['mapel_id'],
+            'waktu_mulai'        => $validated['waktu_mulai'],
+            'waktu_selesai'      => $validated['waktu_selesai'],
+            'durasi'             => (int) $validated['durasi'],
+            'token'              => $tokenUjian,
+            'status'             => $validated['status'],
+            'aturan_ujian'       => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null,
+            'acak_soal'          => $this->boolValue($request->has('acak_soal')),
+            'acak_jawaban'       => $this->boolValue($request->has('acak_jawaban')),
+            'tampilkan_nilai'    => $this->boolValue(false),
+            'tampilkan_soal'     => $this->boolValue(false),
+            'tampil_pg'          => $this->boolValue($komposisi['tampil_pg']),
+            'tampil_esai'        => $this->boolValue($komposisi['tampil_esai']),
+            'tampil_menjodohkan' => $this->boolValue($komposisi['tampil_menjodohkan']),
+            'bobot_pg'           => $komposisi['bobot_pg'],
+            'bobot_esai'         => $komposisi['bobot_esai'],
+            'bobot_menjodohkan'  => $komposisi['bobot_menjodohkan'],
+            'kkm'                => $komposisi['kkm'],
         ];
-
-        if (Schema::hasColumn('ujians', 'tampilkan_soal')) {
-            $dataUjian['tampilkan_soal'] = DB::raw('false');
-        }
 
         Ujian::create($dataUjian);
 
-        return redirect()->route('superadmin.ujian.index')->with('success', 'Jadwal Ujian berhasil dibuat!');
+        return redirect()->route('superadmin.ujian.index')
+            ->with('success', 'Jadwal Ujian beserta pengaturan tipe soal & KKM berhasil dibuat!');
     }
 
     public function update(Request $request, $id)
     {
+        $this->ensureUjianMultiTipeColumns();
         $ujian     = Ujian::findOrFail($id);
         $validated = $this->validateRequest($request);
 
-        $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
-        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
+        // Parse & validasi komposisi tipe soal + bobot 100%
+        $komposisi = $this->parseKomposisiDanBobot($request);
+        if (!$komposisi['valid']) {
+            return redirect()->back()->withInput()->with('error', $komposisi['message']);
+        }
 
-        $ujian->update([
-            'nama_ujian'    => $validated['nama_ujian'],
-            'kelas_id'      => $validated['kelas_id'],
-            'mapel_id'      => $validated['mapel_id'],
-            'waktu_mulai'   => $validated['waktu_mulai'],
-            'waktu_selesai' => $validated['waktu_selesai'],
-            'durasi'        => $validated['durasi'],
-            'token'         => !empty($validated['token']) ? strtoupper(trim($validated['token'])) : $ujian->token,
-            'status'        => $validated['status'],
-            'aturan_ujian'  => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null,
-            'acak_soal'     => DB::raw($acakSoalVal),
-            'acak_jawaban'  => DB::raw($acakJawabanVal),
+        $updateData = [
+            'nama_ujian'         => $validated['nama_ujian'],
+            'kelas_id'           => $validated['kelas_id'],
+            'mapel_id'           => $validated['mapel_id'],
+            'waktu_mulai'        => $validated['waktu_mulai'],
+            'waktu_selesai'      => $validated['waktu_selesai'],
+            'durasi'             => (int) $validated['durasi'],
+            'token'              => !empty($validated['token']) ? strtoupper(trim($validated['token'])) : $ujian->token,
+            'status'             => $validated['status'],
+            'aturan_ujian'       => !empty($validated['aturan_ujian']) ? trim($validated['aturan_ujian']) : null,
+            'acak_soal'          => $this->boolValue($request->has('acak_soal')),
+            'acak_jawaban'       => $this->boolValue($request->has('acak_jawaban')),
+            'tampil_pg'          => $this->boolValue($komposisi['tampil_pg']),
+            'tampil_esai'        => $this->boolValue($komposisi['tampil_esai']),
+            'tampil_menjodohkan' => $this->boolValue($komposisi['tampil_menjodohkan']),
+            'bobot_pg'           => $komposisi['bobot_pg'],
+            'bobot_esai'         => $komposisi['bobot_esai'],
+            'bobot_menjodohkan'  => $komposisi['bobot_menjodohkan'],
+            'kkm'                => $komposisi['kkm'],
+        ];
+
+        if ($request->has('tampilkan_nilai')) {
+            $updateData['tampilkan_nilai'] = $this->boolValue($request->boolean('tampilkan_nilai'));
+        }
+
+        if ($request->has('tampilkan_soal')) {
+            $updateData['tampilkan_soal'] = $this->boolValue($request->boolean('tampilkan_soal'));
+        }
+
+        $ujian->update($updateData);
+
+        return redirect()->route('superadmin.ujian.index')
+            ->with('success', 'Jadwal Ujian dan bobot/KKM berhasil diperbarui!');
+    }
+
+    /**
+     * Update status ujian (draft, aktif, selesai)
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:draft,aktif,selesai',
         ]);
 
-        return redirect()->route('superadmin.ujian.index')->with('success', 'Jadwal Ujian berhasil diperbarui!');
+        $ujian = Ujian::findOrFail($id);
+        $ujian->update([
+            'status' => $request->status,
+        ]);
+
+        return redirect()->back()
+            ->with('success', "Status ujian '{$ujian->nama_ujian}' berhasil diubah menjadi {$request->status}.");
     }
 
     public function destroy($id)
@@ -132,7 +222,8 @@ class UjianController extends Controller
         $ujian = Ujian::findOrFail($id);
         $ujian->delete();
 
-        return redirect()->route('superadmin.ujian.index')->with('success', 'Jadwal Ujian berhasil dihapus!');
+        return redirect()->route('superadmin.ujian.index')
+            ->with('success', 'Jadwal Ujian berhasil dihapus!');
     }
 
     /**
@@ -141,11 +232,12 @@ class UjianController extends Controller
     public function toggleRilisNilai($id)
     {
         $ujian      = Ujian::findOrFail($id);
-        $statusBaru = !$ujian->isNilaiDirilis();
+        $statusBaru = method_exists($ujian, 'isNilaiDirilis')
+            ? !$ujian->isNilaiDirilis()
+            : !((bool) ($ujian->tampilkan_nilai ?? false));
 
-        DB::table('ujians')->where('id', $id)->update([
-            'tampilkan_nilai' => DB::raw($statusBaru ? 'true' : 'false'),
-            'updated_at'      => now(),
+        $ujian->update([
+            'tampilkan_nilai' => $this->boolValue($statusBaru),
         ]);
 
         $pesan = $statusBaru
@@ -160,18 +252,13 @@ class UjianController extends Controller
      */
     public function toggleTampilSoal($id)
     {
-        if (Schema::hasTable('ujians') && !Schema::hasColumn('ujians', 'tampilkan_soal')) {
-            Schema::table('ujians', function (Blueprint $table) {
-                $table->boolean('tampilkan_soal')->default(false);
-            });
-        }
+        $this->ensureUjianMultiTipeColumns();
 
         $ujian      = Ujian::findOrFail($id);
         $statusBaru = !((bool) ($ujian->tampilkan_soal ?? false));
 
-        DB::table('ujians')->where('id', $id)->update([
-            'tampilkan_soal' => DB::raw($statusBaru ? 'true' : 'false'),
-            'updated_at'     => now(),
+        $ujian->update([
+            'tampilkan_soal' => $this->boolValue($statusBaru),
         ]);
 
         $pesan = $statusBaru
@@ -179,26 +266,6 @@ class UjianController extends Controller
             : "Akses lihat butir soal untuk ujian '{$ujian->nama_ujian}' DIKUNCI kembali dari Admin Sekolah.";
 
         return redirect()->back()->with('success', $pesan);
-    }
-
-    /**
-     * Helper private untuk validasi request form Ujian
-     */
-    private function validateRequest(Request $request)
-    {
-        return $request->validate([
-            'nama_ujian'    => 'required|string|max:255',
-            'kelas_id'      => 'required|exists:kelas,id',
-            'mapel_id'      => 'required|exists:mapels,id',
-            'waktu_mulai'   => 'required|date',
-            'waktu_selesai' => 'required|date|after:waktu_mulai',
-            'durasi'        => 'required|integer|min:1',
-            'token'         => 'nullable|string|max:6',
-            'status'        => 'required|in:draft,aktif,selesai',
-            'aturan_ujian'  => 'nullable|string',
-            'acak_soal'     => 'nullable',
-            'acak_jawaban'  => 'nullable',
-        ]);
     }
 
     /**
@@ -230,8 +297,8 @@ class UjianController extends Controller
         $rekapNilais = $query->orderBy('nilai', 'desc')->get();
 
         $listUjian = Ujian::with(['mapel', 'kelas'])->orderBy('created_at', 'desc')->get();
-        $sekolahs  = Sekolah::all();
-        $kelases   = Kelas::all();
+        $sekolahs  = Sekolah::orderBy('nama_sekolah', 'asc')->get();
+        $kelases   = Kelas::orderBy('nama_kelas', 'asc')->get();
 
         return view('superadmin.ujian.rekap', compact('ujian', 'rekapNilais', 'listUjian', 'sekolahs', 'kelases'));
     }
@@ -279,8 +346,10 @@ class UjianController extends Controller
 
         $listSekolah = Sekolah::orderBy('nama_sekolah', 'asc')->get();
 
-        $hasFileCol    = Schema::hasTable('ujians') && Schema::hasColumn('ujians', 'file_berita_acara');
-        $hasSekolahCol = Schema::hasTable('ujians') && Schema::hasColumn('ujians', 'sekolah_id');
+        $hasUjiansTable = Schema::hasTable('ujians');
+        $hasFileCol     = $hasUjiansTable && Schema::hasColumn('ujians', 'file_berita_acara');
+        $hasSekolahCol  = $hasUjiansTable && Schema::hasColumn('ujians', 'sekolah_id');
+        $hasUploadedAt  = $hasUjiansTable && Schema::hasColumn('ujians', 'uploaded_ba_at');
 
         $query = Ujian::with(['kelas', 'mapel'])
             ->withCount('nilaiUjians');
@@ -322,7 +391,8 @@ class UjianController extends Controller
             });
         }
 
-        $ujians = $query->orderByDesc($hasFileCol ? 'uploaded_ba_at' : 'created_at')
+        $orderCol = ($hasFileCol && $hasUploadedAt) ? 'uploaded_ba_at' : 'created_at';
+        $ujians = $query->orderByDesc($orderCol)
             ->paginate(15)
             ->withQueryString();
 
@@ -336,5 +406,147 @@ class UjianController extends Controller
             'totalSudahUpload',
             'totalBelumUpload'
         ));
+    }
+
+    /**
+     * Helper private untuk format boolean aman lintas driver database (MySQL/MariaDB & PostgreSQL)
+     */
+    private function boolValue(bool $value): mixed
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            return DB::raw($value ? 'true' : 'false');
+        }
+
+        return $value ? 1 : 0;
+    }
+
+    /**
+     * Helper private untuk membuat token unik 6 karakter
+     */
+    private function createUniqueToken(): string
+    {
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+        do {
+            $token = '';
+            for ($i = 0; $i < 6; $i++) {
+                $token .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        } while (Ujian::where('token', $token)->exists());
+
+        return $token;
+    }
+
+    /**
+     * Helper private untuk memastikan kolom multi-tipe soal, bobot, & KKM tersedia di tabel ujians
+     */
+    private function ensureUjianMultiTipeColumns(): void
+    {
+        if (Cache::get('superadmin_ujian_columns_v1')) {
+            return;
+        }
+
+        if (Schema::hasTable('ujians')) {
+            Schema::table('ujians', function (Blueprint $table) {
+                if (!Schema::hasColumn('ujians', 'tampilkan_soal')) {
+                    $table->boolean('tampilkan_soal')->default(false);
+                }
+                if (!Schema::hasColumn('ujians', 'tampil_pg')) {
+                    $table->boolean('tampil_pg')->default(true);
+                }
+                if (!Schema::hasColumn('ujians', 'tampil_esai')) {
+                    $table->boolean('tampil_esai')->default(false);
+                }
+                if (!Schema::hasColumn('ujians', 'tampil_menjodohkan')) {
+                    $table->boolean('tampil_menjodohkan')->default(false);
+                }
+                if (!Schema::hasColumn('ujians', 'bobot_pg')) {
+                    $table->integer('bobot_pg')->default(100);
+                }
+                if (!Schema::hasColumn('ujians', 'bobot_esai')) {
+                    $table->integer('bobot_esai')->default(0);
+                }
+                if (!Schema::hasColumn('ujians', 'bobot_menjodohkan')) {
+                    $table->integer('bobot_menjodohkan')->default(0);
+                }
+                if (!Schema::hasColumn('ujians', 'kkm')) {
+                    $table->decimal('kkm', 5, 2)->default(75.00);
+                }
+            });
+        }
+
+        Cache::put('superadmin_ujian_columns_v1', true, now()->addHours(24));
+    }
+
+    /**
+     * Helper private untuk menghitung & memvalidasi pilihan tipe soal, bobot (harus 100%), dan KKM
+     */
+    private function parseKomposisiDanBobot(Request $request): array
+    {
+        $tampilPg          = $request->has('tampil_pg');
+        $tampilEsai        = $request->has('tampil_esai');
+        $tampilMenjodohkan = $request->has('tampil_menjodohkan');
+
+        // Fallback jika tidak ada checkbox tipe soal yang dikirim (misalnya form lama) -> default PG 100%
+        if (!$tampilPg && !$tampilEsai && !$tampilMenjodohkan) {
+            $tampilPg = true;
+        }
+
+        $bobotPg          = $tampilPg ? (int) $request->input('bobot_pg', 100) : 0;
+        $bobotEsai        = $tampilEsai ? (int) $request->input('bobot_esai', 0) : 0;
+        $bobotMenjodohkan = $tampilMenjodohkan ? (int) $request->input('bobot_menjodohkan', 0) : 0;
+
+        // Jika hanya 1 tipe soal yang aktif dan user lupa mengisi bobotnya, otomatis set ke 100%
+        $jumlahAktif = (int) $tampilPg + (int) $tampilEsai + (int) $tampilMenjodohkan;
+        if ($jumlahAktif === 1 && ($bobotPg + $bobotEsai + $bobotMenjodohkan) === 0) {
+            if ($tampilPg) $bobotPg = 100;
+            if ($tampilEsai) $bobotEsai = 100;
+            if ($tampilMenjodohkan) $bobotMenjodohkan = 100;
+        }
+
+        if (($bobotPg + $bobotEsai + $bobotMenjodohkan) !== 100) {
+            return [
+                'valid'   => false,
+                'message' => 'Total pembagian Bobot Nilai (PG + Menjodohkan + Esai) harus berjumlah tepat 100%.',
+            ];
+        }
+
+        return [
+            'valid'              => true,
+            'tampil_pg'          => $tampilPg,
+            'tampil_esai'        => $tampilEsai,
+            'tampil_menjodohkan' => $tampilMenjodohkan,
+            'bobot_pg'           => $bobotPg,
+            'bobot_esai'         => $bobotEsai,
+            'bobot_menjodohkan'  => $bobotMenjodohkan,
+            'kkm'                => (float) $request->input('kkm', 75),
+        ];
+    }
+
+    /**
+     * Helper private untuk validasi request form Ujian
+     */
+    private function validateRequest(Request $request)
+    {
+        return $request->validate([
+            'nama_ujian'         => 'required|string|max:255',
+            'kelas_id'           => 'required|exists:kelas,id',
+            'mapel_id'           => 'required|exists:mapels,id',
+            'waktu_mulai'        => 'required|date',
+            'waktu_selesai'      => 'required|date|after:waktu_mulai',
+            'durasi'             => 'required|integer|min:1',
+            'token'              => 'nullable|string|max:10',
+            'status'             => 'required|in:draft,aktif,selesai',
+            'aturan_ujian'       => 'nullable|string',
+            'acak_soal'          => 'nullable',
+            'acak_jawaban'       => 'nullable',
+            'tampil_pg'          => 'nullable',
+            'tampil_esai'        => 'nullable',
+            'tampil_menjodohkan' => 'nullable',
+            'bobot_pg'           => 'nullable|integer|min:0|max:100',
+            'bobot_esai'         => 'nullable|integer|min:0|max:100',
+            'bobot_menjodohkan'  => 'nullable|integer|min:0|max:100',
+            'kkm'                => 'nullable|numeric|min:0|max:100',
+        ]);
     }
 }

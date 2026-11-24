@@ -113,6 +113,13 @@
                     <span>Cetak Kartu Ujian</span>
                 </a>
 
+                <!-- Data Korektor -->
+                <a href="{{ route('admin.korektor.index') }}"
+                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.korektor.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    <i class="fa-solid fa-user-pen w-5 text-center"></i>
+                    <span>Data Korektor</span>
+                </a>
+
                 <div class="pt-3 pb-1">
                     <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Manajemen CAT</p>
                 </div>

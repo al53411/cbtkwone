@@ -39,7 +39,7 @@
     @endphp
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <form action="{{ route('admin.sekolah.update', $sekolah->id ?? 0) }}" method="POST" class="p-6 space-y-8">
+        <form action="{{ route('admin.sekolah.update', $sekolah->id ?? 0) }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-8">
             @csrf
             @method('PUT')
 
@@ -307,6 +307,41 @@
                 </div>
             </div>
 
+            <hr class="border-gray-200">
+
+            <!-- SECTION 6: LOGO RESMI LEMBAGA / SEKOLAH -->
+            <div>
+                <div class="flex items-center text-sm font-bold text-emerald-700 uppercase tracking-wider mb-4">
+                    <i class="fa-solid fa-image mr-2"></i> Logo Resmi Lembaga / Sekolah
+                </div>
+                <div class="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200">
+                    <div class="flex flex-col sm:flex-row items-center gap-5">
+                        <div class="w-20 h-20 bg-white border-2 border-slate-300 rounded-xl p-2 flex items-center justify-center shrink-0 shadow-xs overflow-hidden" id="preview-logo-box">
+                            @if(!empty($sekolah->logo))
+                                <img src="{{ asset('storage/' . $sekolah->logo) }}" alt="Logo Lembaga" class="w-full h-full object-contain">
+                            @else
+                                <img src="{{ asset('logo.png') }}" alt="Logo Bawaan" class="w-full h-full object-contain opacity-75">
+                            @endif
+                        </div>
+                        <div class="flex-1 w-full">
+                            <label for="logo" class="block text-xs font-semibold text-gray-700 uppercase mb-1">
+                                Upload Logo Lembaga
+                            </label>
+                            <input type="file" name="logo" id="logo" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                                onchange="previewLogo(this)"
+                                class="w-full px-3.5 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white @error('logo') border-red-500 @enderror">
+                            <p class="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                                Format didukung: PNG, JPG, JPEG, WEBP, atau SVG (Maks. 2MB). Disarankan berlatar transparan.<br>
+                                <span class="font-semibold text-emerald-700">* Jika sekolah belum upload logo, sistem dan kartu ujian otomatis menggunakan logo bawaan (default).</span>
+                            </p>
+                            @error('logo')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- TOMBOL SIMPAN -->
             <div class="pt-4 border-t border-gray-200 flex justify-end">
                 <button type="submit" {{ isset($warning) ? 'disabled' : '' }}
@@ -317,4 +352,17 @@
 
         </form>
     </div>
+
+    <script>
+        function previewLogo(input) {
+            const box = document.getElementById('preview-logo-box');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    box.innerHTML = `<img src="${e.target.result}" alt="Preview Logo" class="w-full h-full object-contain">`;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
 @endsection

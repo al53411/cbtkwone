@@ -1,19 +1,19 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
-// Import Controller Superadmin / Admin Pusat
-use App\Http\Controllers\Superadmin\DashboardController as SuperadminDashboardController;
-use App\Http\Controllers\Superadmin\SekolahController as SuperadminSekolahController;
-use App\Http\Controllers\Superadmin\UserController;
-use App\Http\Controllers\Superadmin\KepsekController;
-use App\Http\Controllers\Superadmin\SoalController as SuperadminSoalController;
-use App\Http\Controllers\Superadmin\KelasController as SuperadminKelasController;
-use App\Http\Controllers\Superadmin\MapelController as SuperadminMapelController;
-use App\Http\Controllers\Superadmin\UjianController as SuperadminUjianController;
-use App\Http\Controllers\Superadmin\UjianController as SuperadminJadwalController;
-
+// Import Controller SuperAdmin / Admin Pusat
+use App\Http\Controllers\SuperAdmin\DashboardController as SuperadminDashboardController;
+use App\Http\Controllers\SuperAdmin\SekolahController as SuperadminSekolahController;
+use App\Http\Controllers\SuperAdmin\UserController;
+use App\Http\Controllers\SuperAdmin\KepsekController;
+use App\Http\Controllers\SuperAdmin\UjianController as SuperadminUjianController;
+use App\Http\Controllers\SuperAdmin\SoalController as SuperadminSoalController;
+use App\Http\Controllers\SuperAdmin\KelasController as SuperadminKelasController;
+use App\Http\Controllers\SuperAdmin\MapelController as SuperadminMapelController;
+use App\Http\Controllers\SuperAdmin\JadwalController as SuperadminJadwalController;
 
 // Import Controller Admin Sekolah
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -35,23 +35,18 @@ use App\Http\Controllers\Admin\RuangSesiController;
 use App\Http\Controllers\Admin\TokenController;
 use App\Http\Controllers\Admin\SoalController as AdminSoalController;
 use App\Http\Controllers\Admin\UjianController;
+use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
+use App\Http\Controllers\Admin\KorektorController as AdminKorektorController;
 
-// Import Controller Guru
-use App\Http\Controllers\Guru\DashboardController as GuruDashboardController;
-use App\Http\Controllers\Guru\GuruSiswaController;
-use App\Http\Controllers\Guru\JurnalController as GuruJurnalController;
-use App\Http\Controllers\Guru\AbsensiController as GuruAbsensiController;
-use App\Http\Controllers\Guru\SekolahController as GuruSekolahController;
-use App\Http\Controllers\Guru\ProfilController as GuruProfilController;
-use App\Http\Controllers\Guru\ModulAjarController as GuruModulAjarController;
+// Import Controller Konrektor
+use App\Http\Controllers\Korektor\DashboardController as KorektorDashboardController;
+use App\Http\Controllers\Korektor\KoreksiController;
+
 
 // Import Controller Siswa
 use App\Http\Controllers\Siswa\AuthController as SiswaAuthController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
-
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 
 // Redirect Halaman Utama langsung ke Login
 Route::get('/', function () {
@@ -78,12 +73,22 @@ Route::get('/dashboard', function () {
         return redirect()->route('admin.dashboard');
     }
 
+    // Deteksi role korektor maupun guru dengan jenis_guru = 'korektor'
+    $isKorektor = ($role === 'korektor')
+        || \App\Models\Guru::where('user_id', $user->id)
+        ->where('jenis_guru', 'korektor')
+        ->exists();
+
+    if ($isKorektor) {
+        return redirect()->route('korektor.dashboard');
+    }
+
     if ($role === 'guru') {
         return redirect()->route('guru.dashboard');
     }
 
     return redirect()->route('login')->withErrors(['login' => 'Role pengguna tidak terdaftar dengan benar.']);
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('dashboard');
 
 
 // ==========================================
@@ -104,7 +109,8 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::resource('kelas', SuperadminKelasController::class);
     Route::resource('mapel', SuperadminMapelController::class);
 
-    // Rute Kustom Soal
+    // Rute Kustom Soal (Wajib di atas Route::resource('soal', ...))
+    Route::get('/soal/download-template', [SuperadminSoalController::class, 'downloadTemplate'])->name('soal.download-template');
     Route::get('/soal/import', [SuperadminSoalController::class, 'import'])->name('soal.import');
     Route::post('/soal/import', [SuperadminSoalController::class, 'processImport'])->name('soal.process-import');
     Route::get('/soal/paket', [SuperadminSoalController::class, 'paketIndex'])->name('soal.paket');
@@ -118,6 +124,10 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::patch('/ujian/{id}/toggle-rilis-nilai', [SuperadminUjianController::class, 'toggleRilisNilai'])->name('ujian.toggle-rilis');
     Route::patch('/ujian/{id}/toggle-tampil-soal', [SuperadminUjianController::class, 'toggleTampilSoal'])->name('ujian.toggle-tampil-soal');
 
+    // Pengaman jika ada form PUT tanpa ID ujian agar tidak muncul MethodNotAllowedHttpException
+    Route::put('/ujian', fn() => redirect()->route('superadmin.ujian.index')
+        ->with('error', 'ID sesi ujian tidak ditemukan. Pilih sesi ujian lalu klik tombol Settings untuk mengubah pengaturan.'));
+
     // Rute Rekap & Cetak Rekap Nilai Ujian
     Route::get('/rekap-nilai/{id?}', [SuperadminUjianController::class, 'rekapNilai'])->name('ujian.rekap');
     Route::get('/cetak-rekap/{id?}', [SuperadminUjianController::class, 'cetakRekap'])->name('ujian.cetak-rekap');
@@ -126,7 +136,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::resource('ujian', SuperadminUjianController::class);
 
     // Jadwal Ujian & Monitoring Berita Acara Superadmin
-    Route::get('/jadwal-ujian', [\App\Http\Controllers\Superadmin\JadwalController::class, 'index'])->name('jadwal.index');
+    Route::get('/jadwal-ujian', [SuperadminJadwalController::class, 'index'])->name('jadwal.index');
     Route::get('/berita-acara', [SuperadminUjianController::class, 'superadminBeritaAcara'])->name('berita-acara.index');
 });
 
@@ -158,7 +168,7 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::get('/validasi-jurnal', [AdminKepalaSekolahController::class, 'indexValidasiJurnal'])->name('kepala-sekolah.jurnal.index');
         Route::put('/validasi-jurnal/{id}', [AdminKepalaSekolahController::class, 'updateStatusJurnal'])->name('kepala-sekolah.jurnal.update');
 
-        // Fitur Tambahan Guru
+        // Fitur Tambahan Guru (Wajib di atas Route::resource('guru', ...))
         Route::get('/guru/template', [AdminGuruController::class, 'downloadTemplate'])->name('guru.template');
         Route::post('/guru/import', [AdminGuruController::class, 'import'])->name('guru.import');
         Route::post('/guru/{guru}/reset-password', [AdminGuruController::class, 'resetPassword'])->name('guru.reset-password');
@@ -170,9 +180,8 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::get('/siswa/cetak-kartu-kelas', [AdminSiswaController::class, 'cetakKartuKelas'])->name('siswa.cetak-kartu-kelas');
         Route::get('/siswa/print-preview', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-preview');
         Route::get('/siswa/print-pure', [AdminSiswaController::class, 'printPreview'])->name('siswa.print-pure');
-        Route::get('/siswa/admin.cetak-kartu', [AdminSiswaController::class, 'cetakKartu'])->name('admin.cetak-kartu');
 
-        // Cetak Absensi Mapel
+        // Cetak Absensi Mapel (Wajib di atas Route::resource('absensi', ...))
         Route::get('/absensi/cetak-mapel', [CetakAbsensiMapelController::class, 'index'])->name('absensi.cetak-mapel');
 
         // Route Resource Utama
@@ -185,6 +194,7 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::resource('kepala-sekolah', AdminKepalaSekolahController::class);
         Route::resource('mapel', AdminMapelController::class);
         Route::resource('modul_ajar', ModulAjarController::class);
+        Route::resource('korektor', AdminKorektorController::class);
 
         // Route Kurikulum (CP, TP, ATP)
         Route::resource('capaian-pembelajaran', CapaianPembelajaranController::class)->except(['create', 'edit', 'show']);
@@ -218,39 +228,27 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         // Berita Acara Ujian CAT (Menu Sidebar & Cetak PDF)
         Route::get('/berita-acara-ujian', [UjianController::class, 'indexBeritaAcara'])->name('ujian.berita-acara-index');
         Route::get('/ujian/{id}/berita-acara', [UjianController::class, 'cetakBeritaAcara'])->name('ujian.berita-acara');
-
-        // Route untuk memproses ganti sandi bawaan dari popup login pertama
-        Route::post('/ganti-sandi-awal', [\App\Http\Controllers\Admin\ProfilController::class, 'updateSandiAwal'])
-            ->name('ganti-sandi-awal');
-
         Route::post('/ujian/{id}/upload-berita-acara', [UjianController::class, 'uploadBeritaAcara'])->name('ujian.upload-berita-acara');
         Route::delete('/ujian/{id}/hapus-berita-acara', [UjianController::class, 'hapusBeritaAcara'])->name('ujian.hapus-berita-acara');
+
+        // Route untuk memproses ganti sandi bawaan dari popup login pertama
+        Route::post('/ganti-sandi-awal', [AdminProfilController::class, 'updateSandiAwal'])
+            ->name('ganti-sandi-awal');
     });
 
 
-// ==========================================
-// GROUP ROUTE KHUSUS GURU
-// ==========================================
-Route::middleware(['auth', 'role:guru,superadmin'])->prefix('guru')->name('guru.')->group(function () {
-    Route::get('/dashboard', [GuruDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/profil', [GuruProfilController::class, 'index'])->name('profil.index');
-    Route::put('/profil', [GuruProfilController::class, 'update'])->name('profil.update');
-    Route::get('/absensi', [GuruAbsensiController::class, 'index'])->name('absensi.index');
-    Route::post('/absensi', [GuruAbsensiController::class, 'store'])->name('absensi.store');
-    Route::get('/absensi/rekap', [GuruAbsensiController::class, 'rekap'])->name('absensi.rekap');
-    Route::get('/absensi/cetak', [GuruAbsensiController::class, 'cetakRekap'])->name('absensi.cetak');
-    Route::get('/sekolah', [GuruSekolahController::class, 'index'])->name('sekolah.index');
-    Route::resource('siswa', GuruSiswaController::class)->only(['index', 'show']);
-    Route::get('/kelas', [GuruSiswaController::class, 'kelasIndex'])->name('kelas.index');
-    Route::get('/kelas/{id}', [GuruSiswaController::class, 'kelasShow'])->name('kelas.show');
-    Route::get('/get-cp-filtered', [GuruModulAjarController::class, 'getCpFiltered'])->name('get_cp_filtered');
-    Route::get('/get-tp-by-cp/{cp_id}', [GuruModulAjarController::class, 'getTpByCp'])->name('get_tp_by_cp');
-    Route::get('/get-tp-filtered', [GuruModulAjarController::class, 'getTpFiltered'])->name('get_tp_filtered');
-    Route::get('/modul-ajar/{id}/print', [GuruModulAjarController::class, 'print'])->name('modul_ajar.print');
-    Route::resource('modul_ajar', GuruModulAjarController::class);
-    Route::get('/jurnal/cetak-pdf', [GuruJurnalController::class, 'cetakWord'])->name('jurnal.cetak');
-    Route::resource('jurnal', GuruJurnalController::class);
-});
+Route::middleware(['auth', 'role:korektor,guru,superadmin'])
+    ->prefix('korektor')
+    ->name('korektor.')
+    ->group(function () {
+        Route::get('/dashboard', [KorektorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/koreksi', [KoreksiController::class, 'index'])->name('koreksi.index');
+        Route::get('/koreksi/{ujian}', [KoreksiController::class, 'show'])->name('koreksi.show');
+        Route::post('/koreksi/{jawaban}', [KoreksiController::class, 'simpanSkor'])->name('koreksi.simpan');
+        Route::get('/nilai', [KoreksiController::class, 'rekapNilai'])->name('nilai.index');
+        Route::get('/nilai/{ujian}/cetak', [KoreksiController::class, 'cetakNilai'])->name('nilai.cetak');
+        Route::get('/soal', [KoreksiController::class, 'pedomanSoal'])->name('soal.index');
+    });
 
 
 // ==========================================
@@ -262,7 +260,6 @@ Route::prefix('siswa')->name('siswa.')->group(function () {
         Route::post('/login', [SiswaAuthController::class, 'login'])->name('login.post');
     });
 
-    // Tambahkan 'single.siswa' di sini setelah alias didaftarkan di bootstrap/app.php
     Route::middleware(['auth:siswa', 'single.siswa'])->group(function () {
         Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
         Route::post('/konfirmasi', [SiswaDashboardController::class, 'konfirmasiUjian'])->name('konfirmasi');

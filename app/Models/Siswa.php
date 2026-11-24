@@ -36,6 +36,7 @@ class Siswa extends Authenticatable
         'sesi',
         'jenis_kelamin',
         'alamat',
+        'foto',
         'session_token',
     ];
 

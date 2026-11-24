@@ -16,7 +16,15 @@ class JawabanSiswa extends Model
         'ujian_id',
         'soal_id',
         'jawaban',
+        'jawaban_teks',
+        'jawaban_json',
         'is_benar',
+        'skor_esai',
+        'catatan_korektor',
+    ];
+
+    protected $casts = [
+        'jawaban_json' => 'array',
     ];
 
     // Relasi ke Siswa (opsional, jika diperlukan)
