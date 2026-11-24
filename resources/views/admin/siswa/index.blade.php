@@ -1,310 +1,481 @@
 @extends('layouts.admin')
 
 @section('title', 'Data Siswa')
-@section('page_title', 'Siswa')
+@section('page_title', 'Input Data Siswa')
 
 @section('content')
-    <div class="w-full space-y-4 sm:space-y-6">
-
-        <!-- Flash Message Notifikasi -->
-        @if(session('success'))
-            <div
-                class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm flex items-center justify-between shadow-sm">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                    <span>{{ session('success') }}</span>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div
-                class="p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs sm:text-sm flex items-center justify-between shadow-sm">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-circle-exclamation text-red-600 text-base"></i>
-                    <span>{{ session('error') }}</span>
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        @endif
-
-        <!-- Section Header -->
-        <div
-            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Manajemen Data Siswa</h1>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">
-                    Kelola seluruh data siswa aktif
-                    {{ Auth::user()?->sekolah?->nama_sekolah ?? $profilSekolah?->nama_sekolah ?? 'Sekolah' }}.
-                </p>
-            </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <!-- Tombol Import Excel -->
-                <button type="button" onclick="document.getElementById('modal-import-siswa').classList.remove('hidden')"
-                    class="w-1/2 sm:w-auto inline-flex items-center justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition space-x-2 active:bg-emerald-800 shadow-sm">
-                    <i class="fa-solid fa-file-excel text-xs"></i>
-                    <span>Import Excel</span>
-                </button>
-
-                <!-- Tombol Tambah Siswa -->
-                <a href="{{ route('admin.siswa.create') }}"
-                    class="w-1/2 sm:w-auto inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition space-x-2 active:bg-blue-800 shadow-sm">
-                    <i class="fa-solid fa-plus text-xs"></i>
-                    <span>Tambah Siswa</span>
-                </a>
-            </div>
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-5">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Manajemen Data Siswa</h1>
+            <p class="text-slate-500 text-xs sm:text-sm mt-1">Kelola data peserta ujian CAT, kelas, foto kartu, dan akun
+                login siswa.</p>
         </div>
-
-        <!-- Filter & Search Bar Section -->
-        <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-200 shadow-sm">
-            <form method="GET" action="{{ route('admin.siswa.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-
-                <!-- Input Search Nama / NISN -->
-                <div class="sm:col-span-6 lg:col-span-7 relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                    </div>
-                    <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Cari nama siswa atau NISN..."
-                        class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
-                </div>
-
-                <!-- Dropdown Filter Kelas -->
-                <div class="sm:col-span-4 lg:col-span-3">
-                    <select name="kelas_id"
-                        class="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-lg text-xs sm:text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
-                        <option value="">-- Semua Kelas --</option>
-                        @if(isset($listKelas))
-                            @foreach($listKelas as $k)
-                                <option value="{{ $k->id }}" {{ request('kelas_id') == $k->id ? 'selected' : '' }}>
-                                    {{ $k->nama_kelas }}
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
-                </div>
-
-                <!-- Tombol Submit & Reset -->
-                <div class="sm:col-span-2 lg:col-span-2 flex items-center gap-1.5">
-                    <button type="submit"
-                        class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm rounded-lg transition shadow-sm flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-filter text-xs"></i>
-                        <span>Filter</span>
-                    </button>
-                    @if(request()->has('search') || request()->has('kelas_id'))
-                        <a href="{{ route('admin.siswa.index') }}"
-                            class="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition text-xs"
-                            title="Reset Filter">
-                            <i class="fa-solid fa-xmark text-sm"></i>
-                        </a>
-                    @endif
-                </div>
-            </form>
-        </div>
-
-        <!-- MAIN DATA CONTAINER -->
-        <div class="flat-card bg-white rounded-xl border border-gray-200 overflow-hidden w-full shadow-sm">
-
-            <!-- 1. TAMPILAN MOBILE (< sm) -->
-            <div class="block sm:hidden divide-y divide-gray-100">
-                @forelse($siswas as $index => $siswa)
-                    <div class="p-4 hover:bg-gray-50/80 transition-colors">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-start gap-3 min-w-0">
-                                <span
-                                    class="shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100 mt-0.5">
-                                    {{ $siswas->firstItem() + $index }}
-                                </span>
-
-                                <div class="min-w-0">
-                                    <h2 class="font-semibold text-gray-900 text-sm leading-snug truncate">
-                                        {{ $siswa->nama_siswa ?? $siswa->nama_lengkap ?? '-' }}
-                                    </h2>
-                                    <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                                        <span>NISN:</span>
-                                        <span class="font-mono font-medium text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">
-                                            {{ $siswa->nisn ?? '-' }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span
-                                class="shrink-0 bg-blue-50 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-blue-100">
-                                {{ $siswa->kelas->nama_kelas ?? '-' }}
-                            </span>
-                        </div>
-
-                        <div class="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-gray-100">
-                            <a href="{{ route('admin.siswa.edit', $siswa->id) }}"
-                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100 transition"
-                                title="Edit Data">
-                                <i class="fa-solid fa-pen text-[10px]"></i>
-                                <span>Edit</span>
-                            </a>
-                            <form action="{{ route('admin.siswa.destroy', $siswa->id) }}" method="POST"
-                                onsubmit="return confirm('Hapus data siswa ini?')" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs font-medium hover:bg-red-100 transition"
-                                    title="Hapus Data">
-                                    <i class="fa-solid fa-trash text-[10px]"></i>
-                                    <span>Hapus</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @empty
-                    <div class="p-8 text-center text-gray-400 text-xs">
-                        <i class="fa-solid fa-folder-open text-2xl mb-2 block text-gray-300"></i>
-                        Tidak ditemukan data siswa yang sesuai.
-                    </div>
-                @endforelse
-            </div>
-
-            <!-- 2. TAMPILAN DESKTOP/TABLET (>= sm) -->
-            <div class="hidden sm:block overflow-x-auto w-full">
-                <table class="w-full text-left border-collapse min-w-[640px]">
-                    <thead>
-                        <tr class="bg-gray-50/80 border-b border-gray-200">
-                            <th
-                                class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500 text-center w-12 sm:w-16">
-                                No</th>
-                            <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500">NISN</th>
-                            <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500">Nama Lengkap</th>
-                            <th class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500">Kelas</th>
-                            <th
-                                class="px-4 sm:px-6 py-3.5 text-xs font-semibold uppercase text-gray-500 text-center w-28 sm:w-36">
-                                Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @forelse($siswas as $index => $siswa)
-                            <tr class="hover:bg-gray-50/80 transition">
-                                <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500 text-center font-medium">
-                                    {{ $siswas->firstItem() + $index }}
-                                </td>
-                                <td
-                                    class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap font-mono">
-                                    {{ $siswa->nisn }}
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm font-medium text-gray-900">
-                                    {{ $siswa->nama_siswa ?? $siswa->nama_lengkap ?? '-' }}
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 whitespace-nowrap">
-                                    <span
-                                        class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-blue-100">
-                                        {{ $siswa->kelas->nama_kelas ?? '-' }}
-                                    </span>
-                                </td>
-                                <td class="px-4 sm:px-6 py-4 text-xs sm:text-sm text-center whitespace-nowrap">
-                                    <div class="flex justify-center space-x-1.5 sm:space-x-2">
-                                        <a href="{{ route('admin.siswa.edit', $siswa->id) }}"
-                                            class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-amber-600 hover:bg-amber-50 transition active:bg-amber-100"
-                                            title="Edit Data">
-                                            <i class="fa-solid fa-pen text-xs"></i>
-                                        </a>
-                                        <form action="{{ route('admin.siswa.destroy', $siswa->id) }}" method="POST"
-                                            onsubmit="return confirm('Hapus data siswa ini?')" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center text-red-600 hover:bg-red-50 transition active:bg-red-100"
-                                                title="Hapus Data">
-                                                <i class="fa-solid fa-trash text-xs"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-xs sm:text-sm">
-                                    <i class="fa-solid fa-folder-open text-2xl mb-2 block text-gray-300"></i>
-                                    Tidak ditemukan data siswa yang sesuai.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- LINK PAGINATION -->
-            @if($siswas->hasPages())
-                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6">
-                    {{ $siswas->appends(request()->query())->links() }}
-                </div>
-            @endif
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="openImportSiswaModal()"
+                class="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md transition cursor-pointer">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Import Excel / CSV</span>
+            </button>
+            <button type="button" onclick="openSiswaModal('{{ route('admin.siswa.create') }}', 'Tambah Data Siswa Baru')"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md transition cursor-pointer">
+                <i class="fa-solid fa-plus"></i>
+                <span>Tambah Siswa</span>
+            </button>
         </div>
     </div>
 
-    <!-- MODAL IMPORT EXCEL DATA SISWA -->
-    <div id="modal-import-siswa"
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
-            <!-- Modal Header -->
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div class="flex items-center gap-2 text-emerald-600 font-bold text-sm sm:text-base">
-                    <i class="fa-solid fa-file-excel text-lg"></i>
-                    <span>Import Data Siswa Excel</span>
+    <!-- Filter & Pencarian Tanpa Reload -->
+    <div class="flat-card p-3.5 mb-4">
+        <form id="filterSiswaForm" action="{{ route('admin.siswa.index') }}" method="GET" data-no-loader="true"
+            class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <div class="sm:col-span-4">
+                <select name="kelas_id" id="filterKelasSiswa" class="flat-input w-full px-3 py-2">
+                    <option value="">-- Semua Kelas --</option>
+                    @foreach($listKelas ?? [] as $k)
+                        <option value="{{ $k->id }}" @selected(request('kelas_id') == $k->id)>
+                            {{ $k->nama_kelas }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="sm:col-span-6">
+                <input type="text" name="search" id="filterSearchSiswa" value="{{ request('search') }}"
+                    placeholder="Cari Nama Siswa atau NISN..." class="flat-input w-full px-3 py-2">
+            </div>
+            <div class="sm:col-span-2 flex gap-2">
+                <button type="submit"
+                    class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-md transition cursor-pointer">
+                    <i class="fa-solid fa-magnifying-glass mr-1"></i> Cari
+                </button>
+                @if(request()->filled('kelas_id') || request()->filled('search'))
+                    <button type="button" onclick="resetFilterSiswa()"
+                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-md transition cursor-pointer"
+                        title="Reset Filter">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                @endif
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabel Data Siswa (Di-refresh otomatis via AJAX) -->
+    <div id="siswaTableContainer" class="flat-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th
+                            class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center w-10">
+                            No</th>
+                        <th
+                            class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 w-14 text-center">
+                            Foto</th>
+                        <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">NISN</th>
+                        <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Nama Lengkap
+                        </th>
+                        <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center">L/P
+                        </th>
+                        <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">Kelas</th>
+                        <th class="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center">Aksi
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
+                    @forelse($siswas as $siswa)
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="px-4 py-3 text-slate-500 text-center">
+                                {{ ($siswas->currentPage() - 1) * $siswas->perPage() + $loop->iteration }}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                @if(!empty($siswa->foto))
+                                    <img src="{{ asset('storage/' . $siswa->foto) }}" alt="Foto"
+                                        class="w-8 h-10 object-cover rounded border border-slate-200 mx-auto">
+                                @else
+                                    <div
+                                        class="w-8 h-10 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto">
+                                        <i class="fa-solid fa-user text-xs"></i>
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 font-mono text-xs text-slate-700 font-semibold">{{ $siswa->nisn }}</td>
+                            <td class="px-4 py-3 font-semibold text-slate-900">{{ $siswa->nama_siswa }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <span
+                                    class="px-2 py-0.5 rounded text-[11px] font-bold {{ $siswa->jenis_kelamin === 'L' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-pink-50 text-pink-700 border border-pink-200' }}">
+                                    {{ $siswa->jenis_kelamin }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-slate-700">
+                                <span class="px-2.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-xs font-semibold">
+                                    {{ $siswa->kelas->nama_kelas ?? '-' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <button type="button"
+                                        onclick="openSiswaModal('{{ route('admin.siswa.edit', $siswa->id) }}', 'Edit Data Siswa')"
+                                        class="px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-700 rounded-md text-xs font-medium hover:bg-amber-100 transition cursor-pointer">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </button>
+                                    <button type="button"
+                                        onclick="hapusSiswaAjax('{{ route('admin.siswa.destroy', $siswa->id) }}', {{ Js::from($siswa->nama_siswa) }})"
+                                        class="px-2.5 py-1 bg-rose-50 border border-rose-300 text-rose-700 rounded-md text-xs font-medium hover:bg-rose-100 transition cursor-pointer">
+                                        <i class="fa-solid fa-trash"></i> Hapus
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="p-10 text-center text-slate-400">
+                                <i class="fa-solid fa-users-slash text-3xl mb-2 block"></i>
+                                Belum ada data siswa ditemukan.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($siswas->hasPages())
+            <div id="siswaPaginationLinks" class="px-4 py-3 bg-slate-50 border-t border-slate-200">
+                {{ $siswas->links() }}
+            </div>
+        @endif
+    </div>
+
+    <!-- MODAL INPUT / EDIT SISWA (BACKGROUND BLUR) -->
+    <div id="modalSiswa"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4 transition-all">
+        <div
+            class="bg-white w-full max-w-2xl rounded-lg border border-slate-300 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header Modal -->
+            <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-md bg-blue-600/30 text-blue-400 flex items-center justify-center">
+                        <i class="fa-solid fa-user-graduate text-xs"></i>
+                    </span>
+                    <h3 id="modalSiswaTitle" class="text-sm font-bold tracking-wide">Form Siswa</h3>
                 </div>
-                <button type="button" onclick="document.getElementById('modal-import-siswa').classList.add('hidden')"
-                    class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                <button type="button" onclick="closeSiswaModal()"
+                    class="text-slate-400 hover:text-white p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <!-- Modal Body & Form -->
-            <form action="{{ route('admin.siswa.import') }}" method="POST" enctype="multipart/form-data"
-                class="p-6 space-y-4">
-                @csrf
+            <!-- Body Modal (Diisi AJAX dari create.blade.php / edit.blade.php) -->
+            <div id="modalSiswaBody" class="p-5 overflow-y-auto">
+                <div class="py-10 flex flex-col items-center justify-center gap-3">
+                    <div class="color-spinner"></div>
+                    <p class="text-xs font-semibold text-slate-500">Memuat formulir...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <p class="font-semibold">Format Kolom Header Excel:</p>
-                        <a href="{{ asset('templates/template_import_siswa.xlsx') }}" download="template_import_siswa.xlsx"
-                            class="inline-flex items-center gap-1 text-[11px] bg-blue-600 hover:bg-blue-700 text-white font-medium px-2 py-1 rounded transition">
-                            <i class="fa-solid fa-download text-[10px]"></i>
-                            <span>Download Template</span>
-                        </a>
-                    </div>
-                    <p><code>nisn</code>, <code>nama_siswa</code>, <code>jenis_kelamin</code> (L/P), <code>kelas_id</code>,
-                        <code>alamat</code>.
+    <!-- MODAL IMPORT EXCEL / CSV (BACKGROUND BLUR) -->
+    <div id="modalImportSiswa"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/55 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md rounded-lg border border-slate-300 shadow-2xl overflow-hidden">
+            <div class="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                    <h3 class="text-sm font-bold">Import Data Siswa (XLSX / CSV)</h3>
+                </div>
+                <button type="button" onclick="closeImportSiswaModal()"
+                    class="text-slate-400 hover:text-white p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="formImportSiswaModal" action="{{ route('admin.siswa.import') }}" method="POST"
+                enctype="multipart/form-data" data-no-loader="true" class="p-5 space-y-4">
+                @csrf
+                <div id="importErrorBox"
+                    class="hidden p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md text-xs"></div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
+                        Pilih File Excel (.xlsx) atau CSV (.csv)
+                    </label>
+                    <input type="file" name="file" accept=".xlsx,.csv,.txt" required
+                        class="flat-input w-full px-3 py-2 text-xs">
+                    <p class="text-[11px] text-slate-500 mt-1.5">
+                        Kolom wajib: <strong>nisn</strong>, <strong>nama_siswa</strong>, <strong>jenis_kelamin</strong>
+                        (L/P), <strong>kelas</strong>.
                     </p>
                 </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Pilih File (.xlsx / .xls / .csv)</label>
-                    <input type="file" name="file" required accept=".xlsx, .xls, .csv"
-                        class="block w-full text-xs text-gray-500 border border-gray-200 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition">
-                </div>
-
-                <!-- Modal Footer Buttons -->
-                <div class="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
-                    <button type="button" onclick="document.getElementById('modal-import-siswa').classList.add('hidden')"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-xs sm:text-sm rounded-lg transition">
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                    <button type="button" onclick="closeImportSiswaModal()"
+                        class="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-md cursor-pointer">
                         Batal
                     </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-upload text-xs"></i>
-                        <span>Upload & Import</span>
+                    <button type="submit" id="btnImportSiswa"
+                        class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md cursor-pointer">
+                        <i class="fa-solid fa-upload mr-1"></i> Mulai Import
                     </button>
                 </div>
             </form>
-        </div>
-
-        <div
-            class="max-w-4xl mx-auto-center text-[10px] flex flex-col sm:flex-row items-center justify-between gap-1 text-slate-400">
-            <div>
-                &copy; {{ date('Y') }} Copyright: MahesAPP. All rights reserved.
-            </div>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        const modalSiswa = document.getElementById('modalSiswa');
+        const modalSiswaTitle = document.getElementById('modalSiswaTitle');
+        const modalSiswaBody = document.getElementById('modalSiswaBody');
+        const modalImportSiswa = document.getElementById('modalImportSiswa');
+
+        function closeSiswaModal() {
+            modalSiswa.classList.add('hidden');
+            modalSiswa.classList.remove('flex');
+        }
+
+        function openImportSiswaModal() {
+            document.getElementById('importErrorBox').classList.add('hidden');
+            modalImportSiswa.classList.remove('hidden');
+            modalImportSiswa.classList.add('flex');
+        }
+
+        function closeImportSiswaModal() {
+            modalImportSiswa.classList.add('hidden');
+            modalImportSiswa.classList.remove('flex');
+        }
+
+        // Tutup modal jika klik area blur di luar kotak modal
+        modalSiswa.addEventListener('click', function (e) {
+            if (e.target === modalSiswa) closeSiswaModal();
+        });
+        modalImportSiswa.addEventListener('click', function (e) {
+            if (e.target === modalImportSiswa) closeImportSiswaModal();
+        });
+
+        // Buka Form Create / Edit di dalam modal background blur
+        async function openSiswaModal(url, title) {
+            modalSiswaTitle.textContent = title;
+            modalSiswaBody.innerHTML = `
+                <div class="py-12 flex flex-col items-center justify-center gap-3">
+                    <div class="color-spinner"></div>
+                    <p class="text-xs font-semibold text-slate-500">Memuat formulir...</p>
+                </div>
+            `;
+            modalSiswa.classList.remove('hidden');
+            modalSiswa.classList.add('flex');
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    }
+                });
+                if (!response.ok) throw new Error('Gagal memuat form (' + response.status + ')');
+
+                modalSiswaBody.innerHTML = await response.text();
+                bindSiswaFormSubmit();
+            } catch (err) {
+                modalSiswaBody.innerHTML = `
+                    <div class="p-3 bg-rose-50 border border-rose-300 text-rose-700 rounded-md text-xs font-semibold">
+                        ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Submit Create / Edit tanpa pindah halaman
+        function bindSiswaFormSubmit() {
+            const form = document.getElementById('formSiswaModal');
+            const errorBox = document.getElementById('ajaxErrorBox');
+            const submitBtn = document.getElementById('btnSubmitSiswa');
+            if (!form) return;
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                errorBox.classList.add('hidden');
+
+                const originalHtml = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Menyimpan...</span>`;
+
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        if (response.status === 422 && data.errors) {
+                            const list = Object.values(data.errors).flat().map(msg => `<li>${msg}</li>`).join('');
+                            errorBox.innerHTML = `<p class="font-bold mb-1">Periksa inputan berikut:</p><ul class="list-disc pl-5 space-y-0.5">${list}</ul>`;
+                            errorBox.classList.remove('hidden');
+                        } else {
+                            throw new Error(data.message || 'Gagal menyimpan data siswa.');
+                        }
+                        return;
+                    }
+
+                    closeSiswaModal();
+                    await reloadSiswaTable();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } catch (err) {
+                    errorBox.textContent = err.message;
+                    errorBox.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        // Submit Import Excel/CSV tanpa pindah halaman
+        document.getElementById('formImportSiswaModal')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const errorBox = document.getElementById('importErrorBox');
+            const btn = document.getElementById('btnImportSiswa');
+            errorBox.classList.add('hidden');
+
+            const ori = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Mengimport...`;
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: new FormData(this)
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Gagal mengimport file.');
+
+                closeImportSiswaModal();
+                this.reset();
+                await reloadSiswaTable();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Import Selesai!',
+                    text: data.message,
+                    timer: 2200,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = ori;
+            }
+        });
+
+        // Hapus siswa tanpa pindah halaman
+        async function hapusSiswaAjax(url, nama) {
+            const confirmRes = await Swal.fire({
+                icon: 'warning',
+                title: 'Hapus Data Siswa?',
+                text: `Data "${nama}" beserta akun login siswa akan dihapus permanen.`,
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal'
+            });
+
+            if (!confirmRes.isConfirmed) return;
+
+            if (typeof showPageLoader === 'function') showPageLoader('Menghapus data siswa...');
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: '_method=DELETE'
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Gagal menghapus data.');
+
+                await reloadSiswaTable();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Terhapus!',
+                    text: data.message,
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: err.message });
+            } finally {
+                if (typeof hidePageLoader === 'function') hidePageLoader();
+            }
+        }
+
+        // Filter & Pencarian tanpa reload halaman
+        document.getElementById('filterSiswaForm')?.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const params = new URLSearchParams(new FormData(this)).toString();
+            const url = this.action + (params ? '?' + params : '');
+            window.history.pushState({}, '', url);
+            reloadSiswaTable(url);
+        });
+
+        document.getElementById('filterKelasSiswa')?.addEventListener('change', function () {
+            document.getElementById('filterSiswaForm').dispatchEvent(new Event('submit'));
+        });
+
+        function resetFilterSiswa() {
+            const baseUrl = "{{ route('admin.siswa.index') }}";
+            document.getElementById('filterKelasSiswa').value = '';
+            document.getElementById('filterSearchSiswa').value = '';
+            window.history.pushState({}, '', baseUrl);
+            reloadSiswaTable(baseUrl);
+        }
+
+        // Intercept klik tombol paginasi agar tidak reload halaman
+        document.addEventListener('click', function (e) {
+            const pageLink = e.target.closest('#siswaPaginationLinks a');
+            if (pageLink) {
+                e.preventDefault();
+                window.history.pushState({}, '', pageLink.href);
+                reloadSiswaTable(pageLink.href);
+            }
+        });
+
+        // Reload isi tabel secara diam-diam di belakang layar
+        async function reloadSiswaTable(targetUrl = window.location.href) {
+            const res = await fetch(targetUrl, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const newContainer = doc.getElementById('siswaTableContainer');
+            const currentContainer = document.getElementById('siswaTableContainer');
+            if (newContainer && currentContainer) {
+                currentContainer.innerHTML = newContainer.innerHTML;
+            }
+        }
+    </script>
+@endpush

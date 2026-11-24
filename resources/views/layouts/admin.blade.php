@@ -39,6 +39,40 @@
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
         }
 
+        /* Spinner Berwarna Gradasi (Biru - Indigo - Emerald) */
+        .color-spinner {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #3b82f6, #6366f1, #10b981, #f59e0b, #3b82f6);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 0);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 0);
+            animation: spinRing 0.85s linear infinite;
+        }
+
+        @keyframes spinRing {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Top Progress Bar Animasi */
+        .top-loader-bar {
+            background: linear-gradient(90deg, #3b82f6, #6366f1, #10b981, #f59e0b);
+            background-size: 200% 100%;
+            animation: shimmerBar 1.2s linear infinite;
+        }
+
+        @keyframes shimmerBar {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
         ::-webkit-scrollbar {
             width: 5px;
             height: 5px;
@@ -61,6 +95,19 @@
 </head>
 
 <body class="bg-slate-100 font-sans antialiased text-slate-800">
+
+    <!-- Top Loading Progress Bar -->
+    <div id="topProgressBar" class="fixed top-0 left-0 right-0 h-1 top-loader-bar z-50 hidden"></div>
+
+    <!-- Global Page Transition Color Spinner Overlay -->
+    <div id="globalPageLoader"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/35 backdrop-blur-[2px] transition-opacity">
+        <div
+            class="bg-white/95 border border-slate-200 shadow-xl rounded-2xl px-6 py-5 flex flex-col items-center gap-3">
+            <div class="color-spinner"></div>
+            <span id="globalLoaderText" class="text-xs font-bold text-slate-700 tracking-wide">Memuat halaman...</span>
+        </div>
+    </div>
 
     <div class="flex h-screen overflow-hidden relative">
 
@@ -91,35 +138,35 @@
 
                 <!-- Dashboard -->
                 <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin/dashboard') }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-chart-pie w-5 text-center"></i>
                     <span>Dashboard</span>
                 </a>
 
                 <!-- Profil Sekolah -->
                 <a href="{{ Route::has('admin.sekolah.index') ? route('admin.sekolah.index') : '#' }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sekolah.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sekolah.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-school w-5 text-center"></i>
                     <span>Profil Sekolah</span>
                 </a>
 
                 <!-- Input / Data Siswa -->
                 <a href="{{ Route::has('admin.siswa.index') ? route('admin.siswa.index') : '#' }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.index') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.index') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-user-graduate w-5 text-center"></i>
                     <span>Input Data Siswa</span>
                 </a>
 
                 <!-- Cetak Kartu Ujian -->
                 <a href="{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : (Route::has('admin.siswa.cetak-kartu-kelas') ? route('admin.siswa.cetak-kartu-kelas') : '#') }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.cetak-kartu*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.cetak-kartu*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-id-card w-5 text-center text-blue-400"></i>
                     <span>Cetak Kartu Ujian</span>
                 </a>
 
                 <!-- Data Korektor -->
                 <a href="{{ Route::has('admin.korektor.index') ? route('admin.korektor.index') : url('/admin/korektor') }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.korektor.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.korektor.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-user-pen w-5 text-center"></i>
                     <span>Data Korektor</span>
                 </a>
@@ -130,14 +177,14 @@
 
                 <!-- Atur Sesi Ujian -->
                 <a href="{{ Route::has('admin.sesi.index') ? route('admin.sesi.index') : '#' }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sesi.*', 'admin.cat.sesi.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sesi.*', 'admin.cat.sesi.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
                     <span>Atur Sesi Ujian</span>
                 </a>
 
                 <!-- Token Ujian (Dari Super Admin) -->
                 <a href="{{ Route::has('admin.token.index') ? route('admin.token.index') : '#' }}"
-                    class="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.token.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.token.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <div class="flex items-center space-x-3 truncate">
                         <i class="fa-solid fa-key w-5 text-center"></i>
                         <span class="truncate">Token Ujian CAT</span>
@@ -150,28 +197,28 @@
 
                 <!-- Daftar Paket Soal -->
                 <a href="{{ Route::has('admin.soal.paket') ? route('admin.soal.paket') : '#' }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.soal.paket') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.soal.paket') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-layer-group w-5 text-center"></i>
                     <span>Daftar Paket Soal</span>
                 </a>
 
                 <!-- Monitoring Ujian -->
                 <a href="{{ Route::has('admin.ujian.index') ? route('admin.ujian.index') : url('/admin/ujian') }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-desktop w-5 text-center"></i>
                     <span>Monitoring Ujian</span>
                 </a>
 
                 <!-- Hasil & Rekap Nilai -->
                 <a href="{{ Route::has('admin.ujian.rekap') ? route('admin.ujian.rekap') : url('/admin/hasil-ujian') }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.rekap*', 'admin.ujian.hasil*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.rekap*', 'admin.ujian.hasil*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
                     <span>Hasil & Rekap Nilai</span>
                 </a>
 
                 <!-- Berita Acara Ujian CAT -->
                 <a href="{{ Route::has('admin.ujian.berita-acara-index') ? route('admin.ujian.berita-acara-index') : '#' }}"
-                    class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.berita-acara*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.berita-acara*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i
                         class="fa-solid fa-file-signature w-5 text-center {{ request()->routeIs('admin.ujian.berita-acara*') ? 'text-white' : 'text-amber-400' }}"></i>
                     <span>Berita Acara Ujian</span>
@@ -181,7 +228,7 @@
 
             <!-- Footer Sidebar (Tombol Logout) -->
             <div class="p-3 border-t border-slate-800 bg-slate-900/50 shrink-0">
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" onsubmit="showPageLoader('Keluar dari sistem...')">
                     @csrf
                     <button type="submit"
                         class="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-600 hover:text-white transition duration-150 cursor-pointer">
@@ -274,7 +321,7 @@
                 <!-- Form Ganti Sandi -->
                 <form
                     action="{{ Route::has('admin.ganti-sandi-awal') ? route('admin.ganti-sandi-awal') : url('/admin/ganti-sandi-awal') }}"
-                    method="POST" class="p-6 space-y-4">
+                    method="POST" class="p-6 space-y-4" onsubmit="showPageLoader('Menyimpan sandi baru...')">
                     @csrf
 
                     @if($errors->has('password'))
@@ -311,10 +358,50 @@
         </div>
     @endif
 
-    <!-- Script Global UI Interaktif & Pop-up Cetak Kartu -->
+    <!-- Script Global UI Interaktif, Spinner & Pop-up Cetak Kartu -->
     <script>
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
+        const globalLoader = document.getElementById('globalPageLoader');
+        const globalLoaderText = document.getElementById('globalLoaderText');
+        const topProgressBar = document.getElementById('topProgressBar');
+
+        function showPageLoader(text = 'Memuat halaman...') {
+            if (globalLoaderText) globalLoaderText.textContent = text;
+            if (topProgressBar) topProgressBar.classList.remove('hidden');
+            if (globalLoader) {
+                globalLoader.classList.remove('hidden');
+                globalLoader.classList.add('flex');
+            }
+        }
+
+        function hidePageLoader() {
+            if (topProgressBar) topProgressBar.classList.add('hidden');
+            if (globalLoader) {
+                globalLoader.classList.add('hidden');
+                globalLoader.classList.remove('flex');
+            }
+        }
+
+        // Aktifkan spinner berwarna saat berpindah menu sidebar
+        document.querySelectorAll('.nav-link-loader').forEach(link => {
+            link.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (!href || href === '#' || href.startsWith('javascript:') || this.target === '_blank') return;
+                showPageLoader('Membuka ' + this.textContent.trim() + '...');
+            });
+        });
+
+        // Aktifkan spinner saat form disubmit
+        document.querySelectorAll('main form').forEach(form => {
+            form.addEventListener('submit', function () {
+                if (this.dataset.noLoader === 'true') return;
+                showPageLoader('Memproses data...');
+            });
+        });
+
+        // Pastikan spinner otomatis hilang jika pengguna menekan tombol Back browser
+        window.addEventListener('pageshow', () => hidePageLoader());
 
         // 1. Buka / Tutup Sidebar (Mobile)
         function toggleSidebar() {

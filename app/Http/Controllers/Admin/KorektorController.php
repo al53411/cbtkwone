@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\User;
@@ -26,9 +28,15 @@ class KorektorController extends Controller
         return view('admin.korektor.index', compact('korektors'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $kelas = Kelas::orderBy('nama_kelas')->get();
+        $kelas = Kelas::when(
+            Auth::user()->sekolah_id && Schema::hasColumn('kelas', 'sekolah_id'),
+            fn($q) => $q->where('sekolah_id', Auth::user()->sekolah_id)
+        )
+            ->orderBy('nama_kelas')
+            ->get();
+
         return view('admin.korektor.create', compact('kelas'));
     }
 
@@ -46,17 +54,23 @@ class KorektorController extends Controller
         $sekolahId = Auth::user()->sekolah_id;
 
         DB::transaction(function () use ($validated, $sekolahId) {
-            // 1. Buat akun User otomatis (username/nip: nip, password: nip)
-            $user = User::create([
-                'name'              => $validated['nama_lengkap'],
-                'nip'               => $validated['nip'],
-                'password'          => Hash::make($validated['nip']),
-                'role'              => 'korektor', // Ubah ke 'guru' jika middleware route memakai role:guru
-                'sekolah_id'        => $sekolahId,
-                'wajib_ganti_sandi' => true,
-            ]);
+            $userData = [
+                'name'       => $validated['nama_lengkap'],
+                'nip'        => $validated['nip'],
+                'password'   => Hash::make($validated['nip']),
+                'role'       => 'korektor',
+                'sekolah_id' => $sekolahId,
+            ];
 
-            // 2. Buat data Guru (jenis korektor) dan kaitkan ke User
+            if (Schema::hasColumn('users', 'email')) {
+                $userData['email'] = $validated['nip'] . '@korektor.local';
+            }
+            if (Schema::hasColumn('users', 'wajib_ganti_sandi')) {
+                $userData['wajib_ganti_sandi'] = true;
+            }
+
+            $user = User::create($userData);
+
             $guru = Guru::create([
                 'user_id'        => $user->id,
                 'sekolah_id'     => $sekolahId,
@@ -67,18 +81,37 @@ class KorektorController extends Controller
                 'jenis_guru'     => 'korektor',
             ]);
 
-            // 3. Kaitkan kelas yang diampu korektor
             $guru->kelas()->sync($validated['kelas_id']);
         });
 
-        return redirect()->route('admin.korektor.index')
-            ->with('success', "Korektor berhasil ditambahkan. Login menggunakan NIP: {$validated['nip']} dan Password: {$validated['nip']}");
+        $pesan = "Korektor berhasil ditambahkan. Login menggunakan NIP: {$validated['nip']} dan Password: {$validated['nip']}";
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $pesan,
+            ]);
+        }
+
+        return redirect()->route('admin.korektor.index')->with('success', $pesan);
+    }
+
+    public function show(Guru $korektor)
+    {
+        return redirect()->route('admin.korektor.edit', $korektor->id);
     }
 
     public function edit(Guru $korektor)
     {
-        $kelas    = Kelas::orderBy('nama_kelas')->get();
+        $kelas = Kelas::when(
+            Auth::user()->sekolah_id && Schema::hasColumn('kelas', 'sekolah_id'),
+            fn($q) => $q->where('sekolah_id', Auth::user()->sekolah_id)
+        )
+            ->orderBy('nama_kelas')
+            ->get();
+
         $selected = $korektor->kelas->pluck('id')->toArray();
+
         return view('admin.korektor.edit', compact('korektor', 'kelas', 'selected'));
     }
 
@@ -86,8 +119,19 @@ class KorektorController extends Controller
     {
         $validated = $request->validate([
             'nama_lengkap'   => 'required|string|max:255',
-            'nip'            => 'required|string|max:18|unique:gurus,nip,' . $korektor->id . '|unique:users,nip,' . ($korektor->user_id ?? 'NULL'),
-            'nuptk'          => 'nullable|string|max:16|unique:gurus,nuptk,' . $korektor->id,
+            'nip'            => [
+                'required',
+                'string',
+                'max:18',
+                Rule::unique('gurus', 'nip')->ignore($korektor->id),
+                Rule::unique('users', 'nip')->ignore($korektor->user_id),
+            ],
+            'nuptk'          => [
+                'nullable',
+                'string',
+                'max:16',
+                Rule::unique('gurus', 'nuptk')->ignore($korektor->id),
+            ],
             'mata_pelajaran' => 'required|string|max:255',
             'kelas_id'       => 'required|array',
             'kelas_id.*'     => 'exists:kelas,id',
@@ -95,7 +139,6 @@ class KorektorController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $validated, $korektor) {
-            // Update data Guru
             $korektor->update([
                 'nama_lengkap'   => $validated['nama_lengkap'],
                 'nip'            => $validated['nip'],
@@ -103,39 +146,59 @@ class KorektorController extends Controller
                 'mata_pelajaran' => $validated['mata_pelajaran'],
             ]);
 
-            // Update atau buat akun User jika belum ada
             if ($korektor->user) {
                 $updateUser = [
                     'name' => $validated['nama_lengkap'],
                     'nip'  => $validated['nip'],
                 ];
 
+                if (Schema::hasColumn('users', 'email') && str_ends_with((string) $korektor->user->email, '@korektor.local')) {
+                    $updateUser['email'] = $validated['nip'] . '@korektor.local';
+                }
+
                 if ($request->boolean('reset_password')) {
                     $updateUser['password'] = Hash::make($validated['nip']);
-                    $updateUser['wajib_ganti_sandi'] = true;
+                    if (Schema::hasColumn('users', 'wajib_ganti_sandi')) {
+                        $updateUser['wajib_ganti_sandi'] = true;
+                    }
                 }
 
                 $korektor->user->update($updateUser);
             } else {
-                $user = User::create([
-                    'name'              => $validated['nama_lengkap'],
-                    'nip'               => $validated['nip'],
-                    'password'          => Hash::make($validated['nip']),
-                    'role'              => 'korektor',
-                    'sekolah_id'        => $korektor->sekolah_id ?? Auth::user()->sekolah_id,
-                    'wajib_ganti_sandi' => true,
-                ]);
+                $userData = [
+                    'name'       => $validated['nama_lengkap'],
+                    'nip'        => $validated['nip'],
+                    'password'   => Hash::make($validated['nip']),
+                    'role'       => 'korektor',
+                    'sekolah_id' => $korektor->sekolah_id ?? Auth::user()->sekolah_id,
+                ];
+                if (Schema::hasColumn('users', 'email')) {
+                    $userData['email'] = $validated['nip'] . '@korektor.local';
+                }
+                if (Schema::hasColumn('users', 'wajib_ganti_sandi')) {
+                    $userData['wajib_ganti_sandi'] = true;
+                }
+
+                $user = User::create($userData);
                 $korektor->update(['user_id' => $user->id]);
             }
 
             $korektor->kelas()->sync($validated['kelas_id']);
         });
 
-        return redirect()->route('admin.korektor.index')
-            ->with('success', 'Data korektor dan akun login berhasil diperbarui.');
+        $pesan = 'Data korektor dan akun login berhasil diperbarui.';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $pesan,
+            ]);
+        }
+
+        return redirect()->route('admin.korektor.index')->with('success', $pesan);
     }
 
-    public function destroy(Guru $korektor)
+    public function destroy(Request $request, Guru $korektor)
     {
         DB::transaction(function () use ($korektor) {
             if ($korektor->user) {
@@ -145,7 +208,15 @@ class KorektorController extends Controller
             $korektor->delete();
         });
 
-        return redirect()->route('admin.korektor.index')
-            ->with('success', 'Korektor dan akun login berhasil dihapus.');
+        $pesan = 'Korektor dan akun login berhasil dihapus.';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $pesan,
+            ]);
+        }
+
+        return redirect()->route('admin.korektor.index')->with('success', $pesan);
     }
 }
