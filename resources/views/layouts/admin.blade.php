@@ -10,7 +10,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="icon" type="image/png" href="{{ asset('logo.png') . '?v=' . filemtime(public_path('logo.png')) }}">
+    @php
+        $logoPath = public_path('logo.png');
+        $logoUrl = file_exists($logoPath) ? asset('logo.png') . '?v=' . filemtime($logoPath) : asset('favicon.png');
+    @endphp
+    <link rel="icon" type="image/png" href="{{ $logoUrl }}">
 
     <style>
         .flat-card {
@@ -53,6 +57,7 @@
             background: #475569;
         }
     </style>
+    @stack('styles')
 </head>
 
 <body class="bg-slate-100 font-sans antialiased text-slate-800">
@@ -66,8 +71,7 @@
             <!-- Header Sidebar: Info Sekolah -->
             <div class="h-16 flex items-center justify-between bg-slate-900 px-4 border-b border-slate-800 shrink-0">
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <img src="{{ asset('logo.png') . '?v=' . filemtime(public_path('logo.png')) }}" alt="Logo"
-                        class="w-8 h-8 object-contain shrink-0">
+                    <img src="{{ $logoUrl }}" alt="Logo" class="w-8 h-8 object-contain shrink-0">
                     <div class="flex flex-col truncate">
                         <span class="text-white font-bold text-sm tracking-wide truncate">
                             {{ Auth::user()->sekolah->nama_sekolah ?? $profilSekolah->nama_sekolah ?? 'Sistem Sekolah' }}
@@ -75,7 +79,7 @@
                         <span class="text-[10px] text-blue-400 font-medium">Admin Sekolah CAT</span>
                     </div>
                 </div>
-                <button onclick="toggleSidebar()"
+                <button type="button" onclick="toggleSidebar()"
                     class="md:hidden text-slate-400 hover:text-white focus:outline-none p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
@@ -86,7 +90,7 @@
                 <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Utama</p>
 
                 <!-- Dashboard -->
-                <a href="{{ route('admin.dashboard') }}"
+                <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin/dashboard') }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-chart-pie w-5 text-center"></i>
                     <span>Dashboard</span>
@@ -114,7 +118,7 @@
                 </a>
 
                 <!-- Data Korektor -->
-                <a href="{{ route('admin.korektor.index') }}"
+                <a href="{{ Route::has('admin.korektor.index') ? route('admin.korektor.index') : url('/admin/korektor') }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.korektor.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-user-pen w-5 text-center"></i>
                     <span>Data Korektor</span>
@@ -152,20 +156,20 @@
                 </a>
 
                 <!-- Monitoring Ujian -->
-                <a href="{{ route('admin.ujian.index') }}"
+                <a href="{{ Route::has('admin.ujian.index') ? route('admin.ujian.index') : url('/admin/ujian') }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-desktop w-5 text-center"></i>
                     <span>Monitoring Ujian</span>
                 </a>
 
                 <!-- Hasil & Rekap Nilai -->
-                <a href="{{ route('admin.ujian.rekap') }}"
+                <a href="{{ Route::has('admin.ujian.rekap') ? route('admin.ujian.rekap') : url('/admin/hasil-ujian') }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.rekap*', 'admin.ujian.hasil*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
                     <span>Hasil & Rekap Nilai</span>
                 </a>
 
-                <!-- MENU BARU: Berita Acara Ujian CAT -->
+                <!-- Berita Acara Ujian CAT -->
                 <a href="{{ Route::has('admin.ujian.berita-acara-index') ? route('admin.ujian.berita-acara-index') : '#' }}"
                     class="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.berita-acara*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
                     <i
@@ -200,7 +204,7 @@
             <header
                 class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 z-10 shrink-0 shadow-sm">
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleSidebar()"
+                    <button type="button" onclick="toggleSidebar()"
                         class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none md:hidden">
                         <i class="fa-solid fa-bars text-lg"></i>
                     </button>
@@ -216,7 +220,9 @@
                 <!-- User Info & Indikator Tahun Ajaran -->
                 <div class="flex items-center space-x-2 sm:space-x-3">
                     @php
-                        $taAktif = \App\Models\TahunAjaran::getAktif(auth()->user()->sekolah_id ?? null);
+                        $taAktif = class_exists(\App\Models\TahunAjaran::class)
+                            ? \App\Models\TahunAjaran::getAktif(auth()->user()->sekolah_id ?? null)
+                            : null;
                     @endphp
 
                     @if($taAktif)
@@ -266,7 +272,9 @@
                 </div>
 
                 <!-- Form Ganti Sandi -->
-                <form action="{{ route('admin.ganti-sandi-awal') }}" method="POST" class="p-6 space-y-4">
+                <form
+                    action="{{ Route::has('admin.ganti-sandi-awal') ? route('admin.ganti-sandi-awal') : url('/admin/ganti-sandi-awal') }}"
+                    method="POST" class="p-6 space-y-4">
                     @csrf
 
                     @if($errors->has('password'))
@@ -332,7 +340,8 @@
                 confirmButtonColor: '#2563eb',
             }).then((result) => {
                 if (result.value) {
-                    window.open("{{ route('admin.siswa.cetak-kartu') }}?kelas_id=" + result.value, '_blank');
+                    const baseUrl = "{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : url('/admin/siswa/cetak-kartu') }}";
+                    window.open(baseUrl + "?kelas_id=" + result.value, '_blank');
                 }
             });
         }
@@ -366,6 +375,7 @@
             });
         @endif
     </script>
+    @stack('scripts')
 </body>
 
 </html>
