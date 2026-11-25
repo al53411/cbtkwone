@@ -71,9 +71,6 @@ class UjianController extends Controller
             ? strtoupper(trim($request->token))
             : strtoupper(Str::random(6));
 
-        $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
-        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
-
         $dataUjian = [
             'nama_ujian'    => $validated['nama_ujian'],
             'kelas_id'      => $validated['kelas_id'],
@@ -83,8 +80,8 @@ class UjianController extends Controller
             'waktu_mulai'   => $validated['waktu_mulai'],
             'waktu_selesai' => $validated['waktu_selesai'],
             'status'        => $validated['status'],
-            'acak_soal'     => DB::raw($acakSoalVal),
-            'acak_jawaban'  => DB::raw($acakJawabanVal),
+            'acak_soal'     => $this->boolValue($request->has('acak_soal')),
+            'acak_jawaban'  => $this->boolValue($request->has('acak_jawaban')),
         ];
 
         if (Schema::hasColumn('ujians', 'sekolah_id') && Auth::user()?->sekolah_id) {
@@ -117,9 +114,6 @@ class UjianController extends Controller
             ? strtoupper(trim($request->token))
             : $ujian->token;
 
-        $acakSoalVal    = $request->has('acak_soal') ? 'true' : 'false';
-        $acakJawabanVal = $request->has('acak_jawaban') ? 'true' : 'false';
-
         $updateData = [
             'nama_ujian'    => $validated['nama_ujian'],
             'kelas_id'      => $validated['kelas_id'],
@@ -129,8 +123,8 @@ class UjianController extends Controller
             'waktu_mulai'   => $validated['waktu_mulai'],
             'waktu_selesai' => $validated['waktu_selesai'],
             'status'        => $validated['status'],
-            'acak_soal'     => DB::raw($acakSoalVal),
-            'acak_jawaban'  => DB::raw($acakJawabanVal),
+            'acak_soal'     => $this->boolValue($request->has('acak_soal')),
+            'acak_jawaban'  => $this->boolValue($request->has('acak_jawaban')),
         ];
 
         if (Schema::hasColumn('ujians', 'sekolah_id') && empty($ujian->sekolah_id) && Auth::user()?->sekolah_id) {
@@ -163,8 +157,7 @@ class UjianController extends Controller
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->whereHas('siswa', function ($q) use ($search) {
-                $q->where('nama', 'LIKE', "%{$search}%")
-                    ->orWhere('nisn', 'LIKE', "%{$search}%");
+                $this->applySiswaSearch($q, $search);
             });
         }
 
@@ -184,8 +177,7 @@ class UjianController extends Controller
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->whereHas('siswa', function ($q) use ($search) {
-                $q->where('nama', 'LIKE', "%{$search}%")
-                    ->orWhere('nisn', 'LIKE', "%{$search}%");
+                $this->applySiswaSearch($q, $search);
             });
         }
 
@@ -223,7 +215,6 @@ class UjianController extends Controller
         $query = Ujian::with(['kelas', 'mapel'])
             ->withCount('nilaiUjians');
 
-        // Tampilkan ujian milik sekolah ini ATAU ujian lama yang sekolah_id-nya masih NULL
         if ($user && $user->role !== 'superadmin' && $user->sekolah_id && Schema::hasColumn('ujians', 'sekolah_id')) {
             $query->where(function ($q) use ($user) {
                 $q->where('sekolah_id', $user->sekolah_id)
@@ -255,21 +246,17 @@ class UjianController extends Controller
         $user  = Auth::user();
         $ujian = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
 
-        // Ambil sekolah ujian atau sekolah milik user yang login
         $sekolahId = $ujian->sekolah_id ?? ($user->sekolah_id ?? null);
         $sekolah   = $sekolahId ? Sekolah::find($sekolahId) : Sekolah::first();
 
-        // Proteksi multi-tenant sekolah
         if ($user && $user->role !== 'superadmin' && $user->sekolah_id && $ujian->sekolah_id && $ujian->sekolah_id !== $user->sekolah_id) {
             abort(403, 'Anda tidak memiliki akses ke dokumen ujian sekolah lain.');
         }
 
-        // Ambil daftar hasil ujian peserta
         $hasilUjians = NilaiUjian::with(['siswa.kelas'])
             ->where('ujian_id', $id)
             ->get();
 
-        // Hitung total peserta seharusnya (berdasarkan kelas ujian & sekolah)
         $totalTerdaftar = Siswa::query()
             ->when($sekolahId && Schema::hasColumn('siswas', 'sekolah_id'), fn($q) => $q->where('sekolah_id', $sekolahId))
             ->when($ujian->kelas_id, fn($q) => $q->where('kelas_id', $ujian->kelas_id))
@@ -278,7 +265,6 @@ class UjianController extends Controller
         $jumlahHadir      = $hasilUjians->count();
         $jumlahTidakHadir = max(0, $totalTerdaftar - $jumlahHadir);
 
-        // Prioritas Pengawas: Profil Sekolah -> Relasi Guru Ujian -> User yang mencetak
         $defaultPengawas    = !empty($sekolah?->nama_pengawas)
             ? $sekolah->nama_pengawas
             : ($user->name ?? '........................................');
@@ -291,7 +277,6 @@ class UjianController extends Controller
             $defaultNipPengawas = $ujian->guru->nip ?? $defaultNipPengawas;
         }
 
-        // Input kustom dari form toolbar berita acara
         $nomorBa         = $request->input('nomor_ba', 'BA-CAT/' . str_pad($ujian->id, 3, '0', STR_PAD_LEFT) . '/' . date('Y'));
         $ruangUjian      = $request->input('ruang', 'Ruang Lab Komputer / CAT 01');
         $namaPengawas    = $request->input('pengawas', $defaultPengawas);
@@ -325,8 +310,7 @@ class UjianController extends Controller
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->whereHas('siswa', function ($q) use ($search) {
-                $q->where('nama', 'LIKE', "%{$search}%")
-                    ->orWhere('nisn', 'LIKE', "%{$search}%");
+                $this->applySiswaSearch($q, $search);
             });
         }
 
@@ -340,25 +324,18 @@ class UjianController extends Controller
     }
 
     /**
-     * 1. RESET LOGIN: Melepas kunci sesi perangkat siswa tanpa menghapus jawaban
+     * 1. RESET LOGIN: Melepas kunci sesi perangkat siswa & memutus sesi aktif di database tanpa menghapus jawaban
      */
     public function resetLogin($nilaiUjianId)
     {
         $nilaiUjian = NilaiUjian::with('siswa')->findOrFail($nilaiUjianId);
+        $siswa      = $nilaiUjian->siswa;
 
-        if ($nilaiUjian->siswa) {
-            DB::table('siswas')->where('id', $nilaiUjian->siswa->id)->update([
-                'session_token'  => null,
-                'remember_token' => null,
-                'updated_at'     => now(),
-            ]);
-
-            if (config('session.driver') === 'database') {
-                DB::table('sessions')->where('user_id', $nilaiUjian->siswa->id)->delete();
-            }
+        if ($siswa) {
+            $this->clearSiswaSession($siswa);
         }
 
-        $namaSiswa = $nilaiUjian->siswa->nama ?? $nilaiUjian->siswa->nama_lengkap ?? 'Siswa';
+        $namaSiswa = $siswa->nama_siswa ?? $siswa->nama ?? $siswa->nama_lengkap ?? 'Siswa';
 
         return redirect()->back()->with('success', "Sesi login {$namaSiswa} berhasil direset. Siswa dapat masuk kembali dan melanjutkan ujian.");
     }
@@ -419,28 +396,27 @@ class UjianController extends Controller
             ]);
         });
 
-        $namaSiswa = $nilaiUjian->siswa->nama ?? $nilaiUjian->siswa->nama_lengkap ?? 'Siswa';
+        $namaSiswa = $nilaiUjian->siswa->nama_siswa ?? $nilaiUjian->siswa->nama ?? $nilaiUjian->siswa->nama_lengkap ?? 'Siswa';
 
         return redirect()->back()->with('success', "Ujian {$namaSiswa} berhasil diselesaikan paksa dan nilai telah dikalkulasi.");
     }
 
     /**
-     * 3. RESET UJIAN (SUSULAN / REMEDIAL): Menghapus riwayat ujian siswa agar mengulang dari awal
+     * 3. RESET UJIAN (SUSULAN / REMEDIAL): Menghapus riwayat ujian & memutus sesi login siswa agar mengulang dari awal
      */
     public function resetUjian($nilaiUjianId)
     {
         $nilaiUjian = NilaiUjian::with('siswa')->findOrFail($nilaiUjianId);
-        $namaSiswa  = $nilaiUjian->siswa->nama ?? $nilaiUjian->siswa->nama_lengkap ?? 'Siswa';
+        $siswa      = $nilaiUjian->siswa;
+        $namaSiswa  = $siswa->nama_siswa ?? $siswa->nama ?? $siswa->nama_lengkap ?? 'Siswa';
 
-        DB::transaction(function () use ($nilaiUjian) {
+        DB::transaction(function () use ($nilaiUjian, $siswa) {
             JawabanSiswa::where('ujian_id', $nilaiUjian->ujian_id)
                 ->where('siswa_id', $nilaiUjian->siswa_id)
                 ->delete();
 
-            if ($nilaiUjian->siswa) {
-                DB::table('siswas')->where('id', $nilaiUjian->siswa->id)->update([
-                    'session_token' => null,
-                ]);
+            if ($siswa) {
+                $this->clearSiswaSession($siswa);
             }
 
             $nilaiUjian->delete();
@@ -459,7 +435,6 @@ class UjianController extends Controller
             abort(403, 'Anda tidak memiliki akses ke dokumen ujian sekolah lain.');
         }
 
-        // Otomatis tambahkan kolom arsip di tabel ujians jika belum ada
         if (Schema::hasTable('ujians') && !Schema::hasColumn('ujians', 'file_berita_acara')) {
             Schema::table('ujians', function (Blueprint $table) {
                 $table->string('file_berita_acara')->nullable();
@@ -468,14 +443,13 @@ class UjianController extends Controller
         }
 
         $request->validate([
-            'file_berita_acara' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // Maks 5 MB
+            'file_berita_acara' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ], [
             'file_berita_acara.required' => 'Pilih file scan Berita Acara terlebih dahulu.',
             'file_berita_acara.mimes'    => 'Format file harus berupa PDF, JPG, atau PNG.',
             'file_berita_acara.max'      => 'Ukuran file maksimal 5 MB.',
         ]);
 
-        // Hapus file lama jika mengganti arsip
         if (!empty($ujian->file_berita_acara) && Storage::disk('public')->exists($ujian->file_berita_acara)) {
             Storage::disk('public')->delete($ujian->file_berita_acara);
         }
@@ -490,7 +464,6 @@ class UjianController extends Controller
             'updated_at'        => now(),
         ];
 
-        // Otomatis ikat sekolah_id jika sesi ujian lama belum memiliki sekolah_id
         if (Schema::hasColumn('ujians', 'sekolah_id') && empty($ujian->sekolah_id) && !empty($user?->sekolah_id)) {
             $updateData['sekolah_id'] = $user->sekolah_id;
         }
@@ -521,5 +494,56 @@ class UjianController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Arsip scan Berita Acara berhasil dihapus.');
+    }
+
+    /**
+     * Helper private untuk membersihkan session_token, remember_token, dan baris tabel sessions siswa
+     */
+    private function clearSiswaSession($siswa): void
+    {
+        if (config('session.driver') === 'database' && Schema::hasTable('sessions')) {
+            if (!empty($siswa->session_token)) {
+                DB::table('sessions')->where('id', $siswa->session_token)->delete();
+            }
+            if (!empty($siswa->user_id)) {
+                DB::table('sessions')->where('user_id', $siswa->user_id)->delete();
+            }
+        }
+
+        $updateSiswa = ['updated_at' => now()];
+
+        if (Schema::hasColumn('siswas', 'session_token')) {
+            $updateSiswa['session_token'] = null;
+        }
+        if (Schema::hasColumn('siswas', 'remember_token')) {
+            $updateSiswa['remember_token'] = null;
+        }
+
+        DB::table('siswas')->where('id', $siswa->id)->update($updateSiswa);
+    }
+
+    /**
+     * Helper private untuk pencarian siswa yang aman (mendukung kolom nama_siswa maupun nama)
+     */
+    private function applySiswaSearch($query, string $search): void
+    {
+        $namaCol = Schema::hasColumn('siswas', 'nama_siswa') ? 'nama_siswa' : 'nama';
+
+        $query->where(function ($sub) use ($namaCol, $search) {
+            $sub->where($namaCol, 'LIKE', "%{$search}%")
+                ->orWhere('nisn', 'LIKE', "%{$search}%");
+        });
+    }
+
+    /**
+     * Helper private untuk format boolean aman lintas driver database (MySQL/MariaDB & PostgreSQL)
+     */
+    private function boolValue(bool $value): mixed
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            return DB::raw($value ? 'true' : 'false');
+        }
+
+        return $value ? 1 : 0;
     }
 }
