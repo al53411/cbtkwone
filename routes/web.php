@@ -26,11 +26,7 @@ use App\Http\Controllers\Admin\SekolahController as AdminSekolahController;
 use App\Http\Controllers\Admin\SiswaController as AdminSiswaController;
 use App\Http\Controllers\Admin\JurnalController as AdminJurnalController;
 use App\Http\Controllers\Admin\TahunAjaranController;
-use App\Http\Controllers\Admin\CapaianPembelajaranController;
 use App\Http\Controllers\Admin\MapelController as AdminMapelController;
-use App\Http\Controllers\Admin\TujuanPembelajaranController;
-use App\Http\Controllers\Admin\AlurTujuanPembelajaranController;
-use App\Http\Controllers\Admin\ModulAjarController;
 use App\Http\Controllers\Admin\RuangSesiController;
 use App\Http\Controllers\Admin\TokenController;
 use App\Http\Controllers\Admin\SoalController as AdminSoalController;
@@ -38,17 +34,16 @@ use App\Http\Controllers\Admin\UjianController;
 use App\Http\Controllers\Admin\ProfilController as AdminProfilController;
 use App\Http\Controllers\Admin\KorektorController as AdminKorektorController;
 
-// Import Controller Konrektor
+// Import Controller Korektor
 use App\Http\Controllers\Korektor\DashboardController as KorektorDashboardController;
 use App\Http\Controllers\Korektor\KoreksiController;
-
 
 // Import Controller Siswa
 use App\Http\Controllers\Siswa\AuthController as SiswaAuthController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
 
-// Redirect Halaman Utama langsung ke Login
+// Redirect Halaman Utama langsung ke Login Admin/Staff
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -84,7 +79,7 @@ Route::get('/dashboard', function () {
     }
 
     if ($role === 'guru') {
-        return redirect()->route('guru.dashboard');
+        return redirect()->route('admin.dashboard');
     }
 
     return redirect()->route('login')->withErrors(['login' => 'Role pengguna tidak terdaftar dengan benar.']);
@@ -124,7 +119,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
     Route::patch('/ujian/{id}/toggle-rilis-nilai', [SuperadminUjianController::class, 'toggleRilisNilai'])->name('ujian.toggle-rilis');
     Route::patch('/ujian/{id}/toggle-tampil-soal', [SuperadminUjianController::class, 'toggleTampilSoal'])->name('ujian.toggle-tampil-soal');
 
-    // Pengaman jika ada form PUT tanpa ID ujian agar tidak muncul MethodNotAllowedHttpException
+    // Pengaman jika ada form PUT tanpa ID ujian
     Route::put('/ujian', fn() => redirect()->route('superadmin.ujian.index')
         ->with('error', 'ID sesi ujian tidak ditemukan. Pilih sesi ujian lalu klik tombol Settings untuk mengubah pengaturan.'));
 
@@ -142,7 +137,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('supe
 
 
 // ==========================================
-// GROUP ROUTE KHUSUS ADMIN SEKOLAH / KEPSEK
+// GROUP ROUTE KHUSUS ADMIN SEKOLAH / KEPSEK / PROKTOR
 // ==========================================
 Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,proktor'])
     ->prefix('admin')
@@ -164,15 +159,10 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun-ajaran.store');
         Route::put('/tahun-ajaran/{id}/set-aktif', [TahunAjaranController::class, 'setAktif'])->name('tahun-ajaran.set-aktif');
 
-        // Validasi Jurnal oleh Kepala Sekolah / Admin
-        Route::get('/validasi-jurnal', [AdminKepalaSekolahController::class, 'indexValidasiJurnal'])->name('kepala-sekolah.jurnal.index');
-        Route::put('/validasi-jurnal/{id}', [AdminKepalaSekolahController::class, 'updateStatusJurnal'])->name('kepala-sekolah.jurnal.update');
-
         // Fitur Tambahan Guru (Wajib di atas Route::resource('guru', ...))
         Route::get('/guru/template', [AdminGuruController::class, 'downloadTemplate'])->name('guru.template');
         Route::post('/guru/import', [AdminGuruController::class, 'import'])->name('guru.import');
         Route::post('/guru/{guru}/reset-password', [AdminGuruController::class, 'resetPassword'])->name('guru.reset-password');
-        Route::get('/guru/get-elemen-tp', [TujuanPembelajaranController::class, 'getElemenAndTp'])->name('guru.get_elemen_tp');
 
         // Siswa & Cetak Kartu Ujian
         Route::post('/siswa/import', [AdminSiswaController::class, 'import'])->name('siswa.import');
@@ -193,15 +183,7 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
         Route::resource('jurnal', AdminJurnalController::class);
         Route::resource('kepala-sekolah', AdminKepalaSekolahController::class);
         Route::resource('mapel', AdminMapelController::class);
-        Route::resource('modul_ajar', ModulAjarController::class);
         Route::resource('korektor', AdminKorektorController::class);
-
-        // Route Kurikulum (CP, TP, ATP)
-        Route::resource('capaian-pembelajaran', CapaianPembelajaranController::class)->except(['create', 'edit', 'show']);
-        Route::get('/get-elemen-cp', [TujuanPembelajaranController::class, 'getElemenByMapelFase'])->name('get_elemen_cp');
-        Route::resource('tujuan-pembelajaran', TujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
-        Route::resource('atp', AlurTujuanPembelajaranController::class)->except(['create', 'edit', 'show']);
-        Route::get('/api/atp/by-tp', [AlurTujuanPembelajaranController::class, 'getByTp'])->name('api.atp.get_by_tp');
 
         // Route Ruang & Sesi Ujian
         Route::get('/sesi', [RuangSesiController::class, 'index'])->name('sesi.index');
@@ -237,6 +219,9 @@ Route::middleware(['auth', 'role:admin,admin_sekolah,kepsek,superadmin,guru,prok
     });
 
 
+// ==========================================
+// GROUP ROUTE KHUSUS KOREKTOR
+// ==========================================
 Route::middleware(['auth', 'role:korektor,guru,superadmin'])
     ->prefix('korektor')
     ->name('korektor.')
@@ -255,10 +240,9 @@ Route::middleware(['auth', 'role:korektor,guru,superadmin'])
 // GROUP ROUTE KHUSUS SISWA
 // ==========================================
 Route::prefix('siswa')->name('siswa.')->group(function () {
-    Route::middleware('guest:siswa')->group(function () {
-        Route::get('/login', [SiswaAuthController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [SiswaAuthController::class, 'login'])->name('login.post');
-    });
+    // Bebas dari middleware guest/auth agar /siswa/login tidak pernah ter-redirect ke /login admin
+    Route::get('/login', [SiswaAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [SiswaAuthController::class, 'login'])->name('login.post');
 
     Route::middleware(['auth:siswa', 'single.siswa'])->group(function () {
         Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
