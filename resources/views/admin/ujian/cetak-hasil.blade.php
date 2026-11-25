@@ -19,8 +19,8 @@
 
         body {
             font-family: 'Inter', Arial, Helvetica, sans-serif;
-            background: #e2e8f0;
-            color: #0f172a;
+            background: #f8fafc;
+            color: #000000;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
@@ -30,30 +30,26 @@
             width: 210mm;
             min-height: 297mm;
             background: #ffffff;
+            border: 1px solid #cbd5e1;
             margin: 0 auto;
             padding: 10mm 12mm;
             box-sizing: border-box;
             overflow: hidden;
         }
 
-        /* Watermark Background dari public/logo.png */
+        /* Watermark Background Tipis dari public/logo.png */
         .watermark-logo {
             position: absolute;
             top: 52%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 340px;
-            height: 340px;
+            width: 300px;
+            height: 300px;
             object-fit: contain;
-            opacity: 0.065;
-            filter: grayscale(15%);
+            opacity: 0.035;
+            filter: grayscale(100%);
             pointer-events: none;
             z-index: 0;
-        }
-
-        .bg-cat-pattern {
-            background-image: radial-gradient(#cbd5e1 0.65px, transparent 0.65px);
-            background-size: 14px 14px;
         }
 
         .content-layer {
@@ -64,12 +60,12 @@
         table.cat-table {
             border-collapse: collapse;
             width: 100%;
-            background-color: rgba(255, 255, 255, 0.88);
+            background-color: #ffffff;
         }
 
         table.cat-table th,
         table.cat-table td {
-            border: 1px solid #1e3a8a;
+            border: 1px solid #000000;
         }
 
         table.cat-table tr {
@@ -88,7 +84,7 @@
             }
 
             .sheet {
-                box-shadow: none !important;
+                border: none !important;
                 width: 100%;
                 min-height: 277mm;
                 padding: 0;
@@ -98,7 +94,7 @@
                 position: fixed;
                 top: 50%;
                 left: 50%;
-                opacity: 0.06;
+                opacity: 0.03;
             }
         }
     </style>
@@ -157,32 +153,32 @@
         $payloadQr = "DOKUMEN SAH HASIL UJIAN CAT\nSekolah: {$namaSekolah}\nUjian: " . ($ujian->nama_ujian ?? '-') . "\nProktor: {$namaProktor}\nPeserta: {$totalPeserta} Siswa | Rata-rata: " . number_format($rataRata, 2) . "\nKode: {$kodeValidasi}";
     @endphp
 
-    <!-- Toolbar Pratinjau (Hilang saat Print) -->
+    <!-- Toolbar Pratinjau Bersih (Hilang saat Print) -->
     <div id="toolbar-print"
-        class="max-w-[210mm] mx-auto mb-4 bg-white p-3.5 rounded-xl border border-slate-300 shadow-xs flex items-center justify-between gap-3">
+        class="max-w-[210mm] mx-auto mb-3 bg-white p-3 border border-slate-300 flex items-center justify-between gap-3">
         <div class="flex items-center gap-2.5">
             <span
-                class="px-2.5 py-1 rounded bg-blue-950 text-amber-300 text-[10px] font-extrabold uppercase tracking-wider">
+                class="px-2.5 py-1 border border-slate-800 bg-white text-slate-900 text-[10px] font-bold uppercase tracking-wider">
                 Format CAT BKN
             </span>
-            <span class="text-xs text-slate-600 font-semibold">
+            <span class="text-xs text-slate-700 font-semibold">
                 Pratinjau Dokumen Hasil Ujian (A4 Portrait)
             </span>
         </div>
         <div class="flex items-center gap-2">
             <button type="button" onclick="window.print()"
-                class="px-4 py-2 bg-blue-800 hover:bg-blue-900 text-white rounded-lg text-xs font-bold shadow-2xs cursor-pointer">
+                class="px-4 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-bold cursor-pointer">
                 Cetak / Simpan PDF
             </button>
             <button type="button" onclick="window.close()"
-                class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold cursor-pointer">
+                class="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-xs font-bold cursor-pointer">
                 Tutup
             </button>
         </div>
     </div>
 
-    <!-- Lembar Dokumen Resmi CAT -->
-    <div class="sheet bg-cat-pattern shadow-md">
+    <!-- Lembar Dokumen Resmi CAT (Bersih Putih Monokrom) -->
+    <div class="sheet">
 
         <!-- WATERMARK BACKGROUND DARI public/logo.png -->
         <img src="{{ $logoUtama }}" alt="Watermark Logo" class="watermark-logo">
@@ -190,125 +186,121 @@
         <!-- LAYER KONTEN UTAMA -->
         <div class="content-layer">
 
-            <!-- HEADER RESMI GAYA CAT BKN -->
-            <div class="border-2 border-blue-950 rounded-md overflow-hidden mb-3 bg-white">
-                <div class="h-1.5 bg-gradient-to-r from-blue-950 via-blue-700 to-amber-500"></div>
-
-                <div
-                    class="flex items-center justify-between p-3 border-b border-blue-900/30 gap-3 bg-gradient-to-r from-blue-50/90 via-white to-amber-50/50">
+            <!-- HEADER RESMI BERSIH GAYA CAT BKN -->
+            <div class="border border-black mb-3 bg-white">
+                <div class="flex items-center justify-between p-3 border-b border-black gap-3 bg-white">
                     <div class="flex items-center gap-3">
-                        <div
-                            class="w-12 h-12 rounded-lg bg-white border border-blue-200 p-1 shadow-2xs flex items-center justify-center shrink-0">
+                        <div class="w-12 h-12 bg-white p-0.5 flex items-center justify-center shrink-0">
                             <img src="{{ $logoSekolah }}" alt="Logo" class="w-full h-full object-contain">
                         </div>
                         <div>
-                            <p class="text-[9px] font-extrabold uppercase tracking-widest text-blue-800">
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-slate-700">
                                 Computer Assisted Test (CAT) — Panitia Penyelenggara Ujian
                             </p>
-                            <h1 class="text-sm font-black uppercase tracking-tight text-slate-900 leading-tight">
+                            <h1 class="text-sm font-black uppercase tracking-tight text-black leading-tight">
                                 {{ $namaSekolah }}
                             </h1>
-                            <p class="text-[9.5px] text-slate-600">
-                                NPSN: <span class="font-mono font-bold text-blue-950">{{ $npsnSekolah }}</span> •
+                            <p class="text-[9.5px] text-slate-700">
+                                NPSN: <span class="font-mono font-bold text-black">{{ $npsnSekolah }}</span> •
                                 {{ $alamatSekolah }}
                             </p>
                         </div>
                     </div>
 
                     <!-- Barcode Batang Nomor Dokumen di Pojok Kanan Kop -->
-                    <div class="text-right shrink-0 border-l border-blue-200 pl-3 flex flex-col items-end">
+                    <div class="text-right shrink-0 border-l border-black pl-3 flex flex-col items-end">
                         <span
-                            class="inline-block bg-blue-950 text-amber-300 text-[8.5px] font-extrabold uppercase px-2 py-0.5 rounded-xs tracking-wider mb-1">
+                            class="inline-block border border-black bg-white text-black text-[8px] font-bold uppercase px-2 py-0.5 tracking-wider mb-1">
                             DOKUMEN HASIL UJIAN
                         </span>
                         <svg id="barcode-dokumen" class="h-7"></svg>
-                        <p class="text-[8px] font-mono text-slate-600 mt-0.5">
+                        <p class="text-[8px] font-mono text-slate-700 mt-0.5">
                             Dicetak: {{ $waktuCetak->format('d/m/Y H:i') }} WIB
                         </p>
                     </div>
                 </div>
 
-                <!-- Bar Judul Kegiatan -->
-                <div class="bg-blue-950 text-white px-3 py-1.5 text-center">
+                <!-- Bar Judul Kegiatan Bersih (Putih + Border Bawah Tegas) -->
+                <div class="bg-white text-black px-3 py-1.5 text-center border-b-2 border-black">
                     <h2 class="text-[10.5px] font-extrabold uppercase tracking-widest">
                         REKAPITULASI HASIL NILAI PESERTA UJIAN BERBASIS KOMPUTER (CAT)
                     </h2>
                 </div>
             </div>
 
-            <!-- PANEL METADATA UJIAN & RINGKASAN STATISTIK -->
+            <!-- PANEL METADATA UJIAN & RINGKASAN STATISTIK (BERSIH PUTIH) -->
             <div class="grid grid-cols-12 gap-2.5 mb-3 text-[9.5px]">
                 <!-- Kiri: Identitas Pelaksanaan -->
-                <div class="col-span-7 border border-blue-950 rounded-md p-2.5 bg-white/90">
+                <div class="col-span-7 border border-black p-2.5 bg-white">
                     <div
-                        class="text-[8.5px] font-extrabold uppercase tracking-wider text-blue-900 border-b border-blue-100 pb-1 mb-1.5">
+                        class="text-[8.5px] font-extrabold uppercase tracking-wider text-black border-b border-black pb-1 mb-1.5">
                         Informasi Pelaksanaan Ujian
                     </div>
                     <table class="w-full">
                         <tr>
-                            <td class="w-28 py-0.5 text-slate-600 font-semibold">Nama Kegiatan</td>
+                            <td class="w-28 py-0.5 text-slate-700 font-semibold">Nama Kegiatan</td>
                             <td class="w-3 py-0.5">:</td>
-                            <td class="py-0.5 font-extrabold text-slate-900 uppercase">{{ $ujian->nama_ujian ?? '-' }}
+                            <td class="py-0.5 font-extrabold text-black uppercase">{{ $ujian->nama_ujian ?? '-' }}
                             </td>
                         </tr>
                         <tr>
-                            <td class="py-0.5 text-slate-600 font-semibold">Mata Pelajaran</td>
+                            <td class="py-0.5 text-slate-700 font-semibold">Mata Pelajaran</td>
                             <td class="py-0.5">:</td>
-                            <td class="py-0.5 font-bold text-blue-900">{{ $ujian->mapel->nama_mapel ?? '-' }}</td>
+                            <td class="py-0.5 font-bold text-black">{{ $ujian->mapel->nama_mapel ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <td class="py-0.5 text-slate-600 font-semibold">Kelas / Rombel</td>
+                            <td class="py-0.5 text-slate-700 font-semibold">Kelas / Rombel</td>
                             <td class="py-0.5">:</td>
-                            <td class="py-0.5 font-bold text-slate-900">{{ $ujian->kelas->nama_kelas ?? 'Semua Kelas' }}
+                            <td class="py-0.5 font-bold text-black">{{ $ujian->kelas->nama_kelas ?? 'Semua Kelas' }}
                             </td>
                         </tr>
                         <tr>
-                            <td class="py-0.5 text-slate-600 font-semibold">Tanggal & Durasi</td>
+                            <td class="py-0.5 text-slate-700 font-semibold">Tanggal & Durasi</td>
                             <td class="py-0.5">:</td>
-                            <td class="py-0.5 font-medium text-slate-800">
+                            <td class="py-0.5 font-medium text-black">
                                 {{ !empty($ujian->waktu_mulai) ? \Carbon\Carbon::parse($ujian->waktu_mulai)->locale('id')->translatedFormat('d F Y') : $waktuCetak->locale('id')->translatedFormat('d F Y') }}
                                 ({{ $ujian->durasi ?? '-' }} Menit)
                             </td>
                         </tr>
                         <tr>
-                            <td class="py-0.5 text-slate-600 font-semibold">Ambang Batas (KKM)</td>
+                            <td class="py-0.5 text-slate-700 font-semibold">Ambang Batas (KKM)</td>
                             <td class="py-0.5">:</td>
-                            <td class="py-0.5 font-mono font-bold text-amber-700">{{ number_format($kkm, 2) }}</td>
+                            <td class="py-0.5 font-mono font-bold text-black">{{ number_format($kkm, 2) }}</td>
                         </tr>
                     </table>
                 </div>
 
                 <!-- Kanan: Ringkasan Statistik Hasil -->
-                <div class="col-span-5 border border-blue-950 rounded-md p-2.5 bg-blue-50/80">
+                <div class="col-span-5 border border-black p-2.5 bg-white">
                     <div
-                        class="text-[8.5px] font-extrabold uppercase tracking-wider text-blue-950 border-b border-blue-200 pb-1 mb-1.5">
+                        class="text-[8.5px] font-extrabold uppercase tracking-wider text-black border-b border-black pb-1 mb-1.5">
                         Statistik Hasil Sesi
                     </div>
                     <table class="w-full">
                         <tr>
                             <td class="py-0.5 text-slate-700">Total Peserta Hadir</td>
-                            <td class="py-0.5 text-right font-mono font-bold text-slate-900">{{ $totalPeserta }} Siswa
+                            <td class="py-0.5 text-right font-mono font-bold text-black">{{ $totalPeserta }} Siswa
                             </td>
                         </tr>
                         <tr>
                             <td class="py-0.5 text-slate-700">Memenuhi KKM (P/L)</td>
-                            <td class="py-0.5 text-right font-mono font-bold text-emerald-700">{{ $jumlahTuntas }} Siswa
+                            <td class="py-0.5 text-right font-mono font-bold text-black">{{ $jumlahTuntas }} Siswa
                             </td>
                         </tr>
                         <tr>
                             <td class="py-0.5 text-slate-700">Di Bawah KKM (TL)</td>
-                            <td class="py-0.5 text-right font-mono font-bold text-rose-700">{{ $jumlahBelumTuntas }}
+                            <td class="py-0.5 text-right font-mono font-bold text-black">{{ $jumlahBelumTuntas }}
                                 Siswa</td>
                         </tr>
                         <tr>
                             <td class="py-0.5 text-slate-700">Tertinggi / Terendah</td>
-                            <td class="py-0.5 text-right font-mono font-bold text-slate-900">
+                            <td class="py-0.5 text-right font-mono font-bold text-black">
                                 {{ number_format($nilaiTertinggi, 1) }} / {{ number_format($nilaiTerendah, 1) }}
                             </td>
                         </tr>
-                        <tr class="border-t border-blue-200">
-                            <td class="pt-1 font-extrabold text-blue-950">Rata-Rata Kelas</td>
-                            <td class="pt-1 text-right font-mono font-black text-blue-950">
+                        <tr class="border-t border-black">
+                            <td class="pt-1 font-extrabold text-black">Rata-Rata Kelas</td>
+                            <td class="pt-1 text-right font-mono font-black text-black">
                                 {{ number_format($rataRata, 2) }}
                             </td>
                         </tr>
@@ -316,18 +308,18 @@
                 </div>
             </div>
 
-            <!-- TABEL UTAMA PERINGKAT & SKOR CAT -->
+            <!-- TABEL UTAMA PERINGKAT & SKOR CAT (PUTIH BERSIH) -->
             <table class="cat-table text-[9.5px]">
                 <thead>
-                    <tr class="bg-blue-950 text-white uppercase tracking-wider text-[8.5px]">
-                        <th class="px-1.5 py-2 w-10 text-center">Rank</th>
-                        <th class="px-2 py-2 w-28 text-center">No. Peserta / NISN</th>
-                        <th class="px-2.5 py-2 text-left">Nama Peserta Ujian</th>
-                        <th class="px-1.5 py-2 w-14 text-center">Benar</th>
-                        <th class="px-1.5 py-2 w-14 text-center">Salah</th>
-                        <th class="px-2 py-2 w-20 text-center">Waktu Selesai</th>
-                        <th class="px-2 py-2 w-20 text-center bg-blue-900 text-amber-300">Skor Total</th>
-                        <th class="px-2 py-2 w-24 text-center">Status</th>
+                    <tr class="bg-white text-black uppercase tracking-wider text-[8.5px] border-b-2 border-black">
+                        <th class="px-1.5 py-2 w-10 text-center font-extrabold">Rank</th>
+                        <th class="px-2 py-2 w-28 text-center font-extrabold">No. Peserta / NISN</th>
+                        <th class="px-2.5 py-2 text-left font-extrabold">Nama Peserta Ujian</th>
+                        <th class="px-1.5 py-2 w-14 text-center font-extrabold">Benar</th>
+                        <th class="px-1.5 py-2 w-14 text-center font-extrabold">Salah</th>
+                        <th class="px-2 py-2 w-20 text-center font-extrabold">Waktu Selesai</th>
+                        <th class="px-2 py-2 w-20 text-center font-extrabold">Skor Total</th>
+                        <th class="px-2 py-2 w-24 text-center font-extrabold">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -339,38 +331,35 @@
                                 ? \Carbon\Carbon::parse($item->waktu_selesai)->format('H:i:s')
                                 : (!empty($item->updated_at) ? \Carbon\Carbon::parse($item->updated_at)->format('H:i:s') : '-');
                         @endphp
-                        <tr class="{{ $index % 2 === 1 ? 'bg-blue-50/45' : 'bg-white/85' }}">
-                            <td class="px-1.5 py-1.5 text-center font-mono font-bold text-blue-950">
+                        <tr class="bg-white">
+                            <td class="px-1.5 py-1.5 text-center font-mono font-bold text-black">
                                 {{ $index + 1 }}
                             </td>
-                            <td class="px-2 py-1.5 text-center font-mono font-semibold text-slate-900">
+                            <td class="px-2 py-1.5 text-center font-mono font-semibold text-black">
                                 {{ $item->siswa->nisn ?? '-' }}
                             </td>
-                            <td class="px-2.5 py-1.5 font-bold uppercase text-slate-900">
+                            <td class="px-2.5 py-1.5 font-bold uppercase text-black">
                                 {{ $item->siswa->nama_siswa ?? ($item->siswa->nama ?? '-') }}
                             </td>
-                            <td class="px-1.5 py-1.5 text-center font-mono text-emerald-800 font-semibold">
+                            <td class="px-1.5 py-1.5 text-center font-mono text-black font-semibold">
                                 {{ $item->jumlah_benar ?? $item->benar ?? '-' }}
                             </td>
-                            <td class="px-1.5 py-1.5 text-center font-mono text-rose-800 font-semibold">
+                            <td class="px-1.5 py-1.5 text-center font-mono text-black font-semibold">
                                 {{ $item->jumlah_salah ?? $item->salah ?? '-' }}
                             </td>
-                            <td class="px-2 py-1.5 text-center font-mono text-[8.5px] text-slate-600">
+                            <td class="px-2 py-1.5 text-center font-mono text-[8.5px] text-slate-700">
                                 {{ $jamSelesai }}
                             </td>
-                            <td
-                                class="px-2 py-1.5 text-center font-mono font-black text-[10.5px] bg-amber-50/85 text-blue-950">
+                            <td class="px-2 py-1.5 text-center font-mono font-black text-[10.5px] bg-white text-black">
                                 {{ number_format($nilai, 2) }}
                             </td>
-                            <td class="px-2 py-1.5 text-center font-extrabold text-[8px]">
+                            <td class="px-2 py-1.5 text-center font-bold text-[8px]">
                                 @if($tuntas)
-                                    <span
-                                        class="inline-block px-1.5 py-0.5 rounded-xs border border-emerald-700 bg-emerald-50 text-emerald-800">
+                                    <span class="inline-block px-1.5 py-0.5 border border-black bg-white text-black">
                                         LULUS KKM
                                     </span>
                                 @else
-                                    <span
-                                        class="inline-block px-1.5 py-0.5 rounded-xs border border-rose-700 bg-rose-50 text-rose-800">
+                                    <span class="inline-block px-1.5 py-0.5 border border-slate-500 bg-white text-slate-700">
                                         REMIDI
                                     </span>
                                 @endif
@@ -378,7 +367,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-3 py-8 text-center italic text-slate-500 bg-white/90">
+                            <td colspan="8" class="px-3 py-8 text-center italic text-slate-600 bg-white">
                                 Belum ada data hasil pengerjaan peserta pada sesi ujian ini.
                             </td>
                         </tr>
@@ -386,48 +375,47 @@
                 </tbody>
             </table>
 
-            <!-- FOOTER VALIDASI: QR CODE + BARCODE BATANG + TANDA TANGAN RESMI -->
-            <div class="mt-5 border border-blue-950 rounded-md bg-white/95 p-3"
-                style="page-break-inside: avoid; break-inside: avoid;">
+            <!-- FOOTER VALIDASI BERSIH: QR CODE + TANDA TANGAN RESMI -->
+            <div class="mt-4 border border-black bg-white p-3" style="page-break-inside: avoid; break-inside: avoid;">
                 <div class="grid grid-cols-12 gap-4 items-center">
 
                     <!-- Kolom 1: QR Code Validasi Digital (3 Kolom) -->
                     <div
-                        class="col-span-3 flex flex-col items-center justify-center border-r border-slate-200 pr-2 text-center">
-                        <div id="qrcode-validasi" class="p-1.5 bg-white border border-slate-300 rounded"></div>
-                        <span class="text-[7.5px] font-mono font-bold text-blue-950 mt-1">
+                        class="col-span-3 flex flex-col items-center justify-center border-r border-black pr-2 text-center">
+                        <div id="qrcode-validasi" class="p-1.5 bg-white border border-black"></div>
+                        <span class="text-[7.5px] font-mono font-bold text-black mt-1">
                             {{ $kodeValidasi }}
                         </span>
-                        <span class="text-[7px] text-slate-500 leading-tight">
-                            Scan QR untuk verifikasi keaslian berita acara
+                        <span class="text-[7px] text-slate-600 leading-tight">
+                            Scan QR untuk verifikasi keaslian dokumen
                         </span>
                     </div>
 
                     <!-- Kolom 2: Tanda Tangan Kepala Sekolah (4 Kolom) -->
                     <div class="col-span-4 text-center text-[9.5px]">
-                        <p class="text-slate-600">Mengetahui,</p>
-                        <p class="font-bold text-slate-900">Kepala Sekolah</p>
+                        <p class="text-slate-700">Mengetahui,</p>
+                        <p class="font-bold text-black">Kepala Sekolah</p>
                         <div class="h-14"></div>
-                        <p class="font-extrabold underline uppercase text-slate-900 leading-tight">
+                        <p class="font-extrabold underline uppercase text-black leading-tight">
                             {{ $namaKepsek }}
                         </p>
-                        <p class="font-mono text-[8.5px] text-slate-700 mt-0.5">
+                        <p class="font-mono text-[8.5px] text-black mt-0.5">
                             NIP. {{ $nipKepsek }}
                         </p>
                     </div>
 
                     <!-- Kolom 3: Tanda Tangan Proktor Ujian CAT (5 Kolom) -->
                     <div class="col-span-5 text-center text-[9.5px]">
-                        <p class="text-slate-600">
+                        <p class="text-slate-700">
                             {{ $kotaSekolah }},
                             {{ $waktuCetak->locale('id')->translatedFormat('d F Y') }}
                         </p>
-                        <p class="font-bold text-slate-900">Proktor Ujian CAT</p>
+                        <p class="font-bold text-black">Proktor Ujian CAT</p>
                         <div class="h-14"></div>
-                        <p class="font-extrabold underline uppercase text-slate-900 leading-tight">
+                        <p class="font-extrabold underline uppercase text-black leading-tight">
                             {{ $namaProktor }}
                         </p>
-                        <p class="font-mono text-[8.5px] text-slate-700 mt-0.5">
+                        <p class="font-mono text-[8.5px] text-black mt-0.5">
                             NIP. {{ $nipProktor }}
                         </p>
                     </div>
@@ -436,12 +424,12 @@
 
                 <!-- Catatan Kaki Sistem -->
                 <div
-                    class="mt-2.5 pt-2 border-t border-slate-200 text-[8px] text-slate-500 flex items-center justify-between">
+                    class="mt-2.5 pt-2 border-t border-black text-[8px] text-slate-600 flex items-center justify-between">
                     <span>
                         * Hasil nilai dihitung otomatis oleh sistem Computer Assisted Test (CAT) berdasarkan jawaban
                         terkunci peserta.
                     </span>
-                    <span class="font-mono font-semibold text-slate-700">
+                    <span class="font-mono font-semibold text-black">
                         {{ $namaSekolah }}
                     </span>
                 </div>
@@ -460,7 +448,7 @@
                     text: @json($payloadQr),
                     width: 68,
                     height: 68,
-                    colorDark: '#0f172a',
+                    colorDark: '#000000',
                     colorLight: '#ffffff',
                     correctLevel: QRCode.CorrectLevel.M
                 });
@@ -477,7 +465,7 @@
                     font: 'monospace',
                     margin: 0,
                     background: 'transparent',
-                    lineColor: '#0f172a'
+                    lineColor: '#000000'
                 });
             }
         });
