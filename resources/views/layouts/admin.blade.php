@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Dashboard CAT')</title>
+    <title>@yield('title', 'Dashboard CAT')</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,6 +13,9 @@
     @php
         $logoPath = public_path('logo.png');
         $logoUrl = file_exists($logoPath) ? asset('logo.png') . '?v=' . filemtime($logoPath) : asset('favicon.png');
+        $currentUser = Auth::user();
+        $userRole = strtolower($currentUser->role ?? 'admin');
+        $isPetugasUjian = in_array($userRole, ['proktor', 'pengawas', 'korektor']);
     @endphp
     <link rel="icon" type="image/png" href="{{ $logoUrl }}">
 
@@ -111,7 +114,7 @@
 
     <div class="flex h-screen overflow-hidden relative">
 
-        <!-- SIDEBAR ADMIN CAT SEKOLAH -->
+        <!-- SIDEBAR TERPADU ADMIN & PETUGAS UJIAN (PROKTOR, PENGAWAS, KOREKTOR) -->
         <aside id="sidebar"
             class="fixed inset-y-0 left-0 w-64 bg-slate-950 text-slate-300 flex flex-col border-r border-slate-800 z-30 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out h-full shrink-0">
 
@@ -121,9 +124,11 @@
                     <img src="{{ $logoUrl }}" alt="Logo" class="w-8 h-8 object-contain shrink-0">
                     <div class="flex flex-col truncate">
                         <span class="text-white font-bold text-sm tracking-wide truncate">
-                            {{ Auth::user()->sekolah->nama_sekolah ?? $profilSekolah->nama_sekolah ?? 'Sistem Sekolah' }}
+                            {{ $currentUser->sekolah->nama_sekolah ?? $profilSekolah->nama_sekolah ?? 'Sistem Sekolah' }}
                         </span>
-                        <span class="text-[10px] text-blue-400 font-medium">Admin Sekolah CAT</span>
+                        <span class="text-[10px] text-blue-400 font-medium uppercase">
+                            {{ $isPetugasUjian ? 'Petugas CAT (' . $userRole . ')' : 'Admin Sekolah CAT' }}
+                        </span>
                     </div>
                 </div>
                 <button type="button" onclick="toggleSidebar()"
@@ -134,95 +139,139 @@
 
             <!-- Navigasi Menu -->
             <div class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Utama</p>
+                @if(!$isPetugasUjian)
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Utama</p>
 
-                <!-- Dashboard -->
-                <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin/dashboard') }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
-                    <span>Dashboard</span>
-                </a>
+                    <!-- Dashboard -->
+                    <a href="{{ Route::has('admin.dashboard') ? route('admin.dashboard') : url('/admin/dashboard') }}"
+                        class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
 
-                <!-- Profil Sekolah -->
-                <a href="{{ Route::has('admin.sekolah.index') ? route('admin.sekolah.index') : '#' }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sekolah.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-school w-5 text-center"></i>
-                    <span>Profil Sekolah</span>
-                </a>
+                    <!-- Profil Sekolah -->
+                    <a href="{{ Route::has('admin.sekolah.index') ? route('admin.sekolah.index') : '#' }}"
+                        class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sekolah.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <i class="fa-solid fa-school w-5 text-center"></i>
+                        <span>Profil Sekolah</span>
+                    </a>
 
-                <!-- Input / Data Siswa -->
-                <a href="{{ Route::has('admin.siswa.index') ? route('admin.siswa.index') : '#' }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.index') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-user-graduate w-5 text-center"></i>
-                    <span>Input Data Siswa</span>
-                </a>
+                    <!-- Input / Data Siswa -->
+                    <a href="{{ Route::has('admin.siswa.index') ? route('admin.siswa.index') : '#' }}"
+                        class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.index') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <i class="fa-solid fa-user-graduate w-5 text-center"></i>
+                        <span>Input Data Siswa</span>
+                    </a>
 
-                <!-- Cetak Kartu Ujian -->
-                <a href="{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : (Route::has('admin.siswa.cetak-kartu-kelas') ? route('admin.siswa.cetak-kartu-kelas') : '#') }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.cetak-kartu*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-id-card w-5 text-center text-blue-400"></i>
-                    <span>Cetak Kartu Ujian</span>
-                </a>
+                    <!-- Cetak Kartu Ujian -->
+                    <a href="{{ Route::has('admin.siswa.cetak-kartu') ? route('admin.siswa.cetak-kartu') : (Route::has('admin.siswa.cetak-kartu-kelas') ? route('admin.siswa.cetak-kartu-kelas') : '#') }}"
+                        class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.siswa.cetak-kartu*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <i class="fa-solid fa-id-card w-5 text-center text-blue-400"></i>
+                        <span>Cetak Kartu Ujian</span>
+                    </a>
 
-                <!-- Data Korektor -->
-                <a href="{{ Route::has('admin.korektor.index') ? route('admin.korektor.index') : url('/admin/korektor') }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.korektor.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-user-pen w-5 text-center"></i>
-                    <span>Data Korektor</span>
-                </a>
+                    <div class="pt-3 pb-1">
+                        <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Manajemen CAT</p>
+                    </div>
 
-                <div class="pt-3 pb-1">
-                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Manajemen CAT</p>
+                    <!-- Atur Sesi Ujian -->
+                    <a href="{{ Route::has('admin.sesi.index') ? route('admin.sesi.index') : '#' }}"
+                        class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sesi.*', 'admin.cat.sesi.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+                        <span>Atur Sesi Ujian</span>
+                    </a>
+
+                    <!-- Token Ujian (Dari Super Admin) -->
+                    <a href="{{ Route::has('admin.token.index') ? route('admin.token.index') : '#' }}"
+                        class="nav-link-loader flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.token.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <div class="flex items-center space-x-3 truncate">
+                            <i class="fa-solid fa-key w-5 text-center"></i>
+                            <span class="truncate">Token Ujian CAT</span>
+                        </div>
+                        <span
+                            class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                            SuperAdmin
+                        </span>
+                    </a>
+
+                    <!-- Daftar Paket Soal -->
+                    <a href="{{ Route::has('admin.soal.paket') ? route('admin.soal.paket') : '#' }}"
+                        class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.soal.paket') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <i class="fa-solid fa-layer-group w-5 text-center"></i>
+                        <span>Daftar Paket Soal</span>
+                    </a>
+
+                    <!-- Hasil & Rekap Nilai -->
+                    <a href="{{ Route::has('admin.ujian.rekap') ? route('admin.ujian.rekap') : url('/admin/hasil-ujian') }}"
+                        class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.rekap*', 'admin.ujian.hasil*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
+                        <span>Hasil & Rekap Nilai</span>
+                    </a>
+                @endif
+
+                <!-- KELOMPOK SATU SIDEBAR: PROKTOR, PENGAWAS & KOREKTOR -->
+                <div class="{{ !$isPetugasUjian ? 'pt-3 pb-1' : 'pb-1' }}">
+                    <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        Proktor, Pengawas &amp; Korektor
+                    </p>
                 </div>
 
-                <!-- Atur Sesi Ujian -->
-                <a href="{{ Route::has('admin.sesi.index') ? route('admin.sesi.index') : '#' }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.sesi.*', 'admin.cat.sesi.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
-                    <span>Atur Sesi Ujian</span>
-                </a>
+                @if(!$isPetugasUjian || $userRole === 'proktor')
+                    <!-- Proktor: Kelola Data Korektor / Petugas & Monitoring Ujian -->
+                    <a href="{{ Route::has('admin.korektor.index') ? route('admin.korektor.index') : url('/admin/korektor') }}"
+                        class="nav-link-loader flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.korektor.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <div class="flex items-center space-x-3 truncate">
+                            <i class="fa-solid fa-user-gear w-5 text-center text-cyan-400"></i>
+                            <span class="truncate">Korektor</span>
+                        </div>
+                        <span
+                            class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                            Proktor
+                        </span>
+                    </a>
+                @endif
 
-                <!-- Token Ujian (Dari Super Admin) -->
-                <a href="{{ Route::has('admin.token.index') ? route('admin.token.index') : '#' }}"
-                    class="nav-link-loader flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.token.*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <div class="flex items-center space-x-3 truncate">
-                        <i class="fa-solid fa-key w-5 text-center"></i>
-                        <span class="truncate">Token Ujian CAT</span>
-                    </div>
-                    <span
-                        class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                        SuperAdmin
-                    </span>
-                </a>
+                @if(!$isPetugasUjian || in_array($userRole, ['proktor', 'pengawas']))
+                    <!-- Pengawas: Monitoring Ujian & Berita Acara -->
+                    <a href="{{ Route::has('admin.ujian.index') ? route('admin.ujian.index') : url('/admin/ujian') }}"
+                        class="nav-link-loader flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <div class="flex items-center space-x-3 truncate">
+                            <i class="fa-solid fa-desktop w-5 text-center text-emerald-400"></i>
+                            <span class="truncate">Monitoring Ujian</span>
+                        </div>
+                        <span
+                            class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            Pengawas
+                        </span>
+                    </a>
 
-                <!-- Daftar Paket Soal -->
-                <a href="{{ Route::has('admin.soal.paket') ? route('admin.soal.paket') : '#' }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.soal.paket') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-layer-group w-5 text-center"></i>
-                    <span>Daftar Paket Soal</span>
-                </a>
+                    <a href="{{ Route::has('admin.ujian.berita-acara-index') ? route('admin.ujian.berita-acara-index') : '#' }}"
+                        class="nav-link-loader flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.berita-acara*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <div class="flex items-center space-x-3 truncate">
+                            <i class="fa-solid fa-file-signature w-5 text-center text-amber-400"></i>
+                            <span class="truncate">Berita Acara Ujian</span>
+                        </div>
+                        <span
+                            class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            Pengawas
+                        </span>
+                    </a>
+                @endif
 
-                <!-- Monitoring Ujian -->
-                <a href="{{ Route::has('admin.ujian.index') ? route('admin.ujian.index') : url('/admin/ujian') }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.index', 'admin.ujian.monitoring*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-desktop w-5 text-center"></i>
-                    <span>Monitoring Ujian</span>
-                </a>
-
-                <!-- Hasil & Rekap Nilai -->
-                <a href="{{ Route::has('admin.ujian.rekap') ? route('admin.ujian.rekap') : url('/admin/hasil-ujian') }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.rekap*', 'admin.ujian.hasil*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i class="fa-solid fa-clipboard-check w-5 text-center"></i>
-                    <span>Hasil & Rekap Nilai</span>
-                </a>
-
-                <!-- Berita Acara Ujian CAT -->
-                <a href="{{ Route::has('admin.ujian.berita-acara-index') ? route('admin.ujian.berita-acara-index') : '#' }}"
-                    class="nav-link-loader flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm transition {{ request()->routeIs('admin.ujian.berita-acara*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
-                    <i
-                        class="fa-solid fa-file-signature w-5 text-center {{ request()->routeIs('admin.ujian.berita-acara*') ? 'text-white' : 'text-amber-400' }}"></i>
-                    <span>Berita Acara Ujian</span>
-                </a>
+                @if(!$isPetugasUjian || in_array($userRole, ['proktor', 'korektor']))
+                    <!-- Korektor: Koreksi Jawaban & Rekap Nilai -->
+                    <a href="{{ Route::has('admin.korektor.index') ? route('admin.korektor.index') . '?tab=koreksi' : url('/admin/korektor') }}"
+                        class="nav-link-loader flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition {{ request()->fullUrlIs('*korektor*tab=koreksi*') ? 'bg-blue-600 text-white font-semibold shadow-md' : 'hover:bg-slate-900 hover:text-white' }}">
+                        <div class="flex items-center space-x-3 truncate">
+                            <i class="fa-solid fa-user-pen w-5 text-center text-indigo-400"></i>
+                            <span class="truncate">Koreksi Jawaban</span>
+                        </div>
+                        <span
+                            class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                            Korektor
+                        </span>
+                    </a>
+                @endif
 
             </div>
 
@@ -257,7 +306,9 @@
                     </button>
 
                     <div class="flex items-center space-x-2 text-xs sm:text-sm text-slate-500 truncate">
-                        <span class="font-medium text-slate-700 hidden sm:inline">Admin Sekolah</span>
+                        <span class="font-medium text-slate-700 hidden sm:inline">
+                            {{ $isPetugasUjian ? ucfirst($userRole) : 'Admin Sekolah' }}
+                        </span>
                         <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 hidden sm:inline"></i>
                         <span class="text-slate-800 font-semibold truncate">@yield('page_title', 'Dashboard CAT')</span>
                     </div>
@@ -283,11 +334,11 @@
                     <div class="flex items-center space-x-2 border-l border-slate-200 pl-2 sm:pl-3">
                         <span
                             class="text-xs sm:text-sm font-bold text-slate-700 hidden md:inline truncate max-w-[120px]">
-                            {{ Auth::user()->name ?? 'Admin Sekolah' }}
+                            {{ $currentUser->name ?? 'Admin Sekolah' }}
                         </span>
                         <div
                             class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
-                            {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+                            {{ strtoupper(substr($currentUser->name ?? 'A', 0, 1)) }}
                         </div>
                     </div>
                 </div>

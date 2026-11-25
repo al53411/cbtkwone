@@ -59,18 +59,50 @@ class DashboardController extends Controller
 
         $ujianAktif = $query->get();
 
-        // Ambil riwayat pengerjaan siswa ini
-        $riwayatPengerjaan = collect();
+        // Ambil riwayat pengerjaan siswa ini lengkap dengan relasi ujian & mapel
+        $riwayatList = collect();
         if (class_exists(NilaiUjian::class)) {
-            $riwayatPengerjaan = NilaiUjian::where('siswa_id', $siswa->id)
+            $relasiNilai = ['ujian'];
+            if (method_exists(Ujian::class, 'mapel')) {
+                $relasiNilai[] = 'ujian.mapel';
+            }
+
+            $riwayatList = NilaiUjian::with($relasiNilai)
+                ->where('siswa_id', $siswa->id)
+                ->orderByDesc('updated_at')
                 ->get()
-                ->keyBy('ujian_id');
+                ->map(function ($item) {
+                    $ujian = $item->ujian;
+
+                    // Cek status rilis nilai dari pengaturan SuperAdmin (kolom tampilkan_nilai)
+                    $isDirilis = $ujian && (
+                        method_exists($ujian, 'isNilaiDirilis')
+                        ? $ujian->isNilaiDirilis()
+                        : (bool) ($ujian->tampilkan_nilai ?? false)
+                    );
+
+                    // Sisipkan atribut bantu agar view bisa langsung memakainya dengan aman
+                    $item->is_nilai_dirilis = $isDirilis;
+                    $item->nilai_tampil     = $isDirilis ? $item->nilai : null;
+
+                    return $item;
+                });
         }
+
+        // Tetap sediakan $riwayatPengerjaan (keyBy ujian_id) untuk kartu jadwal ujian aktif
+        $riwayatPengerjaan = $riwayatList->keyBy('ujian_id');
+
+        // Sediakan $riwayatNilais (khusus yang sudah selesai) untuk tabel daftar hasil ujian
+        $riwayatNilais = $riwayatList->filter(function ($item) {
+            $status = strtolower((string) ($item->status ?? ''));
+            return in_array($status, ['selesai', 'finished', 'completed']) || !is_null($item->waktu_selesai ?? null);
+        })->values();
 
         return view('siswa.dashboard', compact(
             'siswa',
             'ujianAktif',
             'riwayatPengerjaan',
+            'riwayatNilais',
             'sekarang'
         ));
     }

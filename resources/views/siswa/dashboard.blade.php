@@ -9,7 +9,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
+    @php
+        $logoPath = public_path('logo.png');
+        $logoUrl = is_file($logoPath)
+            ? asset('logo.png') . '?v=' . @filemtime($logoPath)
+            : (is_file(public_path('favicon.png')) ? asset('favicon.png') : '');
+    @endphp
+    @if ($logoUrl)
+        <link rel="icon" type="image/png" href="{{ $logoUrl }}">
+    @endif
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -44,6 +52,15 @@
     $actionFormUjian = \Illuminate\Support\Facades\Route::has('siswa.ujian.verifikasi')
         ? route('siswa.ujian.verifikasi')
         : route('siswa.konfirmasi');
+
+    $daftarHasil = isset($riwayatNilais)
+        ? $riwayatNilais
+        : (isset($riwayatPengerjaan)
+            ? $riwayatPengerjaan->filter(function ($item) {
+                $status = strtolower((string) ($item->status ?? ''));
+                return in_array($status, ['selesai', 'finished', 'completed']) || !empty($item->waktu_selesai);
+            })->values()
+            : collect());
 @endphp
 
 <body class="bg-slate-100 min-h-screen flex flex-col antialiased">
@@ -52,7 +69,13 @@
     <header class="bg-white border-b border-slate-200 px-6 py-3 shadow-xs sticky top-0 z-50">
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <img src="{{ asset('logo.png') }}" alt="Logo CBT" class="w-12 h-12 rounded-xl object-contain shadow-xs">
+                @if ($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="Logo CBT" class="w-11 h-11 rounded-xl object-contain shadow-xs">
+                @else
+                    <div class="w-11 h-11 rounded-xl bg-blue-700 text-white flex items-center justify-center font-extrabold text-sm shadow-xs">
+                        CAT
+                    </div>
+                @endif
                 <div>
                     <span class="text-xs font-bold text-slate-800 block">MAHESAPP</span>
                     <span class="text-[10px] text-slate-500 font-medium">CAT System</span>
@@ -92,15 +115,12 @@
                     <span>Kelas: <b class="text-white">{{ $siswa->kelas->nama_kelas ?? 'Belum ditentukan' }}</b></span>
                 </p>
             </div>
-            <div>
-                <form action="{{ route('siswa.logout') }}" method="POST"
-                    onsubmit="return confirm('Keluar dari sistem?')">
-                    @csrf
-                    <button type="submit"
-                        class="px-4 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-xs cursor-pointer">
-                        <i class="fa-solid fa-power-off"></i> Keluar Sistem
-                    </button>
-                </form>
+            <div class="flex items-center gap-3">
+                <div class="px-4 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-right">
+                    <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Ujian Selesai</span>
+                    <span class="text-lg font-extrabold text-emerald-400">{{ $daftarHasil->count() }}</span>
+                    <span class="text-xs text-slate-400">Sesi</span>
+                </div>
             </div>
         </div>
 
@@ -247,6 +267,10 @@
                             $isAktif = ($ujian->status ?? 'aktif') === 'aktif';
                             $namaSesi = $ujian->nama_ujian ?? $ujian->judul ?? ($ujian->mapel->nama_mapel ?? 'Ujian CBT');
                             $isTerpilih = (string) old('ujian_id', $ujianUtama?->id) === (string) $ujian->id;
+
+                            $nilaiDirilis = method_exists($ujian, 'isNilaiDirilis')
+                                ? $ujian->isNilaiDirilis()
+                                : (bool) ($ujian->tampilkan_nilai ?? false);
                         @endphp
 
                         <div data-ujian-card="{{ $ujian->id }}" data-ujian-nama="{{ $namaSesi }}"
@@ -308,7 +332,24 @@
                                 </div>
                             </div>
 
-                            @if ($isAktif && !$sudahSelesai)
+                            @if ($sudahSelesai)
+                                <div
+                                    class="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-xs">
+                                    <span class="text-slate-500 font-medium">Hasil Ujian:</span>
+                                    @if ($nilaiDirilis)
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-600 text-white font-extrabold">
+                                            <i class="fa-solid fa-award text-[10px]"></i>
+                                            Nilai: {{ number_format((float) ($pengerjaan->nilai ?? 0), 2) }}
+                                        </span>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold">
+                                            <i class="fa-solid fa-lock text-[10px]"></i> Menunggu Rilis Nilai
+                                        </span>
+                                    @endif
+                                </div>
+                            @elseif ($isAktif)
                                 <div
                                     class="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[11px] font-semibold text-blue-700">
                                     <span>Klik untuk memilih sesi & ketik token</span>
@@ -325,6 +366,115 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- BAGIAN BAWAH: Riwayat & Hasil Ujian CAT (Berdasarkan Status Rilis Nilai SuperAdmin) -->
+        <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-300 shadow-xs space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-square-poll-vertical text-blue-600"></i>
+                        <span>Hasil &amp; Nilai Ujian Saya</span>
+                    </h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        Nilai akhir akan tampil secara otomatis setelah SuperAdmin merilis hasil ujian.
+                    </p>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold">
+                    Total Selesai: {{ $daftarHasil->count() }}
+                </span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 border-y border-slate-200 uppercase text-[11px]">
+                            <th class="py-3 px-3 w-10 text-center">No</th>
+                            <th class="py-3 px-3">Nama Ujian &amp; Mapel</th>
+                            <th class="py-3 px-3">Waktu Selesai</th>
+                            <th class="py-3 px-3 text-center">KKM</th>
+                            <th class="py-3 px-3 text-center">Nilai Akhir</th>
+                            <th class="py-3 px-3 text-center">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        @forelse ($daftarHasil as $idx => $hasil)
+                            @php
+                                $ujianHasil = $hasil->ujian;
+                                $isDirilis = isset($hasil->is_nilai_dirilis)
+                                    ? (bool) $hasil->is_nilai_dirilis
+                                    : ($ujianHasil && (method_exists($ujianHasil, 'isNilaiDirilis')
+                                        ? $ujianHasil->isNilaiDirilis()
+                                        : (bool) ($ujianHasil->tampilkan_nilai ?? false)));
+
+                                $nilaiAngka = (float) ($hasil->nilai ?? 0);
+                                $kkmUjian = (float) ($ujianHasil->kkm ?? 75);
+                                $lulusKkm = $nilaiAngka >= $kkmUjian;
+                            @endphp
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="py-3 px-3 text-center font-semibold text-slate-500">{{ $idx + 1 }}</td>
+                                <td class="py-3 px-3">
+                                    <div class="font-bold text-slate-800">
+                                        {{ $ujianHasil->nama_ujian ?? 'Ujian CAT #' . $hasil->ujian_id }}
+                                    </div>
+                                    <div class="text-[11px] text-emerald-700 font-medium">
+                                        {{ $ujianHasil->mapel->nama_mapel ?? '-' }}
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 text-slate-600">
+                                    @if (!empty($hasil->waktu_selesai))
+                                        {{ \Carbon\Carbon::parse($hasil->waktu_selesai)->locale('id')->translatedFormat('d M Y, H:i') }} WIB
+                                    @elseif (!empty($hasil->updated_at))
+                                        {{ \Carbon\Carbon::parse($hasil->updated_at)->locale('id')->translatedFormat('d M Y, H:i') }} WIB
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="py-3 px-3 text-center font-semibold text-slate-600">
+                                    {{ number_format($kkmUjian, 0) }}
+                                </td>
+                                <td class="py-3 px-3 text-center">
+                                    @if ($isDirilis)
+                                        <span
+                                            class="inline-block px-3 py-1 rounded-lg font-extrabold text-sm {{ $lulusKkm ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                                            {{ number_format($nilaiAngka, 2) }}
+                                        </span>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold">
+                                            <i class="fa-solid fa-eye-slash text-[10px]"></i>
+                                            Belum Dirilis
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-3 text-center">
+                                    @if ($isDirilis)
+                                        @if ($lulusKkm)
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">
+                                                <i class="fa-solid fa-check"></i> Tuntas
+                                            </span>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-extrabold uppercase">
+                                                <i class="fa-solid fa-rotate-right"></i> Belum Tuntas
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span class="text-[11px] text-slate-400 italic">Dalam penilaian / dikunci</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-slate-400 italic">
+                                    Belum ada riwayat ujian yang selesai dikerjakan.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     </main>
@@ -382,8 +532,10 @@
             }
 
             const aturanBox = document.getElementById('box-tata-tertib');
-            if (aturanBox && ujianAturan.trim() !== '') {
-                aturanBox.innerHTML = escapeHtml(ujianAturan);
+            if (aturanBox) {
+                aturanBox.innerHTML = ujianAturan.trim() !== ''
+                    ? escapeHtml(ujianAturan)
+                    : defaultTataTertibHtml;
             }
 
             document.querySelectorAll('[data-ujian-card]').forEach(el => {
