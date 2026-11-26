@@ -134,15 +134,15 @@
             ? $sekolah->nip_proktor
             : ($proktorUser->nip ?? ($ujian->guru->nip ?? ($user->nip ?? '-')));
 
-        // Hitung total butir soal pada paket ujian ini agar Benar + Salah selalu genap
+        // Hitung total butir soal secara aman (cek keberadaan kolom ujian_id)
         $totalSoalUjian = 0;
-        if (!empty($ujian->id)) {
+        if (!empty($ujian->id) && \Illuminate\Support\Facades\Schema::hasColumn('soals', 'ujian_id')) {
             $totalSoalUjian = \App\Models\Soal::where('ujian_id', $ujian->id)->count();
-            if ($totalSoalUjian === 0 && !empty($ujian->mapel_id)) {
-                $totalSoalUjian = \App\Models\Soal::where('mapel_id', $ujian->mapel_id)
-                    ->when(!empty($ujian->kelas_id), fn($q) => $q->where('kelas_id', $ujian->kelas_id))
-                    ->count();
-            }
+        }
+        if ($totalSoalUjian === 0 && !empty($ujian->mapel_id)) {
+            $totalSoalUjian = \App\Models\Soal::where('mapel_id', $ujian->mapel_id)
+                ->when(!empty($ujian->kelas_id) && \Illuminate\Support\Facades\Schema::hasColumn('soals', 'kelas_id'), fn($q) => $q->where('kelas_id', $ujian->kelas_id))
+                ->count();
         }
 
         // Ambil & urutkan peringkat berdasarkan nilai tertinggi (gaya CAT BKN)
