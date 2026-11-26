@@ -134,11 +134,29 @@
             ? $sekolah->nip_proktor
             : ($proktorUser->nip ?? ($ujian->guru->nip ?? ($user->nip ?? '-')));
 
+        // Hitung total butir soal pada paket ujian ini agar Benar + Salah selalu genap
+        $totalSoalUjian = 0;
+        if (!empty($ujian->id)) {
+            $totalSoalUjian = \App\Models\Soal::where('ujian_id', $ujian->id)->count();
+            if ($totalSoalUjian === 0 && !empty($ujian->mapel_id)) {
+                $totalSoalUjian = \App\Models\Soal::where('mapel_id', $ujian->mapel_id)
+                    ->when(!empty($ujian->kelas_id), fn($q) => $q->where('kelas_id', $ujian->kelas_id))
+                    ->count();
+            }
+        }
+
         // Ambil & urutkan peringkat berdasarkan nilai tertinggi (gaya CAT BKN)
         $rawNilai = $hasilUjians ?? $nilaiUjians ?? $pesertas ?? ($ujian->nilaiUjians ?? collect());
         $daftarNilai = collect($rawNilai)->sortByDesc(function ($item) {
             return (float) ($item->nilai ?? $item->skor ?? 0);
         })->values();
+
+        // Fallback jika soal di DB sudah dihapus: ambil nilai tertinggi dari (benar + salah) peserta
+        if ($totalSoalUjian === 0 && $daftarNilai->count() > 0) {
+            $totalSoalUjian = (int) $daftarNilai->max(function ($i) {
+                return (int) ($i->jumlah_benar ?? $i->benar ?? 0) + (int) ($i->jumlah_salah ?? $i->salah ?? 0);
+            });
+        }
 
         $kkm = (float) ($ujian->kkm ?? 75);
         $totalPeserta = $daftarNilai->count();
@@ -259,7 +277,8 @@
                             <td class="py-0.5">:</td>
                             <td class="py-0.5 font-medium text-black">
                                 {{ !empty($ujian->waktu_mulai) ? \Carbon\Carbon::parse($ujian->waktu_mulai)->locale('id')->translatedFormat('d F Y') : $waktuCetak->locale('id')->translatedFormat('d F Y') }}
-                                ({{ $ujian->durasi ?? '-' }} Menit)
+                                ({{ $ujian->durasi ?? '-' }}
+                                Menit{{ $totalSoalUjian > 0 ? ' • ' . $totalSoalUjian . ' Soal' : '' }})
                             </td>
                         </tr>
                         <tr>
@@ -327,6 +346,10 @@
                         @php
                             $nilai = (float) ($item->nilai ?? $item->skor ?? 0);
                             $tuntas = $nilai >= $kkm;
+                            $jumlahBenar = (int) ($item->jumlah_benar ?? $item->benar ?? 0);
+                            $jumlahSalah = $totalSoalUjian > 0
+                                ? max(0, $totalSoalUjian - $jumlahBenar)
+                                : (int) ($item->jumlah_salah ?? $item->salah ?? 0);
                             $jamSelesai = !empty($item->waktu_selesai)
                                 ? \Carbon\Carbon::parse($item->waktu_selesai)->format('H:i:s')
                                 : (!empty($item->updated_at) ? \Carbon\Carbon::parse($item->updated_at)->format('H:i:s') : '-');
@@ -342,10 +365,10 @@
                                 {{ $item->siswa->nama_siswa ?? ($item->siswa->nama ?? '-') }}
                             </td>
                             <td class="px-1.5 py-1.5 text-center font-mono text-black font-semibold">
-                                {{ $item->jumlah_benar ?? $item->benar ?? '-' }}
+                                {{ $jumlahBenar }}
                             </td>
                             <td class="px-1.5 py-1.5 text-center font-mono text-black font-semibold">
-                                {{ $item->jumlah_salah ?? $item->salah ?? '-' }}
+                                {{ $jumlahSalah }}
                             </td>
                             <td class="px-2 py-1.5 text-center font-mono text-[8.5px] text-slate-700">
                                 {{ $jamSelesai }}
