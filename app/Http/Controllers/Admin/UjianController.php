@@ -356,7 +356,7 @@ class UjianController extends Controller
 
             if ($totalSoal === 0 && $nilaiUjian->ujian) {
                 $totalSoal = Soal::where('mapel_id', $nilaiUjian->ujian->mapel_id)
-                    ->where('kelas_id', $nilaiUjian->ujian->kelas_id)
+                    ->when($nilaiUjian->ujian->kelas_id, fn($q) => $q->where('kelas_id', $nilaiUjian->ujian->kelas_id))
                     ->count();
             }
 
@@ -365,8 +365,8 @@ class UjianController extends Controller
                 ->where('siswa_id', $nilaiUjian->siswa_id)
                 ->get();
 
-            $benar = 0;
-            $salah = 0;
+            $benar       = 0;
+            $salahTerisi = 0;
 
             foreach ($jawabans as $jwb) {
                 if (empty($jwb->jawaban)) {
@@ -379,16 +379,18 @@ class UjianController extends Controller
                 if ($kunci !== '' && $pilihanSiswa === $kunci) {
                     $benar++;
                 } else {
-                    $salah++;
+                    $salahTerisi++;
                 }
             }
 
-            $tidakDijawab = max(0, $totalSoal - ($benar + $salah));
+            $tidakDijawab = max(0, $totalSoal - ($benar + $salahTerisi));
+            // Gabungkan salah terisi + tidak dijawab agar BENAR + SALAH selalu genap sama dengan total soal
+            $totalSalah   = max(0, $totalSoal - $benar);
             $skorAkhir    = $totalSoal > 0 ? round(($benar / $totalSoal) * 100, 2) : 0;
 
             $nilaiUjian->update([
                 'jumlah_benar'  => $benar,
-                'jumlah_salah'  => $salah,
+                'jumlah_salah'  => $totalSalah,
                 'tidak_dijawab' => $tidakDijawab,
                 'nilai'         => $skorAkhir,
                 'status'        => 'selesai',
@@ -502,12 +504,18 @@ class UjianController extends Controller
     private function clearSiswaSession($siswa): void
     {
         if (config('session.driver') === 'database' && Schema::hasTable('sessions')) {
-            if (!empty($siswa->session_token)) {
-                DB::table('sessions')->where('id', $siswa->session_token)->delete();
-            }
-            if (!empty($siswa->user_id)) {
-                DB::table('sessions')->where('user_id', $siswa->user_id)->delete();
-            }
+            DB::table('sessions')
+                ->where(function ($q) use ($siswa) {
+                    if (!empty($siswa->session_token)) {
+                        $q->where('id', $siswa->session_token)
+                            ->orWhere('payload', 'LIKE', '%' . $siswa->session_token . '%');
+                    }
+                    if (!empty($siswa->user_id)) {
+                        $q->orWhere('user_id', $siswa->user_id);
+                    }
+                    $q->orWhere('payload', 'LIKE', '%login_siswa_%i:' . (int) $siswa->id . ';%');
+                })
+                ->delete();
         }
 
         $updateSiswa = ['updated_at' => now()];
