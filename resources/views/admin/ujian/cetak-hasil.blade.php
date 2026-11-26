@@ -159,10 +159,10 @@
         <div class="flex items-center gap-2.5">
             <span
                 class="px-2.5 py-1 border border-slate-800 bg-white text-slate-900 text-[10px] font-bold uppercase tracking-wider">
-                Format CAT BKN
+                HASIL UJIAN CAT
             </span>
             <span class="text-xs text-slate-700 font-semibold">
-                Pratinjau Dokumen Hasil Ujian (A4 Portrait)
+                Pratinjau Dokumen Hasil Ujian
             </span>
         </div>
         <div class="flex items-center gap-2">
