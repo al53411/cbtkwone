@@ -140,8 +140,7 @@
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
                         <i class="fa-solid fa-heading text-xs"></i>
                     </span>
-                    <input type="text" name="judul_ujian"
-                        value="{{ request('judul_ujian', $judulUjianAktif) }}"
+                    <input type="text" name="judul_ujian" value="{{ request('judul_ujian', $judulUjianAktif) }}"
                         placeholder="Judul Kegiatan Ujian"
                         class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
@@ -154,17 +153,12 @@
             </form>
 
             <div class="flex items-center justify-end gap-2 w-full lg:w-auto">
-                <a href="{{ route('admin.siswa.index') }}"
-                    class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>Kembali</span>
-                </a>
 
                 @if(isset($siswas) && count($siswas) > 0)
                     <button type="button" onclick="window.print()"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs inline-flex items-center gap-1.5 transition cursor-pointer">
                         <i class="fa-solid fa-print"></i>
-                        <span>Cetak Langsung ({{ count($siswas) }} Siswa)</span>
+                        <span>Cetak Kartu ({{ count($siswas) }} Siswa)</span>
                     </button>
 
                     <a href="{{ route('admin.siswa.print-preview', ['kelas_id' => request('kelas_id', $kelasPilih ?? null), 'judul_ujian' => request('judul_ujian', $judulUjianAktif)]) }}"
@@ -178,7 +172,8 @@
         </div>
 
         <!-- Area Lembar Cetak / Preview Kartu (Flat Paper Container) -->
-        <div id="area-cetak-wrapper" class="bg-white p-4 sm:p-6 rounded-none sm:rounded-xl border border-slate-300 space-y-4">
+        <div id="area-cetak-wrapper"
+            class="bg-white p-4 sm:p-6 rounded-none sm:rounded-xl border border-slate-300 space-y-4">
 
             <!-- Header Dokumen Atas -->
             <div class="text-center pb-2.5 border-b-2 border-black">
@@ -267,9 +262,11 @@
                                     </div>
 
                                     <!-- Box Nomor Meja Flat -->
-                                    <div class="border-[1.5px] border-black bg-slate-50 py-1.5 px-2.5 mb-2 flex items-center justify-between">
+                                    <div
+                                        class="border-[1.5px] border-black bg-slate-50 py-1.5 px-2.5 mb-2 flex items-center justify-between">
                                         <div class="text-left leading-none">
-                                            <span class="block text-[7.5px] font-extrabold uppercase tracking-widest text-slate-700">
+                                            <span
+                                                class="block text-[7.5px] font-extrabold uppercase tracking-widest text-slate-700">
                                                 NOMOR MEJA
                                             </span>
                                             <span class="text-[8.5px] font-bold text-black mt-0.5 block">
@@ -287,13 +284,18 @@
                                         <div class="col-span-8 font-bold font-mono text-black">: {{ $siswa->nisn }}</div>
 
                                         <div class="col-span-4 font-semibold text-slate-800">Nama Peserta</div>
-                                        <div class="col-span-8 font-bold uppercase text-black truncate">: {{ $siswa->nama_siswa }}</div>
+                                        <div class="col-span-8 font-bold uppercase text-black truncate">:
+                                            {{ $siswa->nama_siswa }}
+                                        </div>
 
                                         <div class="col-span-4 font-semibold text-slate-800">Kelas / Rombel</div>
-                                        <div class="col-span-8 font-semibold text-black truncate">: {{ $siswa->kelas->nama_kelas ?? '-' }}</div>
+                                        <div class="col-span-8 font-semibold text-black truncate">:
+                                            {{ $siswa->kelas->nama_kelas ?? '-' }}
+                                        </div>
 
                                         <div class="col-span-4 font-semibold text-slate-800">Asal Sekolah</div>
-                                        <div class="col-span-8 font-semibold uppercase text-black truncate">: {{ $namaSekolah }}</div>
+                                        <div class="col-span-8 font-semibold uppercase text-black truncate">: {{ $namaSekolah }}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -303,7 +305,8 @@
                                         <span class="font-bold text-black">Petunjuk:</span><br>
                                         Tempelkan tanda pengenal ini pada sudut kanan atas meja peserta ujian.
                                     </div>
-                                    <div class="w-10 h-10 border border-black p-0.5 bg-white shrink-0 flex items-center justify-center">
+                                    <div
+                                        class="w-10 h-10 border border-black p-0.5 bg-white shrink-0 flex items-center justify-center">
                                         <img src="{{ $qrUrl }}" alt="QR"
                                             style="width: 36px; height: 36px; max-width: 36px; max-height: 36px;">
                                     </div>
@@ -330,7 +333,8 @@
                                                 {{ $namaSekolah }} • TP {{ $tahunPelajaranDipilih }}
                                             </div>
                                         </div>
-                                        <span class="border border-black bg-white px-1.5 py-0.5 text-[7px] font-black uppercase shrink-0">
+                                        <span
+                                            class="border border-black bg-white px-1.5 py-0.5 text-[7px] font-black uppercase shrink-0">
                                             PESERTA
                                         </span>
                                     </div>
@@ -341,13 +345,17 @@
                                         <div class="col-span-8 font-bold font-mono text-black">: {{ $siswa->nisn }}</div>
 
                                         <div class="col-span-4 font-semibold text-slate-800">Nama Lengkap</div>
-                                        <div class="col-span-8 font-bold uppercase text-black truncate">: {{ $siswa->nama_siswa }}</div>
+                                        <div class="col-span-8 font-bold uppercase text-black truncate">:
+                                            {{ $siswa->nama_siswa }}
+                                        </div>
 
                                         <div class="col-span-4 font-semibold text-slate-800">Tmp, Tgl Lahir</div>
                                         <div class="col-span-8 font-semibold text-black truncate">: {{ $ttlSiswa }}</div>
 
                                         <div class="col-span-4 font-semibold text-slate-800">Kelas / Rombel</div>
-                                        <div class="col-span-8 font-semibold text-black truncate">: {{ $siswa->kelas->nama_kelas ?? '-' }}</div>
+                                        <div class="col-span-8 font-semibold text-black truncate">:
+                                            {{ $siswa->kelas->nama_kelas ?? '-' }}
+                                        </div>
 
                                         <div class="col-span-4 font-semibold text-slate-800">Sandi / PIN Ujian</div>
                                         <div class="col-span-8 font-bold font-mono text-black">: {{ $siswa->nisn }}*</div>
@@ -357,7 +365,8 @@
                                 <!-- Footer Flat: Pas Foto Siswa (Kiri) + Tanda Tangan Kepsek (Tengah) + QR (Kanan) -->
                                 <div class="pt-1.5 border-t border-black flex items-end justify-between gap-2 mt-auto">
                                     <!-- Kotak Pas Foto Siswa 3x4 (Flat) -->
-                                    <div class="w-[50px] h-[64px] border border-black bg-white flex flex-col items-center justify-center overflow-hidden shrink-0">
+                                    <div
+                                        class="w-[50px] h-[64px] border border-black bg-white flex flex-col items-center justify-center overflow-hidden shrink-0">
                                         @if(!empty($siswa->foto) && file_exists(public_path('storage/' . $siswa->foto)))
                                             <img src="{{ asset('storage/' . $siswa->foto) }}" alt="Foto"
                                                 style="width: 100%; height: 100%; object-fit: cover;">
@@ -378,7 +387,8 @@
                                         </div>
 
                                         <!-- Stempel Flat Halus -->
-                                        <div class="absolute left-1 top-2.5 w-9 h-9 rounded-full border border-dashed border-blue-800/35 flex items-center justify-center pointer-events-none -rotate-12">
+                                        <div
+                                            class="absolute left-1 top-2.5 w-9 h-9 rounded-full border border-dashed border-blue-800/35 flex items-center justify-center pointer-events-none -rotate-12">
                                             <span class="text-[5px] font-extrabold text-blue-900/40 uppercase">STEMPEL</span>
                                         </div>
 
@@ -391,7 +401,8 @@
                                     </div>
 
                                     <!-- QR Code Verifikasi Siswa (Flat) -->
-                                    <div class="w-10 h-10 border border-black p-0.5 bg-white shrink-0 flex items-center justify-center">
+                                    <div
+                                        class="w-10 h-10 border border-black p-0.5 bg-white shrink-0 flex items-center justify-center">
                                         <img src="{{ $qrUrl }}" alt="QR"
                                             style="width: 36px; height: 36px; max-width: 36px; max-height: 36px;">
                                     </div>
