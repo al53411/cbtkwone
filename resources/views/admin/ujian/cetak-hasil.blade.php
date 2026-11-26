@@ -356,7 +356,7 @@
                             <td class="px-2 py-1.5 text-center font-bold text-[8px]">
                                 @if($tuntas)
                                     <span class="inline-block px-1.5 py-0.5 border border-black bg-white text-black">
-                                        LULUS KKM
+                                        LULUS
                                     </span>
                                 @else
                                     <span class="inline-block px-1.5 py-0.5 border border-slate-500 bg-white text-slate-700">
