@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ujian;
 use App\Models\Mapel;
 use App\Models\Kelas;
+use App\Models\Soal;
 use App\Models\NilaiUjian;
 use App\Models\Sekolah;
 use Illuminate\Http\Request;
@@ -23,11 +24,12 @@ class UjianController extends Controller
 
         $query = Ujian::with(['mapel', 'kelas']);
 
-        // 1. Pencarian Nama Ujian atau Nama Mapel
+        // 1. Pencarian Nama Ujian, Kode Soal, atau Nama Mapel
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('nama_ujian', 'LIKE', "%{$search}%")
+                    ->orWhere('kode_soal', 'LIKE', "%{$search}%")
                     ->orWhereHas('mapel', function ($qm) use ($search) {
                         $qm->where('nama_mapel', 'LIKE', "%{$search}%");
                     });
@@ -46,17 +48,19 @@ class UjianController extends Controller
 
         $ujians = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
-        $mapels    = Mapel::where('status', 'aktif')->orderBy('nama_mapel', 'asc')->get();
-        $kelases   = Kelas::orderBy('nama_kelas', 'asc')->get();
-        $listMapel = $mapels;
-        $listKelas = $kelases;
+        $mapels       = Mapel::where('status', 'aktif')->orderBy('nama_mapel', 'asc')->get();
+        $kelases      = Kelas::orderBy('nama_kelas', 'asc')->get();
+        $listMapel    = $mapels;
+        $listKelas    = $kelases;
+        $listKodeSoal = $this->getAvailableKodeSoals();
 
         return view('superadmin.ujian.index', compact(
             'ujians',
             'mapels',
             'kelases',
             'listMapel',
-            'listKelas'
+            'listKelas',
+            'listKodeSoal'
         ));
     }
 
@@ -76,12 +80,13 @@ class UjianController extends Controller
     {
         $this->ensureUjianMultiTipeColumns();
 
-        $ujian     = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
-        $ujianItem = $ujian;
-        $mapels    = Mapel::where('status', 'aktif')->orderBy('nama_mapel', 'asc')->get();
-        $kelases   = Kelas::orderBy('nama_kelas', 'asc')->get();
-        $listMapel = $mapels;
-        $listKelas = $kelases;
+        $ujian        = Ujian::with(['mapel', 'kelas'])->findOrFail($id);
+        $ujianItem    = $ujian;
+        $mapels       = Mapel::where('status', 'aktif')->orderBy('nama_mapel', 'asc')->get();
+        $kelases      = Kelas::orderBy('nama_kelas', 'asc')->get();
+        $listMapel    = $mapels;
+        $listKelas    = $kelases;
+        $listKodeSoal = $this->getAvailableKodeSoals();
 
         $viewName = view()->exists('superadmin.ujian.settings')
             ? 'superadmin.ujian.settings'
@@ -93,7 +98,8 @@ class UjianController extends Controller
             'mapels',
             'kelases',
             'listMapel',
-            'listKelas'
+            'listKelas',
+            'listKodeSoal'
         ));
     }
 
@@ -127,6 +133,7 @@ class UjianController extends Controller
             'nama_ujian'         => $validated['nama_ujian'],
             'kelas_id'           => $validated['kelas_id'],
             'mapel_id'           => $validated['mapel_id'],
+            'kode_soal'          => !empty($validated['kode_soal']) ? trim($validated['kode_soal']) : null,
             'waktu_mulai'        => $validated['waktu_mulai'],
             'waktu_selesai'      => $validated['waktu_selesai'],
             'durasi'             => (int) $validated['durasi'],
@@ -149,7 +156,7 @@ class UjianController extends Controller
         Ujian::create($dataUjian);
 
         return redirect()->route('superadmin.ujian.index')
-            ->with('success', 'Jadwal Ujian beserta pengaturan tipe soal & KKM berhasil dibuat!');
+            ->with('success', 'Jadwal Ujian beserta paket kode soal & KKM berhasil dibuat!');
     }
 
     public function update(Request $request, $id)
@@ -168,6 +175,7 @@ class UjianController extends Controller
             'nama_ujian'         => $validated['nama_ujian'],
             'kelas_id'           => $validated['kelas_id'],
             'mapel_id'           => $validated['mapel_id'],
+            'kode_soal'          => !empty($validated['kode_soal']) ? trim($validated['kode_soal']) : null,
             'waktu_mulai'        => $validated['waktu_mulai'],
             'waktu_selesai'      => $validated['waktu_selesai'],
             'durasi'             => (int) $validated['durasi'],
@@ -196,7 +204,7 @@ class UjianController extends Controller
         $ujian->update($updateData);
 
         return redirect()->route('superadmin.ujian.index')
-            ->with('success', 'Jadwal Ujian dan bobot/KKM berhasil diperbarui!');
+            ->with('success', 'Jadwal Ujian dan paket kode soal berhasil diperbarui!');
     }
 
     /**
@@ -409,6 +417,23 @@ class UjianController extends Controller
     }
 
     /**
+     * Helper private untuk mengambil daftar paket kode_soal unik beserta jumlah butir soalnya
+     */
+    private function getAvailableKodeSoals()
+    {
+        if (!Schema::hasTable('soals') || !Schema::hasColumn('soals', 'kode_soal')) {
+            return collect();
+        }
+
+        return Soal::select('kode_soal', 'mapel_id', 'kelas_id', DB::raw('COUNT(*) as total_soal'))
+            ->whereNotNull('kode_soal')
+            ->where('kode_soal', '!=', '')
+            ->groupBy('kode_soal', 'mapel_id', 'kelas_id')
+            ->orderBy('kode_soal', 'asc')
+            ->get();
+    }
+
+    /**
      * Helper private untuk format boolean aman lintas driver database (MySQL/MariaDB & PostgreSQL)
      */
     private function boolValue(bool $value): mixed
@@ -438,16 +463,19 @@ class UjianController extends Controller
     }
 
     /**
-     * Helper private untuk memastikan kolom multi-tipe soal, bobot, & KKM tersedia di tabel ujians
+     * Helper private untuk memastikan kolom kode_soal, multi-tipe soal, bobot, & KKM tersedia di tabel ujians
      */
     private function ensureUjianMultiTipeColumns(): void
     {
-        if (Cache::get('superadmin_ujian_columns_v1')) {
+        if (Cache::get('superadmin_ujian_columns_v2')) {
             return;
         }
 
         if (Schema::hasTable('ujians')) {
             Schema::table('ujians', function (Blueprint $table) {
+                if (!Schema::hasColumn('ujians', 'kode_soal')) {
+                    $table->string('kode_soal', 100)->nullable()->after('mapel_id');
+                }
                 if (!Schema::hasColumn('ujians', 'tampilkan_soal')) {
                     $table->boolean('tampilkan_soal')->default(false);
                 }
@@ -475,7 +503,7 @@ class UjianController extends Controller
             });
         }
 
-        Cache::put('superadmin_ujian_columns_v1', true, now()->addHours(24));
+        Cache::put('superadmin_ujian_columns_v2', true, now()->addHours(24));
     }
 
     /**
@@ -532,6 +560,7 @@ class UjianController extends Controller
             'nama_ujian'         => 'required|string|max:255',
             'kelas_id'           => 'required|exists:kelas,id',
             'mapel_id'           => 'required|exists:mapels,id',
+            'kode_soal'          => 'nullable|string|max:100',
             'waktu_mulai'        => 'required|date',
             'waktu_selesai'      => 'required|date|after:waktu_mulai',
             'durasi'             => 'required|integer|min:1',
